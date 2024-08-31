@@ -374,12 +374,12 @@ class _HMessagerie extends State<Messagerie> {
                                                     children: [
                                                       Text(
                                                         processDateTime(listeChat[index].milliseconds),
-                                                        style: TextStyle(
+                                                        style: const TextStyle(
                                                             fontSize: 10,
                                                             fontWeight: FontWeight.bold
                                                         ),
                                                       ),
-                                                      SizedBox(
+                                                      const SizedBox(
                                                         width: 10,
                                                       ),
                                                       listeChat[index].statut == 0 ?
@@ -420,9 +420,11 @@ class _HMessagerie extends State<Messagerie> {
                 }
               );
             }
-            else return Center(
+            else {
+              return const Center(
               child: Text('Chargement ...'),
             );
+            }
           }
         )
     );
