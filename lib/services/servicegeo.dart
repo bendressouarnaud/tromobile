@@ -82,7 +82,8 @@ class Servicegeo {
         idpub: int.parse(message.data['idpub']),
         iduser: int.parse(message.data['id']),
         millisecondes: DateTime.now().millisecondsSinceEpoch,
-        reserve: int.parse(message.data['reserve']));
+        reserve: int.parse(message.data['reserve']),
+        statut: 0);
     outil.addSouscription(souscription);
   }
 

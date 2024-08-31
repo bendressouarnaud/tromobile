@@ -125,6 +125,14 @@ class Outil {
     return await _souscriptionController.getData(idpub); // Ajout du AWAIT le 29/08/2024
   }
 
+  Future<Souscription> getSouscriptionByIdpubAndIduser(int idpub, int iduser) async{
+    return await _souscriptionController.getByIdpubAndIduser(idpub, iduser); // Ajout du AWAIT le 29/08/2024
+  }
+
+  Future<int> updateSouscription(Souscription data) async{
+    return await _souscriptionController.updateSouscription(data);
+  }
+
   // for  P U B L I C A T I O N
   void addPublication(Publication publication){
     _publicationController.addData(publication);

@@ -181,7 +181,8 @@ class _NewAuth extends State<AuthentificationEcran> {
             idpub: souscriptionBean.idpub,
             iduser: souscriptionBean.iduser,
             millisecondes: souscriptionBean.millisecondes,
-            reserve: souscriptionBean.reserve);
+            reserve: souscriptionBean.reserve,
+            statut: souscriptionBean.statut);
         _souscriptionController.addData(souscription);
       }
 

@@ -223,7 +223,7 @@ class _NewEcranState extends State<EcranCompte> {
                             ),
                             child: GetBuilder<UserGetController>(
                               builder: (_) {
-                                return Text (_userController.userData.isEmpty ? "CONNECTEZ-VOUS" : "MON COMPTE",
+                                return Text (_userController.userData.isEmpty ? "CRÉER COMPTE" : "MON COMPTE",
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,

@@ -57,7 +57,7 @@ class DatabaseHelper {
         'sens INTEGER,statut INTEGER, contenu TEXT, identifiant TEXT, iduser INTEGER, idlocaluser INTEGER)');
 
     await db.execute('CREATE TABLE souscription (id INTEGER PRIMARY KEY AUTOINCREMENT,idpub INTEGER,iduser INTEGER,'
-        'millisecondes INTEGER, reserve INTEGER)');
+        'millisecondes INTEGER, reserve INTEGER, statut INTEGER)');
 
     await db.execute('CREATE TABLE parameters (id INTEGER PRIMARY KEY,state TEXT,travellocal INTEGER,'
         'travelabroad INTEGER)');

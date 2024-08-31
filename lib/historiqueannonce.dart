@@ -1,9 +1,12 @@
 
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:flutter/rendering.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/simple/get_state.dart';
@@ -55,9 +58,13 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   String choixPaiement = 'CinetPAY';
   Outil outil = Outil();
   late String devise ;
+  // User for PROFILE EMETTEUR
   int resteReserve = 0;
   bool signalerLivraison = false;
   int indexSouscripteur = -1;
+  late BuildContext dialogContext;
+  late int iduser;
+  late bool flagSendData;
 
 
   // M E T H O D S
@@ -323,12 +330,117 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   }
 
 
+  // Send Account DATA :
+  Future<void> sendLivraisonFalag() async {
+
+    final url = Uri.parse('${dotenv.env['URL']}markdelivery');
+    var response = await post(url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "idpub": publication.id,
+          "iduser": iduser
+        }));
+
+    // Checks :
+    if(response.statusCode == 200){
+      Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(publication.id, iduser);
+      // Update it :
+      Souscription souscriptionUpdate = Souscription(
+          id: souscription.id,
+          idpub: publication.id,
+          iduser: iduser,
+          millisecondes: souscription.millisecondes,
+          reserve: souscription.reserve,
+          statut: 1
+      );
+      await outil.updateSouscription(souscriptionUpdate);
+
+      // Set FLAG :
+      flagSendData = false;
+    }
+    else {
+      displayFloat("Impossible de traiter la demande !");
+    }
+  }
+
+
+  void displayFloat(String message){
+    Fluttertoast.showToast(
+        msg: message,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 3,
+        backgroundColor: Colors.black54,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
+  }
+
+
+  // Display INTERFACE for SENDING DATA :
+  void displayLoadingInterface(BuildContext dContext) {
+    // Display SYNCHRO :
+    showDialog(
+        barrierDismissible: false,
+        context: dContext,
+        builder: (BuildContext context) {
+          dialogContext = context;
+          return AlertDialog(
+              title: Text('Information'),
+              content: Container(
+                  height: 100,
+                  child: const Column(
+                    children: [
+                      Text("Confirmation livraison ..."),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      SizedBox(
+                          height: 30.0,
+                          width: 30.0,
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                            strokeWidth: 3.0, // Width of the circular line
+                          )
+                      )
+                    ],
+                  )
+              )
+          );
+        }
+    );
+
+    flagSendData = true;
+    sendLivraisonFalag();
+
+    // Run TIMER :
+    Timer.periodic(
+      const Duration(milliseconds: 1500),
+          (timer) {
+        // Update user about remaining time
+        if(!flagSendData){
+          Navigator.pop(dialogContext);
+          timer.cancel();
+
+          // Display message :
+          displayFloat('Confirmation effectuée !');
+
+          setState(() {
+            signalerLivraison = false;
+          });
+        }
+      },
+    );
+  }
+
+
   // Display ACTION BUTTON for 'CONFIRMER LA LIVRAISON'
-  Widget displayActionButton () {
+  Widget displayActionButton (BuildContext context) {
     return signalerLivraison ?
     IconButton(
         onPressed: () {
           // Send DATA to server :
+          displayLoadingInterface(context);
         },
         icon: const Icon(Icons.offline_pin, color: Color(0xFF884106)))
     :
@@ -356,7 +468,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                     bottomRight: Radius.circular(30),
                   )),
               actions: [
-                displayActionButton ()
+                displayActionButton (context)
               ]
           ),
           body: FutureBuilder(
@@ -535,11 +647,18 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                           itemCount: listeUser.length,
                                           itemBuilder: (BuildContext context, int index) {
                                             return GestureDetector(
-                                              onLongPress: (){
-                                                setState(() {
-                                                  indexSouscripteur = index;
-                                                  signalerLivraison = true;
-                                                });
+                                              onLongPress: () async{
+                                                Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(publication.id, listeUser[index].id);
+                                                if(souscription.statut == 0){
+                                                  setState(() {
+                                                    iduser = listeUser[index].id;
+                                                    indexSouscripteur = index;
+                                                    signalerLivraison = true;
+                                                  });
+                                                }
+                                                else{
+                                                  displayFloat('Livraison déjà effectuée');
+                                                }
                                               },
                                               onTap: () {
                                                 // Display DIALOG

@@ -10,8 +10,8 @@ class SouscriptionDao {
   Future<int> insert(Souscription data) async {
     final db = await dbProvider.database;
     var result = db.rawInsert("""
-    INSERT INTO souscription (idpub, iduser, millisecondes, reserve) VALUES (?, ?, ?, ?)""",
-        [data.idpub, data.iduser, data.millisecondes, data.reserve]);
+    INSERT INTO souscription (idpub, iduser, millisecondes, reserve, statut) VALUES (?, ?, ?, ?, ?)""",
+        [data.idpub, data.iduser, data.millisecondes, data.reserve, data.statut]);
     return result;
   }
 
@@ -29,6 +29,15 @@ class SouscriptionDao {
         ? data.map((c) => Souscription.fromDatabaseJson(c)).toList()
         : [];
     return liste;
+  }
+
+  Future<Souscription> findByIdpubAndIduser(int idpub, int iduser) async {
+    final db = await dbProvider.database;
+    var data = await db.query('souscription', where: 'idpub = ? and iduser = ?', whereArgs: [idpub, iduser]);
+    List<Souscription> liste = data.isNotEmpty
+        ? data.map((c) => Souscription.fromDatabaseJson(c)).toList()
+        : [];
+    return liste.single;
   }
 
 }

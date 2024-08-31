@@ -13,9 +13,11 @@ class SouscriptionBean {
   final int idpub;
   final int millisecondes;
   final int reserve;
+  final int statut;
 
   // M e t h o d s  :
-  SouscriptionBean({required this.iduser, required this.idpub, required this.millisecondes, required this.reserve});
+  SouscriptionBean({required this.iduser, required this.idpub, required this.millisecondes, required this.reserve
+    , required this.statut});
   factory SouscriptionBean.fromJson(Map<String, dynamic> json) {
     return SouscriptionBean(
       //This will be used to convert JSON objects that
@@ -24,7 +26,8 @@ class SouscriptionBean {
         iduser: json['iduser'],
         idpub: json['idpub'],
         millisecondes: json['millisecondes'],
-        reserve: json['reserve']
+        reserve: json['reserve'],
+        statut: json['statut']
     );
   }
 }

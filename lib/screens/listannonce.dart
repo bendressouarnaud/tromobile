@@ -244,16 +244,33 @@ class EcranAnnonce {
                                   Container(
                                     margin: const EdgeInsets.only(right: 10),
                                     child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        const Text('Réserve : '),
-                                        Text('${liste[index].reserve} Kg',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black87
+                                        Row(
+                                          children: [
+                                            Text('Réserve : '),
+                                            Text('${liste[index].reserve} Kg',
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.black87
+                                                )
                                             )
+                                          ],
+                                        ),
+                                        Row(
+                                          children: [
+                                            Text(liste[index].prix == 0 ? 'Gratuit' : 'Payant',
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: liste[index].prix == 0 ? const Color(
+                                                        0xFF16A807) :
+                                                    Colors.red
+                                                )
+                                            )
+                                          ],
                                         )
                                       ],
-                                    ),
+                                    )
                                   )
                                 ],
                               )

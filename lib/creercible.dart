@@ -146,8 +146,9 @@ class _creerCible extends State<CreerCible> {
   }
 
   void generateTopic() async {
-    topic = "tro${villeDepart!.id}${villeDestination!.id}";
-    await FirebaseMessaging.instance.subscribeToTopic(topic);
+   //topic = "tro${villeDepart!.id}${villeDestination!.id}";
+   //await FirebaseMessaging.instance.subscribeToTopic(topic);
+    topic = '';
     sendCibleRequest();
   }
 

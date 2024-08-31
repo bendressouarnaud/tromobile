@@ -78,7 +78,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         idpub: int.parse(message.data['idpub']),
         iduser: int.parse(message.data['id']),
         millisecondes: DateTime.now().millisecondsSinceEpoch,
-        reserve: int.parse(message.data['reserve']));
+        reserve: int.parse(message.data['reserve']),
+        statut: 0);
       outil.addSouscription(souscription);
       break;
 
@@ -162,7 +163,7 @@ void showFlutterNotification(RemoteMessage message, String titre, String contenu
           channel.name,
           channelDescription: channel.description,
           // TODO add a proper drawable resource to android, for now using
-          //      one that already exists in example app.
+          //      one that already exists in example app.  tro_notification  launch_background
           icon: 'launch_background',
         ),
         iOS: const DarwinNotificationDetails(

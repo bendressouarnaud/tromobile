@@ -11,7 +11,7 @@ class Publication {
   final String datevoyage;
   final String datepublication;
   final int reserve;
-  final int active;
+  final int active; // 1 : encours , 2 : traité pour les SOUSCRIPTEURS
   final int reservereelle;
   final int souscripteur;
   final int milliseconds;

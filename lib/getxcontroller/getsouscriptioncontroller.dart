@@ -24,6 +24,14 @@ class SouscriptionGetController extends GetxController {
     return data;
   }
 
+  Future<Souscription> getByIdpubAndIduser(int idpub, int iduser) async{
+    return await _repository.findByIdpubAndIduser(idpub, iduser);
+  }
+
+  Future<int> updateSouscription(Souscription data) async{
+    return await _repository.update(data);
+  }
+
   Future<void> addData(Souscription souscription) async {
     await _repository.insert(souscription);
     data.add(souscription);
