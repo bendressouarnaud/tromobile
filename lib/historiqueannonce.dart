@@ -103,6 +103,9 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   // Charger les informations du OWNER si présent :
   Future<List<User>> loadOwner() async{
 
+    // Set this to null
+    outil.setPublicationSuscribed();
+
     // Refresh 'Publication' because the OBJECT has been given as 'Parameter' :
     publication = await outil.refreshPublication(publication.id);
     // Init this variable :
@@ -535,34 +538,41 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                   height: 5,
                                 ),
                               ),
-                              Container(
-                                margin: const EdgeInsets.only(left: 10, top: 10, right: 10),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
+                              GetBuilder<PublicationGetController>(
+                                builder: (PublicationGetController controller) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(left: 10, top: 10, right: 10),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text('Initial : '),
-                                        Text('${publication.reserve} Kg',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold
-                                          ),
+                                        Row(
+                                          children: [
+                                            const Text('Initial : '),
+                                            Text('${publication.reserve} Kg',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold
+                                              ),
+                                            ),
+                                          ],
                                         ),
+                                        Row(
+                                          children: [
+                                            const Text('Reste : '),
+                                            Text(userOrSuscriber == 0 ?
+                                            outil.getPublicationSuscribed() != null ?
+                                            '${outil.getPublicationSuscribed()!.reservereelle}' :
+                                            '${publication.reservereelle} Kg' : '$resteReserve Kg',
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.blue
+                                                )
+                                            ),
+                                          ],
+                                        )
                                       ],
                                     ),
-                                    Row(
-                                      children: [
-                                        const Text('Reste : '),
-                                        Text(userOrSuscriber == 0 ? '${publication.reservereelle} Kg' : '$resteReserve Kg',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.blue
-                                            )
-                                        ),
-                                      ],
-                                    )
-                                  ],
-                                ),
+                                  );
+                                }
                               ),
                               Container(
                                 margin: const EdgeInsets.only(left: 10, top: 30, right: 10),

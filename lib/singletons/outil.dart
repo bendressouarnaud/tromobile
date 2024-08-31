@@ -24,6 +24,7 @@ class Outil {
   late ParametersGetController _parametersController;
   String urlPrefix = '';
   User? publicationOwner;
+  Publication? publicationSuscribed;
   final lesDevises = [
     Devises(libelle: 'CFA', id: 1),
     Devises(libelle: 'EURO', id: 2),
@@ -139,6 +140,7 @@ class Outil {
   }
 
   Future<void> updatePublication(Publication publication) async{
+    publicationSuscribed = publication;
     _publicationController.updateData(publication);
     publicationOwner = await _userController.findById(publication.souscripteur);
     //return null;
@@ -150,6 +152,14 @@ class Outil {
 
   Future<List<Publication>> findAllPublication() async {
     return await _publicationController.findAllPublication();
+  }
+
+  Publication? getPublicationSuscribed() {
+    return publicationSuscribed;
+  }
+
+  void setPublicationSuscribed() {
+    publicationSuscribed = null;
   }
 
 
