@@ -560,7 +560,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                             const Text('Reste : '),
                                             Text(userOrSuscriber == 0 ?
                                             outil.getPublicationSuscribed() != null ?
-                                            '${outil.getPublicationSuscribed()!.reservereelle}' :
+                                            '${outil.getPublicationSuscribed()!.reservereelle} Kg' :
                                             '${publication.reservereelle} Kg' : '$resteReserve Kg',
                                                 style: const TextStyle(
                                                     fontWeight: FontWeight.bold,
