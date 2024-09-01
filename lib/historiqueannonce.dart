@@ -247,15 +247,15 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                   color: Colors.white
               )),
           onPressed: () {
-            displayPaymentChoice();
-            /*Navigator.push(
+            //displayPaymentChoice();
+            Navigator.push(
                 context,
                 MaterialPageRoute(
                     builder: (context){
                       return ReservePaiement(publication: publication);
                     }
                 )
-            );*/
+            );
           },
           icon: const Icon(
             Icons.money,

@@ -28,6 +28,7 @@ import 'ecrancompte.dart';
 import 'getxcontroller/getparamscontroller.dart';
 import 'getxcontroller/getpublicationcontroller.dart';
 import 'getxcontroller/getusercontroller.dart';
+import 'historiqueannonce.dart';
 import 'httpbeans/countrydata.dart';
 import 'httpbeans/countrydataunicodelist.dart';
 import 'main.dart';
@@ -36,6 +37,7 @@ import 'package:flutter/foundation.dart'
 import 'package:http/src/response.dart' as mreponse;
 
 import 'managedeparture.dart';
+import 'messagerie.dart';
 import 'models/parameters.dart';
 import 'models/souscription.dart';
 import 'models/user.dart';
@@ -81,14 +83,9 @@ class _WelcomePageState extends State<WelcomePage> {
   // M e t h o d  :
   @override
   void initState() {
-    /*Future.delayed(const Duration(milliseconds: 1200), () {
-      _publicationController.refreshMainInterface();
-    });*/
-
-    //Future.delayed(const Duration(milliseconds: 1200));
 
     // Call first :
-    //initObjects();
+    setupInteractedMessage();
 
     if (defaultTargetPlatform == TargetPlatform.android) {
       initFire();
@@ -101,6 +98,24 @@ class _WelcomePageState extends State<WelcomePage> {
 
     // Init FireBase :
     super.initState();
+  }
+
+  //
+  Future<void> setupInteractedMessage() async {
+    // Get any messages which caused the application to open from a terminated state.
+    RemoteMessage? initialMessage =
+    await FirebaseMessaging.instance.getInitialMessage();
+
+    // If the message also contains a data property with a "type" of "chat",
+    // navigate to a chat screen
+    if (initialMessage != null) {
+      processIncomingFCMessage(initialMessage, true);
+    }
+
+    // Also handle any interaction when the app is in the background via a Stream listener
+    FirebaseMessaging.onMessageOpenedApp.listen((event) {
+      processIncomingFCMessage(event, true);
+    });
   }
 
   // Listen to the app lifecycle state changes
@@ -180,30 +195,92 @@ class _WelcomePageState extends State<WelcomePage> {
             fontSize: 16.0
         );
 
-        // Create Object :
-        int sujet = int.parse(message.data['sujet']);
-        switch(sujet){
-          case 1:
-            Publication? publication = Servicegeo().generatePublication(message);
-            if(publication != null){
-              outil.addPublication(publication);
-              //_publicationController.addData(publication);
-            }
-            break;
-
-          case 2:
-          // Create User if not exist :
-            Servicegeo().processReservationNotif(message, outil);
-            break;
-
-          case 3:
-          // Create User if not exist :
-            Servicegeo().processIncommingChat(message, outil);
-            break;
-        }
+        //
+        processIncomingFCMessage(message, false);
       });
     }
   }
+
+  // Factoriser le code :
+  void processIncomingFCMessage(RemoteMessage message, bool fromNotification) async{
+    // Create Object :
+    int sujet = int.parse(message.data['sujet']);
+    switch(sujet){
+      case 1:
+        if(!fromNotification) {
+          Publication? publication = Servicegeo().generatePublication(message);
+          if (publication != null) {
+            outil.addPublication(publication);
+          }
+        }
+        else{
+          // Open 'HistoriqueAnnonce'
+          Publication pub = await outil.refreshPublication(int.parse(message.data['id']));
+          Ville vDepart = await outil.getVilleById(int.parse(message.data['villedepart']));
+          Ville vDest = await outil.getVilleById(int.parse(message.data['villedestination']));
+          User? lUser = await outil.pickLocalUser();
+          int userType = !(lUser!.id == int.parse(message.data['userid'])) ? 0 : 1;
+          openHistoriqueAnnonce(pub, vDepart, vDest, userType);
+        }
+        break;
+
+      case 2:
+        if(!fromNotification) {
+          // Create User if not exist :
+          Servicegeo().processReservationNotif(message, outil);
+        }
+        else{
+          // Open 'HistoriqueAnnonce'
+          Publication pub = await outil.refreshPublication(int.parse(message.data['idpub']));
+          Ville vDepart = await outil.getVilleById(pub.villedepart);
+          Ville vDest = await outil.getVilleById(pub.villedestination);
+          openHistoriqueAnnonce(pub, vDepart, vDest, 1);
+        }
+        break;
+
+      case 3:
+        if(!fromNotification) {
+          // Create User if not exist :
+          Servicegeo().processIncommingChat(message, outil);
+        }
+        else{
+          // Open 'CHAT'
+          User usr = (await outil.findAllUserByIdin([0])).single;
+          openMessage(int.parse(message.data['idpub']),
+              ("${usr.nom} ${usr.prenom}"),
+              usr.id
+          );
+        }
+        break;
+    }
+  }
+
+  void openHistoriqueAnnonce(Publication pub, Ville depart, Ville destination, int userType){
+    Navigator.push(context,
+        MaterialPageRoute(
+            builder: (context) {
+              return HistoriqueAnnonce(
+                  publication: pub,
+                  ville: depart,
+                  villeDepart: destination,
+                  userOrSuscriber: userType
+              );
+            }
+        )
+    );
+  }
+
+  void openMessage(int idpub, String username, int userId){
+    Navigator.push(context,
+        MaterialPageRoute(
+            builder: (context) {
+              return Messagerie(idpub: idpub, owner: username,
+                  idSuscriber: userId);
+            }
+        )
+    );
+  }
+
 
   Future<List<int>> produitLoading() async {
     List<int> posts = List.empty(growable: true);

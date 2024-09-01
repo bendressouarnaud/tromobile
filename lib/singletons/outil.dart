@@ -4,6 +4,7 @@ import 'package:tro/getxcontroller/getpublicationcontroller.dart';
 import 'package:tro/getxcontroller/getusercontroller.dart';
 import 'package:tro/models/publication.dart';
 import 'package:tro/models/souscription.dart';
+import 'package:tro/repositories/ville_repository.dart';
 
 import '../getxcontroller/getchatcontroller.dart';
 import '../getxcontroller/getparamscontroller.dart';
@@ -12,6 +13,7 @@ import '../mesbeans/devises.dart';
 import '../models/chat.dart';
 import '../models/parameters.dart';
 import '../models/user.dart';
+import '../models/ville.dart';
 
 class Outil {
 
@@ -22,6 +24,7 @@ class Outil {
   late SouscriptionGetController _souscriptionController;
   late PublicationGetController _publicationController;
   late ParametersGetController _parametersController;
+  final _villeRepository = VilleRepository();
   String urlPrefix = '';
   User? publicationOwner;
   Publication? publicationSuscribed;
@@ -166,6 +169,11 @@ class Outil {
   // P A R A M E T E R S  :
   Future<Parameters?> getParameter() async{
     return await _parametersController.refreshData();
+  }
+
+  // V I L L E
+  Future<Ville> getVilleById(int id) async{
+    return await _villeRepository.findById(id);
   }
 
 }
