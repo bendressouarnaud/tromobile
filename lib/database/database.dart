@@ -60,7 +60,7 @@ class DatabaseHelper {
         'millisecondes INTEGER, reserve INTEGER, statut INTEGER)');
 
     await db.execute('CREATE TABLE parameters (id INTEGER PRIMARY KEY,state TEXT,travellocal INTEGER,'
-        'travelabroad INTEGER)');
+        'travelabroad INTEGER, notification INTEGER, epochdebut INTEGER, epochfin INTEGER)');
 
     // Init values :
     _createCountry(db);
@@ -87,71 +87,7 @@ class DatabaseHelper {
     await database.insert('ville', Ville(id: 9, name: 'Daloa', paysid: 2).toDatabaseJson());
     await database.insert('ville', Ville(id: 10, name: 'Gagnoa', paysid: 2).toDatabaseJson());
     // Add parameters :
-    await database.insert('parameters', Parameters(id: 1, state: 'resumed', travellocal: 500, travelabroad: 5000).toDatabaseJson());
+    await database.insert('parameters', Parameters(id: 1, state: 'resumed', travellocal: 500, travelabroad: 5000
+        , notification: 0, epochdebut: 0, epochfin: 0).toDatabaseJson());
   }
-
-  // Database helper methods:
-  /*Future<int> insert(User user) async {
-    Database db = await database;
-    int id = await db.insert('user', user.toMap());
-    return id;
-  }
-
-  Future<User?> queryWord(int id) async {
-    Database db = await database;
-    List<Map> maps = await db.query('user',
-        columns: ['id', 'name', 'pwd'],
-        where: 'id = ?',
-        whereArgs: [id]);
-    // Browse :
-    if (maps.length > 0) {
-      //return User.fromMap(maps.first);
-      return User(
-          id: maps[0]['id'],
-          name: maps[0]['name'],
-          pwd: maps[0]['pwd']
-      );
-    }
-    return null;
-  }
-
-  // Look for specific user  :
-  Future<User?> authenticateUser(String id, String pwd) async {
-    Database db = await database;
-    List<Map> maps = await db.query('user',
-        columns: ['id', 'name', 'pwd'],
-        where: 'name = ? and pwd = ?',
-        whereArgs: [id, pwd]);
-    // Browse :
-    if (maps.isNotEmpty) {
-      //return User.fromMap(maps.first);
-      return User(
-          id: maps[0]['id'],
-          name: maps[0]['name'],
-          pwd: maps[0]['pwd']
-      );
-    }
-    return null;
-  }
-
-  // Look for specific user  :
-  Future<User?> getLocalUser() async {
-    Database db = await database;
-    List<Map> maps = await db.query('user',
-        columns: ['id', 'name', 'pwd']);
-    // Browse :
-    if (maps.isNotEmpty) {
-      //return User.fromMap(maps.first);
-      return User(
-          id: maps[0]['id'],
-          name: maps[0]['name'],
-          pwd: maps[0]['pwd']
-      );
-    }
-    return null;
-  }*/
-
-// TODO: queryAllWords()
-// TODO: delete(int id)
-// TODO: update(Word word)
 }

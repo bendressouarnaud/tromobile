@@ -23,11 +23,11 @@ class Servicegeo {
   Publication? generatePublication(RemoteMessage message){
     if(message.data.isNotEmpty){
       // Date voyage :
-      List<String> tamponVoyage = message.data['datevoyage'].toString().split(":");
-      // Delete following two characters :
-      //String offSet = tamponVoyage[1].substring(0,2);
-      String offSet = "${tamponVoyage[1].substring(2)}:${tamponVoyage[2]}";
-      final hNow = DateTime.parse(tamponVoyage[0]+offSet);
+      String tamponDateVoyage = message.data['datevoyage'].toString().replaceFirst('Z', ':00Z');
+      //List<String> tamponVoyage = message.data['datevoyage'].toString().split(":");
+      //String offSet = "${tamponVoyage[1].substring(2)}:${tamponVoyage[2]}";
+      //final hNow = DateTime.parse(tamponVoyage[0]+offSet.replaceFirst('Z', '+00:00'));
+      final hNow = DateTime.parse(tamponDateVoyage);
       String tamponNow = hNow.toString();
       List<String> tamponFinal = tamponNow.split(" ");
       String getHour = tamponFinal[1].substring(0,8);

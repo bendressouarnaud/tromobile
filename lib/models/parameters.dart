@@ -5,9 +5,13 @@ class Parameters {
   final String state;
   final int travellocal;
   final int travelabroad;
+  final int notification;
+  final int epochdebut;
+  final int epochfin;
 
   // M e t h o d s  :
-  Parameters({required this.id, required this.state, required this.travellocal, required this.travelabroad});
+  Parameters({required this.id, required this.state, required this.travellocal, required this.travelabroad
+  , required this.notification, required this.epochdebut, required this.epochfin});
   factory Parameters.fromDatabaseJson(Map<String, dynamic> data) => Parameters(
     //This will be used to convert JSON objects that
     //are coming from querying the database and converting
@@ -15,13 +19,19 @@ class Parameters {
       id: data['id'],
       state: data['state'],
       travellocal: data['travellocal'],
-      travelabroad: data['travelabroad']
+      travelabroad: data['travelabroad'],
+      notification: data['notification'],
+      epochdebut: data['epochdebut'],
+      epochfin: data['epochfin']
   );
 
   Map<String, dynamic> toDatabaseJson() => {
     "id": id,
     "state": state,
     "travellocal": travellocal,
-    "travelabroad": travelabroad
+    "travelabroad": travelabroad,
+    "notification": notification,
+    "epochdebut": epochdebut,
+    "epochfin": epochfin,
   };
 }

@@ -66,7 +66,7 @@ class _GestionCible extends State<GestionCible> {
       backgroundColor: Colors.white,
       appBar: AppBar(
           backgroundColor: Colors.white,
-          title: Text(
+          title: const Text(
             'Gestion des cibles',
             textAlign: TextAlign.start,
           ),

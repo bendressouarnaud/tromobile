@@ -33,6 +33,7 @@ class Outil {
     Devises(libelle: 'EURO', id: 2),
     Devises(libelle: 'USD', id: 3)
   ];
+  bool fcmFlag = false;
 
   // M E T H O D S
   // using a factory is important because it promises to return _an_ object of this type but it doesn't promise to make a new one.
@@ -49,6 +50,14 @@ class Outil {
     _souscriptionController = Get.put(SouscriptionGetController());
     _publicationController = Get.put(PublicationGetController());
     _parametersController = Get.put(ParametersGetController());
+  }
+
+  void setFcmFlag(bool value){
+    fcmFlag = value;
+  }
+
+  bool getFcmFlag() {
+    return fcmFlag;
   }
 
   // D E V I S E S

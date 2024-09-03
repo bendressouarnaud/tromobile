@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -19,6 +20,7 @@ import 'ecrancreationcompte.dart';
 import 'gestioncible.dart';
 import 'getxcontroller/getusercontroller.dart';
 import 'httpbeans/countrydata.dart';
+import 'managenotifications.dart';
 import 'models/pays.dart';
 
 
@@ -65,6 +67,36 @@ class _NewEcranState extends State<EcranCompte> {
   void loadingPays() async {
     listePays = await _paysRepository.findAll();
     listeVille = await _villeRepository.findAll();
+  }
+
+  // Display Notification when ACCOUNT Created and NOTIFICATION PERMISSION not given yet :
+  String requestNotificationPermission() {
+
+    if(_userController.userData.isNotEmpty) {
+      // Set timer to
+      Future.delayed(const Duration(milliseconds: 600),
+              () async {
+            FirebaseMessaging messaging = FirebaseMessaging.instance;
+            NotificationSettings settings = await messaging
+                .getNotificationSettings();
+            if (settings.authorizationStatus !=
+                AuthorizationStatus.authorized) {
+              // Request for it :
+              NotificationSettings settings = await messaging.requestPermission(
+                alert: true,
+                announcement: false,
+                badge: true,
+                carPlay: false,
+                criticalAlert: false,
+                provisional: false,
+                sound: true,
+              );
+            }
+          }
+      );
+    }
+
+    return _userController.userData.isEmpty ? "CRÉER COMPTE" : "MON COMPTE";
   }
 
 
@@ -223,7 +255,7 @@ class _NewEcranState extends State<EcranCompte> {
                             ),
                             child: GetBuilder<UserGetController>(
                               builder: (_) {
-                                return Text (_userController.userData.isEmpty ? "CRÉER COMPTE" : "MON COMPTE",
+                                return Text (requestNotificationPermission(),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
@@ -251,120 +283,80 @@ class _NewEcranState extends State<EcranCompte> {
                   ),
                 )
               ),
-              Container(
-                margin: const EdgeInsets.only(top: 10, left: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.arrow_right_sharp,
-                      color: Colors.black,
-                      size: 30,
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        // Display DIALOG
-                        Navigator.push(context,
+              GetBuilder<UserGetController>(
+                builder: (_) {
+                  return _userController.userData.isEmpty ?
+                  Container() :
+                  Column (
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 20, left: 7),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.arrow_right_sharp,
+                              color: Colors.black,
+                              size: 30,
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                // Display DIALOG
+                                Navigator.push(context,
                                     MaterialPageRoute(builder: (context) {
                                       return GestionCible();
                                     }));
-                      },
-                      child: Text('Gestion des cibles',
-                        style: TextStyle(
-                            fontSize: 18
-                        ),
-                      ),
-                    )
+                              },
+                              child: const Text('Gestion des cibles',
+                                style: TextStyle(
+                                    fontSize: 18
+                                ),
+                              ),
+                            )
 
-                  ],
-                ),
-              ),
-              /*Container(
-                height: 40,
-                color: Colors.white,
-                margin: const EdgeInsets.only(right: 7, left: 7),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.emoji_people,
-                      color: Colors.black,
-                      size: 24.0,
-                    ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    Text("Parrainage"),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.topRight,
-                        child: Icon(
-                          Icons.arrow_forward_ios,
-                          color: Colors.black,
-                          size: 24.0,
+                          ],
                         ),
-                      )
-                    ),
-                  ]
-                ),
-              ),
-              Container(
-                height: 40,
-                color: Colors.white,
-                margin: const EdgeInsets.only(right: 7, left: 7),
-                child: const Row(
-                    children: [
-                      Icon(
-                        Icons.people_outline,
-                        color: Colors.black,
-                        size: 24.0,
                       ),
-                      SizedBox(
-                        width: 10,
-                      ),
-                      Text("Filleul"),
-                      Expanded(
-                          child: Align(
-                            alignment: Alignment.topRight,
-                            child: Icon(
-                              Icons.arrow_forward_ios,
-                              color: Colors.black,
-                              size: 24.0,
-                            ),
+                      Container(
+                          margin: const EdgeInsets.only(top: 10, left: 15, right: 15),
+                          child: const Divider(
+                            height: 2,
+                            color: Colors.black,
                           )
                       ),
-                    ]
-                ),
-              ),
-              Container(
-                height: 40,
-                color: Colors.white,
-                margin: const EdgeInsets.only(right: 7, left: 7),
-                child: const Row(
-                    children: [
-                      Icon(
-                        Icons.card_giftcard,
-                        color: Colors.black,
-                        size: 24.0,
-                      ),
-                      SizedBox(
-                        width: 10,
-                      ),
-                      Text("Bonus"),
-                      Expanded(
-                          child: Align(
-                            alignment: Alignment.topRight,
-                            child: Icon(
-                              Icons.arrow_forward_ios,
+                      Container(
+                        margin: const EdgeInsets.only(top: 10, left: 7),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.arrow_right_sharp,
                               color: Colors.black,
-                              size: 24.0,
+                              size: 30,
                             ),
-                          )
+                            GestureDetector(
+                              onTap: () {
+                                // Display DIALOG
+                                Navigator.push(context,
+                                    MaterialPageRoute(builder: (context) {
+                                      return ManageNotification();
+                                    }));
+                              },
+                              child: const Text('Gestion des périodes de notification',
+                                style: TextStyle(
+                                    fontSize: 18
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
                       ),
-                    ]
-                ),
-              ),*/
+                    ],
+                  );
+                }
+              ),
               const SizedBox(
-                height: 70,
+                height: 100,
               ),
               Container(
                 alignment: Alignment.center,
@@ -378,7 +370,8 @@ class _NewEcranState extends State<EcranCompte> {
                             MaterialPageRoute(builder: (context) {
                               return AuthentificationEcran();
                             }
-                            ));
+                            )
+                        );
                       },
                       child: Text("Vous possédez déjà un compte ?",
                         style: TextStyle(

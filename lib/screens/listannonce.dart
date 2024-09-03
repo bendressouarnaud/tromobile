@@ -284,43 +284,42 @@ class EcranAnnonce {
         }
     ) :
     Container(
-      margin: const EdgeInsets.only(left: 10, right: 10),
-      decoration: BoxDecoration(
-          image: DecorationImage(
-            fit: BoxFit.fill,
-            opacity: 0.2,
-            image: AssetImage("assets/images/arret_bus.jpeg"),
-          ),
-          border: Border.all(
-              color: Colors.black
-          ),
-          borderRadius: BorderRadius.circular(8.0),
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [
-              0.3,
-              0.58,
-            ],
-            colors: [
-              Colors.white38,
-              Colors.blue,
-            ],
-          )
-      ),
-      width: MediaQuery.of(context).size.width,
-      height: 200,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: Text("Aucune annonce",
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
+      margin: EdgeInsets.only(top: (MediaQuery.of(context).size.width / 2)),
+        width: MediaQuery.of(context).size.width,
+        child: Column(
+          children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.airplanemode_active,
+                  color: Colors.black,
+                  size: 50.0,
+                ),
+                Icon(
+                  Icons.car_repair,
+                  color: Colors.brown,
+                  size: 50.0,
+                ),
+                Icon(
+                  Icons.directions_boat_outlined,
+                  color: Color.fromRGBO(51, 159, 255, 1.0),
+                  size: 50.0,
+                )
+              ],
+            ),
+            Container(
+              margin: const EdgeInsets.only(top: 20),
+              child: const Text("Aucune annonce",
+                  style: TextStyle(
+                    color: Colors.black,
+                    //fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  )
+              )
             )
-        ),
-      ),
-      //color: Colors.blue,
+          ],
+        )
     );
   }
 }

@@ -345,7 +345,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
         }));
 
     // Checks :
-    if(response.statusCode == 200){
+    if(response.statusCode.toString().startsWith('2')){
       Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(publication.id, iduser);
       // Update it :
       Souscription souscriptionUpdate = Souscription(

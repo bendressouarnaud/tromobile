@@ -86,10 +86,7 @@ class _WelcomePageState extends State<WelcomePage> {
 
     // Call first :
     setupInteractedMessage();
-
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      initFire();
-    }
+    chechNotificationPermission();
 
     // Initialize the AppLifecycleListener class and pass callbacks
     _listener = AppLifecycleListener(
@@ -122,15 +119,33 @@ class _WelcomePageState extends State<WelcomePage> {
   void _onStateChanged(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.detached:
-        updateAppState('detached');
+        print('--------->      detached');
+        //updateAppState('detached');
       case AppLifecycleState.resumed:
-        updateAppState('resumed');
+        print('--------->      resumed');
+        //updateAppState('resumed');
       case AppLifecycleState.inactive:
-        updateAppState('inactive');
+        print('--------->      inactive');
+        //updateAppState('inactive');
       case AppLifecycleState.hidden:
-        updateAppState('hidden');
+        print('--------->      hidden');
+        //updateAppState('hidden');
       case AppLifecycleState.paused:
-        updateAppState('paused');
+        print('--------->      paused');
+        //updateAppState('paused');
+    }
+  }
+
+  // Check if user has logged in and check if NOTIFICATIONs PERMISSIONs has been given :
+  void chechNotificationPermission() async{
+    User? usr = await outil.pickLocalUser();
+    //FirebaseMessaging messaging = FirebaseMessaging.instance;
+    //NotificationSettings settings = await messaging.getNotificationSettings();
+    if(usr != null){
+      // We can request :
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        initFire();
+      }
     }
   }
 
@@ -140,7 +155,10 @@ class _WelcomePageState extends State<WelcomePage> {
     prms = Parameters(id: prms != null ? prms.id : 1,
         state: state,
         travellocal: prms != null ? prms.travellocal : 500,
-        travelabroad: prms != null ? prms.travelabroad : 5000
+        travelabroad: prms != null ? prms.travelabroad : 5000,
+        notification: prms != null ? prms.notification : 0,
+        epochdebut: prms != null ? prms.epochdebut : 0,
+        epochfin: prms != null ? prms.epochfin : 0,
     );
     await _parametersController.updateData(prms);
   }
@@ -148,7 +166,7 @@ class _WelcomePageState extends State<WelcomePage> {
   @override
   void dispose() {
     // Do not forget to dispose the listener
-    print('state application : killing dispose');
+    //print('state application : killing dispose');
     _listener.dispose();
     _parametersController.dispose();
     _userController.dispose();
@@ -168,6 +186,8 @@ class _WelcomePageState extends State<WelcomePage> {
   }
 
   void initFire() async {
+    // Set Flag :
+    //outil.setFcmFlag(true);
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 
     NotificationSettings settings = await messaging.requestPermission(
@@ -181,6 +201,7 @@ class _WelcomePageState extends State<WelcomePage> {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         //
         //showFlutterNotification(message, "Notification Commande", "");
@@ -345,7 +366,7 @@ class _WelcomePageState extends State<WelcomePage> {
   }
 
   // Just loading from DATABASE :
-  void callForCountry(BuildContext context, List<Pays> liste){
+  void callForCountry(List<Pays> liste){ // BuildContext context
 
     // Init :
     paysDestination = liste.first;
@@ -609,9 +630,11 @@ class _WelcomePageState extends State<WelcomePage> {
         floatingActionButton: FloatingActionButton(
           backgroundColor: const Color.fromRGBO(51, 159, 255, 1.0),
           tooltip: 'Nouvelle commande',
-          onPressed: (){
-            if(listePays.isNotEmpty && cUser != null){
-              callForCountry(context, listePays);
+          onPressed: () async{
+            User? usr = await outil.pickLocalUser();
+            if(usr != null){
+              //callForCountry(context, listePays);
+              callForCountry(listePays);
             }
             else{
               Fluttertoast.showToast(
@@ -643,11 +666,11 @@ class _WelcomePageState extends State<WelcomePage> {
                     }
                 );
               }
-              else return Container(
-                child: Center(
+              else {
+                return const Center(
                   child: Text('Chargement ...'),
-                ),
-              );
+                );
+              }
             }
           ),
           SizedBox(

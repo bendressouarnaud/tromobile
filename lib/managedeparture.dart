@@ -490,7 +490,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
                                 },
                                 locale: picker.LocaleType.fr);
                           },
-                          child: Text(
+                          child: const Text(
                             'Date de départ',
                             style: TextStyle(
                                 color: Colors.blue),
