@@ -146,7 +146,8 @@ class _NewAuth extends State<AuthentificationEcran> {
             milliseconds: publication.milliseconds,
             identifiant: publication.identifiant,
           devise: publication.devise,
-          prix: publication.prix
+          prix: publication.prix,
+            read: 1
         );
         _publicationController.addData(pub);
       }

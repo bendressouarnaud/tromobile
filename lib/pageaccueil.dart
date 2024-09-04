@@ -77,7 +77,7 @@ class _WelcomePageState extends State<WelcomePage> {
   final UserGetController _userController = Get.put(UserGetController());
   final ParametersGetController _parametersController = Get.put(ParametersGetController());
   //
-  late final AppLifecycleListener _listener;
+  //late final AppLifecycleListener _listener;
 
 
   // M e t h o d  :
@@ -89,9 +89,9 @@ class _WelcomePageState extends State<WelcomePage> {
     chechNotificationPermission();
 
     // Initialize the AppLifecycleListener class and pass callbacks
-    _listener = AppLifecycleListener(
+    /*_listener = AppLifecycleListener(
       onStateChange: _onStateChanged,
-    );
+    );*/
 
     // Init FireBase :
     super.initState();
@@ -166,8 +166,7 @@ class _WelcomePageState extends State<WelcomePage> {
   @override
   void dispose() {
     // Do not forget to dispose the listener
-    //print('state application : killing dispose');
-    _listener.dispose();
+    //_listener.dispose();
     _parametersController.dispose();
     _userController.dispose();
     //_publicationController.dispose();
@@ -436,11 +435,10 @@ class _WelcomePageState extends State<WelcomePage> {
                             return DropdownMenuEntry<Pays>(
                                 value: menu,
                                 label: menu.name,
-                                leadingIcon: Icon(Icons.map));
+                                leadingIcon: const Icon(Icons.map));
                           }).toList()
                       )
                   )
-
                 ],
               ),
             ),
@@ -469,37 +467,6 @@ class _WelcomePageState extends State<WelcomePage> {
                           }
                       )
                   );
-
-
-
-                  // Send DATA :
-                  /*flagDeleteData = true;
-                  deleteAchat(idart);
-
-                  // Run TIMER :
-                  Timer.periodic(
-                    const Duration(seconds: 1),
-                        (timer) {
-                      // Update user about remaining time
-                      if(!flagDeleteData){
-                        Navigator.pop(dialogContext);
-                        timer.cancel();
-
-                        // if PANIER is empty, then CLOSE the INTERFACE :
-                        if(_achatController.taskData.isEmpty){
-                          // Kill ACTIVITY :
-                          if(Navigator.canPop(context)){
-                            Navigator.pop(context);
-                          }
-                        }
-                        else{
-                          setState(() {
-                          });
-                        }
-                      }
-                    },
-                  );*/
-
                 },
                 child: const Text('Valider',
                   style: TextStyle(
@@ -511,43 +478,31 @@ class _WelcomePageState extends State<WelcomePage> {
           );
         }
     );
+  }
 
-    //_isLoading = false;
-    /*List<CountryData> data = convertPaysCountry(liste);
-    //_isLoading = true;
+  void clearNotifications() async{
+    await flutterLocalNotificationsPlugin.cancelAll();
+  }
 
-    // Launch ACTIVITY if needed :
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context){
-              return ManageDeparture(id: cUser!.id, listeCountry: data, nationalite: cUser!.nationnalite, idpub: 0,);
-            }
-        )
-    );*/
+  void lookForData() async{
+    await flutterLocalNotificationsPlugin.cancelAll();
+  }
 
-    // Run TIMER :
-    /*Timer.periodic(
-      const Duration(seconds: 1),
-          (timer) {
-        // Update user about remaining time
-        if(_isLoading){
+  Widget processAnnonceIcon(List<Publication> liste, IconData iconData) {
+    int taille = liste.where((element) => element.read == 0).toList().length;
+    if(taille > 0){
 
-          Navigator.pop(dialogContext);
-          timer.cancel();
+      // From There we can clear NOTIFICATIONS :
+      clearNotifications();
 
-          // Launch ACTIVITY if needed :
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context){
-                    return ManageDeparture(id: cUser!.id, listeCountry: data, nationalite: cUser!.nationnalite, idpub: 0,);
-                  }
-              )
-          );
-        }
-      },
-    );*/
+      return Badge.count(
+          count: taille,
+          child: Icon(iconData)
+      );
+    }
+    else {
+      return Icon(iconData);
+    }
   }
 
 
@@ -569,19 +524,24 @@ class _WelcomePageState extends State<WelcomePage> {
           },
           indicatorColor: Colors.blue[100],
           selectedIndex: currentPageIndex,
-          destinations: const [
-            NavigationDestination(
-              selectedIcon: Icon(Icons.home),
-              icon: Icon(Icons.home_outlined),
-              label: 'Accueil',
+          destinations:  [
+            GetBuilder<PublicationGetController>(
+              builder: (PublicationGetController controller)  {
+                return NavigationDestination(
+                  selectedIcon: processAnnonceIcon(controller.publicationData, Icons.announcement), //Icon(Icons.announcement),
+                  icon: processAnnonceIcon(controller.publicationData, Icons.announcement_outlined),//Icon(Icons.announcement_outlined),
+                  label: 'Annonces',
+                );
+              }
             ),
-            NavigationDestination(
-              icon: Icon(Icons.shopping_basket),
-              label: 'Commande',
+            const NavigationDestination(
+              selectedIcon: Icon(Icons.access_time_filled),
+              icon: Icon(Icons.access_time),
+              label: 'Historique',
             ),
-            NavigationDestination(
-              selectedIcon: Icon(Icons.school),
-              icon: Icon(Icons.account_box),
+            const NavigationDestination(
+              selectedIcon: Icon(Icons.account_circle_rounded),
+              icon: Icon(Icons.account_circle_outlined),
               label: 'Compte',
             ),
           ],

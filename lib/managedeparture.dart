@@ -319,7 +319,8 @@ class _ManageDepartureState extends State<ManageDeparture> {
         milliseconds: milliseconds,
         identifiant: reponse.identifiant,
         devise: devises.id,
-        prix: int.parse(prixController.text)
+        prix: int.parse(prixController.text),
+        read: 1
       );
       // Save :
       outil.addPublication(pub);

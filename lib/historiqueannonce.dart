@@ -22,6 +22,7 @@ import 'package:tro/singletons/outil.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'httpbeans/hubwaveresponse.dart';
+import 'main.dart';
 import 'models/publication.dart';
 import 'models/user.dart';
 import 'models/ville.dart';
@@ -56,7 +57,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   int choixpaiement = 0;
   final typePaiement = ["CinetPAY", "WAVE"];
   String choixPaiement = 'CinetPAY';
-  Outil outil = Outil();
+  //Outil outil = Outil();
   late String devise ;
   // User for PROFILE EMETTEUR
   int resteReserve = 0;
@@ -93,6 +94,38 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     ville = widget.ville;
     villeDepart = widget.villeDepart;
     userOrSuscriber = widget.userOrSuscriber;
+
+    // Try to UPDATE :
+    if(publication.read == 0) {
+      Future.delayed(const Duration(milliseconds: 600),
+              () {
+            updatePublication();
+          }
+      );
+    }
+  }
+
+
+  // Update PUBLICATION if needed :
+  void updatePublication() async{
+    Publication pub = Publication(
+        id: publication.id,
+        userid: publication.userid,
+        villedepart: publication.villedepart,
+        villedestination: publication.villedestination,
+        datevoyage: publication.datevoyage,
+        datepublication: publication.datepublication,
+        reserve: publication.reserve,
+        active: publication.active,
+        reservereelle: publication.reserve,
+        souscripteur: publication.souscripteur, // Use OWNER Id
+        milliseconds: publication.milliseconds,
+        identifiant: publication.identifiant,
+        devise: publication.devise,
+        prix: publication.prix,
+        read: 1
+    );
+    await outil.updatePublication(pub);
   }
 
   //

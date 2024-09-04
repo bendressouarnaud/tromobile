@@ -45,7 +45,7 @@ class PublicationGetController extends GetxController {
     Publication pub = publicationData.where((p0) => p0.id == publication.id).first;
     int idx = publicationData.indexOf(pub);
     // Update
-    publicationData[idx] = pub;
+    publicationData[idx] = publication; // pub;
 
     int maj = await _publicationRepository.update(publication);
     // Set timer to

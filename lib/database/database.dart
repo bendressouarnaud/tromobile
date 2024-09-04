@@ -48,7 +48,7 @@ class DatabaseHelper {
 
     await db.execute('CREATE TABLE publication (id INTEGER PRIMARY KEY,userid INTEGER,villedepart INTEGER,'
         'villedestination INTEGER, datevoyage TEXT, datepublication TEXT,reserve INTEGER,active INTEGER,reservereelle INTEGER,souscripteur INTEGER,'
-        'milliseconds INTEGER, identifiant TEXT, devise INTEGER, prix INTEGER)');
+        'milliseconds INTEGER, identifiant TEXT, devise INTEGER, prix INTEGER, read INTEGER)');
 
     await db.execute('CREATE TABLE ville (id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT,paysid INTEGER)');
     await db.execute('CREATE TABLE cible (id INTEGER PRIMARY KEY ,villedepartid INTEGER,paysdepartid INTEGER,'

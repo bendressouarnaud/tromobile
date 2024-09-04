@@ -1,4 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:tro/main.dart';
 
 import '../httpbeans/countrydata.dart';
 import '../models/chat.dart';
@@ -47,7 +50,8 @@ class Servicegeo {
           milliseconds: hNow.millisecondsSinceEpoch,
           identifiant: message.data['identifiant'],
           devise: int.parse(message.data['devise']),
-          prix: int.parse(message.data['prix'])
+          prix: int.parse(message.data['prix']),
+          read: 0
       );
       return pub;
     }
@@ -101,5 +105,19 @@ class Servicegeo {
         idlocaluser: localUser.id
     );
     await outil.insertChat(newChat);
+  }
+
+  Future<Widget> processAnnonceIcon(IconData iconData) async{
+    List<Publication> liste = await outil.findAllPublication();
+    int taille = liste.where((element) => element.read == 0).toList().length;
+    if(taille > 0){
+      return Badge.count(
+        count: taille,
+        child: Icon(iconData)
+      );
+    }
+    else {
+      return Icon(iconData);
+    }
   }
 }

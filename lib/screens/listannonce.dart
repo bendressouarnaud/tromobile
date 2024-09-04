@@ -39,6 +39,11 @@ class EcranAnnonce {
     return "$tampnPays ($tampnVille)";
   }
 
+  Color markPublicationAsNotRead(Publication publication){
+    return publication.read == 0 ? const Color(0xFFECECF1) :
+    const Color(0xFFFFFFFF);
+  }
+
   String generateRaccourci(int villeDepart, int villeDest, List<Ville> villes){
     Ville villeDEP = villes.where((ville) => ville.id == villeDepart).single;
     Ville villeDES = villes.where((ville) => ville.id == villeDest).single;
@@ -169,7 +174,6 @@ class EcranAnnonce {
                 return GestureDetector(
                     onTap: () {
                       // Display DIALOG
-                      //!(liste[index].userid == user.first.id) ? displayAlert(context, liste[index].reserve) :
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
                             return HistoriqueAnnonce(publication: liste[index],
@@ -180,10 +184,10 @@ class EcranAnnonce {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        //color: cardviewsousproduit,
+                        color: markPublicationAsNotRead(liste[index]),
                         borderRadius: BorderRadius.circular(8.0)
                       ),
-                      margin: const EdgeInsets.only(left: 3,right: 3, bottom: 25),
+                      margin: const EdgeInsets.only(left: 7,right: 7, bottom: 15),
                       width: MediaQuery.of(context).size.width,
                       height: 95,
                       child: Row(
@@ -191,7 +195,7 @@ class EcranAnnonce {
                           ElevatedButton(
                               onPressed: (){},
                               style: ElevatedButton.styleFrom(
-                                  shape: CircleBorder(),
+                                  shape: const CircleBorder(),
                                   backgroundColor: liste[index].userid == user.first.id ? Colors.white : processButtonColor()
                               ),
                               child: liste[index].userid == user.first.id ? Icon(
@@ -248,7 +252,7 @@ class EcranAnnonce {
                                       children: [
                                         Row(
                                           children: [
-                                            Text('Réserve : '),
+                                            const Text('Réserve : '),
                                             Text('${liste[index].reserve} Kg',
                                                 style: const TextStyle(
                                                     fontWeight: FontWeight.bold,

@@ -18,11 +18,13 @@ class Publication {
   final String identifiant;
   final int devise;
   final int prix;
+  final int read; // 0 : not read,NEW   ;    1 : read
+
 
   // M e t h o d s  :
   Publication({required this.id, required this.userid, required this.villedepart, required this.villedestination, required this.datevoyage, required this.datepublication,
     required this.reserve, required this.active, required this.reservereelle, required this.souscripteur, required this.milliseconds
-  , required this.identifiant, required this.devise, required this.prix});
+  , required this.identifiant, required this.devise, required this.prix, required this.read});
   factory Publication.fromDatabaseJson(Map<String, dynamic> data) => Publication(
     //This will be used to convert JSON objects that
     //are coming from querying the database and converting
@@ -41,6 +43,7 @@ class Publication {
     identifiant: data['identifiant'],
     devise: data['devise'],
     prix: data['prix'],
+    read: data['read']
   );
 
   Map<String, dynamic> toDatabaseJson() => {
@@ -57,6 +60,7 @@ class Publication {
     "milliseconds": milliseconds,
     "identifiant": identifiant,
     "devise": devise,
-    "prix": prix
+    "prix": prix,
+    "read": read
   };
 }

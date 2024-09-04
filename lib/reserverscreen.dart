@@ -212,20 +212,21 @@ class _ReservePaiement extends State<ReservePaiement> {
 
       // Now update 'publication'
       Publication pub = Publication(
-          id: publication.id,
-          userid: publication.userid,
-          villedepart: publication.villedepart,
-          villedestination: publication.villedestination,
-          datevoyage: publication.datevoyage,
-          datepublication: publication.datepublication,
-          reserve: publication.reserve,
-          active: 1,
-          reservereelle: int.parse(reserveController.text),
-          souscripteur: user.id, // Use OWNER Id
-          milliseconds: publication.milliseconds,
-          identifiant: publication.identifiant,
+        id: publication.id,
+        userid: publication.userid,
+        villedepart: publication.villedepart,
+        villedestination: publication.villedestination,
+        datevoyage: publication.datevoyage,
+        datepublication: publication.datepublication,
+        reserve: publication.reserve,
+        active: 1,
+        reservereelle: int.parse(reserveController.text),
+        souscripteur: user.id, // Use OWNER Id
+        milliseconds: publication.milliseconds,
+        identifiant: publication.identifiant,
         devise: publication.devise,
-        prix: publication.prix
+        prix: publication.prix,
+        read: 1
       );
       // Update  :
       await outil.updatePublication(pub);
