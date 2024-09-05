@@ -20,13 +20,23 @@ class PublicationGetController extends GetxController {
 
   // Get Live ACHAT :
   Future<void> findAll() async {
-    await _publicationRepository.findAll().then((value) => {
+    /*await _publicationRepository.findAll().then((value) => {
       publicationData.addAll(value)
-    });
+    });*/
+    List<Publication> lte = await _publicationRepository.findAll();
+    publicationData.addAll(lte);
   }
 
   Future<List<Publication>> findAllPublication() async {
     return await _publicationRepository.findAll();
+  }
+
+  Future<List<Publication>> refreshAllPublicationsFromResumed() async {
+    List<Publication> lte = await _publicationRepository.findAll();
+    publicationData.clear();
+    publicationData.addAll(lte);
+    update(); // force
+    return lte;
   }
 
   void addData(Publication data) async {

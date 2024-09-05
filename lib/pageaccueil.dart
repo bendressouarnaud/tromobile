@@ -25,6 +25,7 @@ import 'package:tro/skeleton.dart';
 
 import 'constants.dart';
 import 'ecrancompte.dart';
+import 'getxcontroller/getnavbarpublication.dart';
 import 'getxcontroller/getparamscontroller.dart';
 import 'getxcontroller/getpublicationcontroller.dart';
 import 'getxcontroller/getusercontroller.dart';
@@ -73,11 +74,13 @@ class _WelcomePageState extends State<WelcomePage> {
   List<Ville> listeVille = [];
   late List<Publication> listePublication;
   User? cUser;
-  //final PublicationGetController _publicationController = Get.put(PublicationGetController());
+  final PublicationGetController _publicationController = Get.put(PublicationGetController());
   final UserGetController _userController = Get.put(UserGetController());
   final ParametersGetController _parametersController = Get.put(ParametersGetController());
   //
-  //late final AppLifecycleListener _listener;
+  late final AppLifecycleListener _listener;
+  int taillePublicationNotRead = 0;
+  int cptInitTaillePublication = 0;
 
 
   // M e t h o d  :
@@ -85,17 +88,25 @@ class _WelcomePageState extends State<WelcomePage> {
   void initState() {
 
     // Call first :
+    //getPublicationNotRead();
     setupInteractedMessage();
     chechNotificationPermission();
 
+
     // Initialize the AppLifecycleListener class and pass callbacks
-    /*_listener = AppLifecycleListener(
+    _listener = AppLifecycleListener(
       onStateChange: _onStateChanged,
-    );*/
+    );
 
     // Init FireBase :
     super.initState();
   }
+
+  /*void checkPublicationNotRead() async {
+    List<Publication> lte = await outil.findAllPublication();
+    taillePublicationNotRead = lte.where((element) => element.read == 0).toList().length;
+    print("taillePublicationNotRead INITIALISATION : $taillePublicationNotRead");
+  }*/
 
   //
   Future<void> setupInteractedMessage() async {
@@ -119,19 +130,21 @@ class _WelcomePageState extends State<WelcomePage> {
   void _onStateChanged(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.detached:
-        print('--------->      detached');
+        //print('--------->      detached');
         //updateAppState('detached');
       case AppLifecycleState.resumed:
-        print('--------->      resumed');
+        // Try to refresh PUBLICATION from THERE :
+        outil.refreshAllPublicationsFromResumed();
+        //print('--------->      resumed');
         //updateAppState('resumed');
       case AppLifecycleState.inactive:
-        print('--------->      inactive');
+        //print('--------->      inactive');
         //updateAppState('inactive');
       case AppLifecycleState.hidden:
-        print('--------->      hidden');
+        //print('--------->      hidden');
         //updateAppState('hidden');
       case AppLifecycleState.paused:
-        print('--------->      paused');
+        //print('--------->      paused');
         //updateAppState('paused');
     }
   }
@@ -166,7 +179,7 @@ class _WelcomePageState extends State<WelcomePage> {
   @override
   void dispose() {
     // Do not forget to dispose the listener
-    //_listener.dispose();
+    _listener.dispose();
     _parametersController.dispose();
     _userController.dispose();
     //_publicationController.dispose();
@@ -181,6 +194,7 @@ class _WelcomePageState extends State<WelcomePage> {
     cUser = await _userRepository.getConnectedUser();
     //
     List<Publication> lte = await outil.findAllPublication();//publicationData;
+    //taillePublicationNotRead = lte.where((element) => element.read == 0).toList().length;
     return lte;
   }
 
@@ -488,15 +502,15 @@ class _WelcomePageState extends State<WelcomePage> {
     await flutterLocalNotificationsPlugin.cancelAll();
   }
 
-  Widget processAnnonceIcon(List<Publication> liste, IconData iconData) {
-    int taille = liste.where((element) => element.read == 0).toList().length;
-    if(taille > 0){
+  Widget processAnnonceIcon(List<int> liste, IconData iconData) {
+    taillePublicationNotRead = liste[0];
+    if(taillePublicationNotRead > 0){
 
       // From There we can clear NOTIFICATIONS :
       clearNotifications();
 
       return Badge.count(
-          count: taille,
+          count: taillePublicationNotRead,
           child: Icon(iconData)
       );
     }
@@ -508,6 +522,7 @@ class _WelcomePageState extends State<WelcomePage> {
 
   @override
   Widget build(BuildContext context) {
+    //checkPublicationNotRead();
     return Scaffold(
         bottomNavigationBar: NavigationBar(
           indicatorShape: const RoundedRectangleBorder(
@@ -525,11 +540,11 @@ class _WelcomePageState extends State<WelcomePage> {
           indicatorColor: Colors.blue[100],
           selectedIndex: currentPageIndex,
           destinations:  [
-            GetBuilder<PublicationGetController>(
-              builder: (PublicationGetController controller)  {
+            GetBuilder<NavGetController>(
+              builder: (NavGetController controller)  {
                 return NavigationDestination(
-                  selectedIcon: processAnnonceIcon(controller.publicationData, Icons.announcement), //Icon(Icons.announcement),
-                  icon: processAnnonceIcon(controller.publicationData, Icons.announcement_outlined),//Icon(Icons.announcement_outlined),
+                  selectedIcon: processAnnonceIcon(controller.tableau, Icons.announcement), //Icon(Icons.announcement),
+                  icon: processAnnonceIcon(controller.tableau, Icons.announcement_outlined),//Icon(Icons.announcement_outlined),
                   label: 'Annonces',
                 );
               }

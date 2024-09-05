@@ -68,7 +68,7 @@ class EcranAnnonce {
   }
 
   Color? processButtonColor(){
-    if(cptCouleur==12) cptCouleur = 0;
+    if(cptCouleur==11) cptCouleur = 0;
     return lesCouleurs[cptCouleur++];
   }
 

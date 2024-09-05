@@ -7,6 +7,7 @@ import 'package:tro/models/souscription.dart';
 import 'package:tro/repositories/ville_repository.dart';
 
 import '../getxcontroller/getchatcontroller.dart';
+import '../getxcontroller/getnavbarpublication.dart';
 import '../getxcontroller/getparamscontroller.dart';
 import '../getxcontroller/getsouscriptioncontroller.dart';
 import '../mesbeans/devises.dart';
@@ -24,6 +25,7 @@ class Outil {
   late SouscriptionGetController _souscriptionController;
   late PublicationGetController _publicationController;
   late ParametersGetController _parametersController;
+  late NavGetController _navController;
   final _villeRepository = VilleRepository();
   String urlPrefix = '';
   User? publicationOwner;
@@ -50,6 +52,7 @@ class Outil {
     _souscriptionController = Get.put(SouscriptionGetController());
     _publicationController = Get.put(PublicationGetController());
     _parametersController = Get.put(ParametersGetController());
+    _navController = Get.put(NavGetController());
   }
 
   void setFcmFlag(bool value){
@@ -149,13 +152,21 @@ class Outil {
   // for  P U B L I C A T I O N
   void addPublication(Publication publication){
     _publicationController.addData(publication);
+    // Update this :
+    if(publication == 0) {
+      int newTaille = _navController.tableau[0];
+      _navController.feed(newTaille + 1);
+    }
   }
 
   Future<void> updatePublication(Publication publication) async{
     publicationSuscribed = publication;
     _publicationController.updateData(publication);
     publicationOwner = await _userController.findById(publication.souscripteur);
-    //return null;
+
+    // Use to refresh NAV BAR
+    int newTaille = _navController.tableau[0];
+    _navController.feed(newTaille - 1);
   }
 
   Future<Publication> refreshPublication(int idpub) async {
@@ -163,7 +174,16 @@ class Outil {
   }
 
   Future<List<Publication>> findAllPublication() async {
-    return await _publicationController.findAllPublication();
+    List<Publication> mList = await _publicationController.findAllPublication();
+    int taille = mList.where((element) => element.read == 0).toList().length;
+    _navController.feed(taille);
+    return mList;
+  }
+
+  Future<void> refreshAllPublicationsFromResumed() async {
+    List<Publication> mList = await _publicationController.refreshAllPublicationsFromResumed();
+    int taille = mList.where((element) => element.read == 0).toList().length;
+    _navController.feed(taille);
   }
 
   Publication? getPublicationSuscribed() {
