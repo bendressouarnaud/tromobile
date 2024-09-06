@@ -23,6 +23,7 @@ class EcranAnnonce {
   final lesCouleurs = [Colors.black12, Colors.blue[100], Colors.blueGrey[100], Colors.red[100], Colors.orange[100], Colors.yellow[100],
   Colors.green[100], Colors.purple[100], Colors.brown[100], Colors.white70, Colors.pink[100]];
   int cptCouleur = 0;
+  List<String> listeDate = [];
 
 
   // Limit Country length :
@@ -37,6 +38,148 @@ class EcranAnnonce {
     // Get the country :
     //Pays pays = await _paysRepository
     return "$tampnPays ($tampnVille)";
+  }
+
+  Widget displayObjectData(Publication pub, List<Pays> pays, List<Ville> villes, List<User> user, BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // Display DIALOG
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) {
+              return HistoriqueAnnonce(publication: pub,
+                  ville: villes.where((ville) => ville.id == pub.villedestination).single,
+                  villeDepart: villes.where((ville) => ville.id == pub.villedepart).single,
+                  userOrSuscriber: !(pub.userid == user.first.id) ? 0 : 1);
+            }));
+      },
+      child: Container(
+          decoration: BoxDecoration(
+              color: markPublicationAsNotRead(pub),
+              borderRadius: BorderRadius.circular(8.0)
+          ),
+          margin: const EdgeInsets.only(left: 7,right: 7, bottom: 15),
+          width: MediaQuery.of(context).size.width,
+          height: 95,
+          child: Row(
+            children: [
+              ElevatedButton(
+                  onPressed: (){},
+                  style: ElevatedButton.styleFrom(
+                      shape: const CircleBorder(),
+                      backgroundColor: pub.userid == user.first.id ? Colors.white : processButtonColor()
+                  ),
+                  child: pub.userid == user.first.id ? Icon(
+                    Icons.person_outline,
+                    color: Colors.red[400],
+                    size: 30.0,
+                  ) :
+                  Text(generateRaccourci(pub.villedepart, pub.villedestination, villes),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black
+                      )
+                  )
+              ),
+              Expanded(
+                  child: Column(
+                    children: [
+                      Container(
+                        alignment: Alignment.topLeft,
+                        child: Text(pub.identifiant),
+                      ),
+                      Container(
+                        margin: EdgeInsets.only(right: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(limitWord(pub.villedepart, pays, villes),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87
+                                )),
+                            Text(limitWord(pub.villedestination, pays, villes),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87
+                                ))
+                          ],
+                        ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(right: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(processDate(pub.datevoyage, 0)),
+                            Text(processDate(pub.datevoyage, 1))
+                          ],
+                        ),
+                      ),
+                      Container(
+                          margin: const EdgeInsets.only(right: 10),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  const Text('Réserve : '),
+                                  Text('${pub.reserve} Kg',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87
+                                      )
+                                  )
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  Text(pub.prix == 0 ? 'Gratuit' : 'Payant',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: pub.prix == 0 ? const Color(
+                                              0xFF16A807) :
+                                          Colors.red
+                                      )
+                                  )
+                                ],
+                              )
+                            ],
+                          )
+                      )
+                    ],
+                  )
+              )
+            ],
+          )
+      ),
+    );
+  }
+
+  String processDateDisplay(String date){
+    List<String> tampon = date.split("T");
+    List<String> jour = tampon[0].split("-");
+    return '${jour[2]}/${jour[1]}/${jour[0]}';
+  }
+
+  String displayDate(String date) {
+    if( listeDate.isEmpty ){
+      listeDate.add(processDateDisplay(date));
+      return listeDate[0];
+    }
+    else{
+      String tampon = processDateDisplay(date);
+      // Look for this :
+      int taille = listeDate.where((element) => element == tampon).toList().length;
+      if(taille == 0){
+        // No match, add :
+        listeDate.add(tampon);
+        return tampon;
+      }
+      else{
+        // Exist already :
+        return "";
+      }
+    }
   }
 
   Color markPublicationAsNotRead(Publication publication){
@@ -171,118 +314,26 @@ class EcranAnnonce {
           return GetBuilder<PublicationGetController>(
               builder: (_)
               {
-                return GestureDetector(
-                    onTap: () {
-                      // Display DIALOG
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                            return HistoriqueAnnonce(publication: liste[index],
-                                ville: villes.where((ville) => ville.id == liste[index].villedestination).single,
-                              villeDepart: villes.where((ville) => ville.id == liste[index].villedepart).single,
-                              userOrSuscriber: !(liste[index].userid == user.first.id) ? 0 : 1);
-                          }));
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: markPublicationAsNotRead(liste[index]),
-                        borderRadius: BorderRadius.circular(8.0)
-                      ),
-                      margin: const EdgeInsets.only(left: 7,right: 7, bottom: 15),
-                      width: MediaQuery.of(context).size.width,
-                      height: 95,
-                      child: Row(
-                        children: [
-                          ElevatedButton(
-                              onPressed: (){},
-                              style: ElevatedButton.styleFrom(
-                                  shape: const CircleBorder(),
-                                  backgroundColor: liste[index].userid == user.first.id ? Colors.white : processButtonColor()
-                              ),
-                              child: liste[index].userid == user.first.id ? Icon(
-                                Icons.person_outline,
-                                color: Colors.red[400],
-                                size: 30.0,
-                              ) :
-                              Text(generateRaccourci(liste[index].villedepart, liste[index].villedestination, villes),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black
-                                  )
-                              )
-                          ),
-                          Expanded(
-                              child: Column(
-                                children: [
-                                  Container(
-                                    alignment: Alignment.topLeft,
-                                    child: Text(liste[index].identifiant),
-                                  ),
-                                  Container(
-                                    margin: EdgeInsets.only(right: 10),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(limitWord(liste[index].villedepart, pays, villes),
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black87
-                                            )),
-                                        Text(limitWord(liste[index].villedestination, pays, villes),
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black87
-                                            ))
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: const EdgeInsets.only(right: 10),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(processDate(liste[index].datevoyage, 0)),
-                                        Text(processDate(liste[index].datevoyage, 1))
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: const EdgeInsets.only(right: 10),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            const Text('Réserve : '),
-                                            Text('${liste[index].reserve} Kg',
-                                                style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.black87
-                                                )
-                                            )
-                                          ],
-                                        ),
-                                        Row(
-                                          children: [
-                                            Text(liste[index].prix == 0 ? 'Gratuit' : 'Payant',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: liste[index].prix == 0 ? const Color(
-                                                        0xFF16A807) :
-                                                    Colors.red
-                                                )
-                                            )
-                                          ],
-                                        )
-                                      ],
-                                    )
-                                  )
-                                ],
-                              )
-                          )
-                        ],
+                String currentDate = displayDate(liste[index].datepublication);
+                return currentDate.isNotEmpty ?
+                Column(
+                  children: [
+                    Container(
+                      //alignment: Alignment.centerLeft,
+                      margin: const EdgeInsets.only(left: 7,right: 7, top: 15),
+                      child: Text(currentDate)
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(left: 7,right: 7, top: 7, bottom: 7),
+                      child: const Divider(
+                        color: Colors.black,
+                        height: 5,
                       )
                     ),
-                );
+                    displayObjectData(liste[index], pays, villes, user, context)
+                  ],
+                ) :
+                displayObjectData(liste[index], pays, villes, user, context);
               }
           );
         }

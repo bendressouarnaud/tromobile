@@ -477,17 +477,6 @@ class _ManageDepartureState extends State<ManageDeparture> {
                                 onConfirm: (date) {
                                   milliseconds = date.millisecondsSinceEpoch;
                                   _departureController.addData(date);
-                                  /*milliseconds = date.millisecondsSinceEpoch;
-                                  List<String> tp = date.toString().split(" ");
-                                  String tpDate = tp[0] ;
-                                  List<String> tpH = tp[1].split(".");
-                                  String tpHeure = tpH[0] ;
-                                  setState(()
-                                    {
-                                      dateDepartController = TextEditingController(text: tpDate);
-                                      heureDepartController = TextEditingController(text: tpHeure);
-                                    }
-                                  );*/
                                 },
                                 locale: picker.LocaleType.fr);
                           },

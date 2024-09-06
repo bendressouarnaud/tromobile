@@ -86,7 +86,6 @@ class _WelcomePageState extends State<WelcomePage> {
   // M e t h o d  :
   @override
   void initState() {
-
     // Call first :
     //getPublicationNotRead();
     setupInteractedMessage();

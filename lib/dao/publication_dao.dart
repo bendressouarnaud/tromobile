@@ -37,6 +37,16 @@ class PublicationDao {
     return liste;
   }
 
+  Future<List<Publication>> findOngoingAll(int milliseconds) async {
+    final db = await dbProvider.database;
+    final List<Map<String, Object?>> publications = await db.query('publication', where: 'milliseconds >= ?',
+        whereArgs: [milliseconds]);
+    List<Publication> liste = publications.isNotEmpty
+        ? publications.map((c) => Publication.fromDatabaseJson(c)).toList()
+        : [];
+    return liste;
+  }
+
   //Update Todo record
   Future<int> update(Publication data) async {
     final db = await dbProvider.database;

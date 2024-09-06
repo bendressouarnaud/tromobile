@@ -14,25 +14,22 @@ class PublicationGetController extends GetxController {
 
   @override
   void onInit() {
-    findAll();
+    findOngoingAll();
     super.onInit();
   }
 
   // Get Live ACHAT :
-  Future<void> findAll() async {
-    /*await _publicationRepository.findAll().then((value) => {
-      publicationData.addAll(value)
-    });*/
-    List<Publication> lte = await _publicationRepository.findAll();
+  Future<void> findOngoingAll() async {
+    List<Publication> lte = await _publicationRepository.findOngoingAll(DateTime.now().millisecondsSinceEpoch);
     publicationData.addAll(lte);
   }
 
   Future<List<Publication>> findAllPublication() async {
-    return await _publicationRepository.findAll();
+    return await _publicationRepository.findOngoingAll(DateTime.now().millisecondsSinceEpoch);
   }
 
   Future<List<Publication>> refreshAllPublicationsFromResumed() async {
-    List<Publication> lte = await _publicationRepository.findAll();
+    List<Publication> lte = await _publicationRepository.findOngoingAll(DateTime.now().millisecondsSinceEpoch);
     publicationData.clear();
     publicationData.addAll(lte);
     update(); // force
