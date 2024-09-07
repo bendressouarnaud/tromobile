@@ -29,6 +29,7 @@ import 'getxcontroller/getnavbarpublication.dart';
 import 'getxcontroller/getparamscontroller.dart';
 import 'getxcontroller/getpublicationcontroller.dart';
 import 'getxcontroller/getusercontroller.dart';
+import 'historique.dart';
 import 'historiqueannonce.dart';
 import 'httpbeans/countrydata.dart';
 import 'httpbeans/countrydataunicodelist.dart';
@@ -647,16 +648,7 @@ class _WelcomePageState extends State<WelcomePage> {
               }
             }
           ),
-          SizedBox(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            child: const Center(
-              child: Text(
-                "Veuillez créer votre compte",
-                style: TextStyle(fontSize: 17, color: Colors.black),
-              ),
-            ),
-          ),
+          Historique(),
           EcranCompte(),
         ][currentPageIndex]);
   }

@@ -296,7 +296,7 @@ class _HMessagerie extends State<Messagerie> {
                               maxLines: 7,
                               controller: messageController,
                               decoration: InputDecoration(
-                                border: UnderlineInputBorder(),
+                                border: const UnderlineInputBorder(),
                                 hintText: "Votre message",
                                 //labelText: "Email",
                                 prefixIcon:
@@ -310,7 +310,7 @@ class _HMessagerie extends State<Messagerie> {
                                     icon: const Icon(Icons.email_rounded)
                                 ),
                                 suffixIcon: IconButton(
-                                  icon: Icon(Icons.send),
+                                  icon: const Icon(Icons.send),
                                   onPressed: (){
                                     persistMessage();
                                   },

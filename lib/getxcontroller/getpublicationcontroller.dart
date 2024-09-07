@@ -28,6 +28,10 @@ class PublicationGetController extends GetxController {
     return await _publicationRepository.findOngoingAll(DateTime.now().millisecondsSinceEpoch);
   }
 
+  Future<List<Publication>> findOldAll() async {
+    return await _publicationRepository.findOldAll(DateTime.now().millisecondsSinceEpoch);
+  }
+
   Future<List<Publication>> refreshAllPublicationsFromResumed() async {
     List<Publication> lte = await _publicationRepository.findOngoingAll(DateTime.now().millisecondsSinceEpoch);
     publicationData.clear();

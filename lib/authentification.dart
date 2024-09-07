@@ -233,6 +233,7 @@ class _NewAuth extends State<AuthentificationEcran> {
                       border: OutlineInputBorder(),
                       labelText: 'Email...',
                     ),
+                    textInputAction: TextInputAction.next,
                   ),
                 ),
                 Container(

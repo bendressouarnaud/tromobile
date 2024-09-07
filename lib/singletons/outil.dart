@@ -180,6 +180,11 @@ class Outil {
     return mList;
   }
 
+  // OLD DATA :
+  Future<List<Publication>> findOldAll() async {
+    return await _publicationController.findOldAll();
+  }
+
   Future<void> refreshAllPublicationsFromResumed() async {
     List<Publication> mList = await _publicationController.refreshAllPublicationsFromResumed();
     int taille = mList.where((element) => element.read == 0).toList().length;

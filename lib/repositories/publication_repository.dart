@@ -12,4 +12,5 @@ class PublicationRepository {
   Future<List<Publication>> findAll() => publicationDao.findAll();
   // These PUBLICATIONs that are still ongoing :
   Future<List<Publication>> findOngoingAll(int milliseconds) => publicationDao.findOngoingAll(milliseconds);
+  Future<List<Publication>> findOldAll(int milliseconds) => publicationDao.findOldAll(milliseconds);
 }

@@ -364,6 +364,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
                           border: OutlineInputBorder(),
                           labelText: 'Num. de la pièce',
                         ),
+                        textInputAction: TextInputAction.next
                       ),
                     ),
                   ),
@@ -382,6 +383,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
                           border: OutlineInputBorder(),
                           labelText: 'Nom...',
                         ),
+                        textInputAction: TextInputAction.next,
                       ),
                     ),
                   ),
@@ -395,6 +397,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
                           border: OutlineInputBorder(),
                           labelText: 'Prénom...',
                         ),
+                        textInputAction: TextInputAction.next,
                       ),
                     ),
                   ),
@@ -409,6 +412,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
                     border: OutlineInputBorder(),
                     labelText: 'Email...',
                   ),
+                  textInputAction: TextInputAction.next,
                 ),
               ),
               Container(
@@ -420,6 +424,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
                     border: OutlineInputBorder(),
                     labelText: 'Contact...',
                   ),
+                  textInputAction: TextInputAction.next,
                 ),
               ),
               Container(

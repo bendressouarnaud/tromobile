@@ -214,28 +214,26 @@ class _NewEcranState extends State<EcranCompte> {
             )
           ],
         ),*/
-        body: Container(
-          color: Colors.brown[50],
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.only(right: 7, left: 7),
-                color: Colors.black,
-                child: Row(
-                  children: [
-                    const Align(
-                      alignment: Alignment.topLeft,
-                      child: Text ("Bonjour\nGérer vos données",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          )
-                      ) ,
-                    ),
-                    Expanded(
-                        child: Align(
-                          alignment: Alignment.topRight,
-                          child: ElevatedButton(
+        body: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.only(right: 7, left: 7),
+              color: Colors.black,
+              child: Row(
+                children: [
+                  const Align(
+                    alignment: Alignment.topLeft,
+                    child: Text ("Bonjour\nGérer vos données",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        )
+                    ) ,
+                  ),
+                  Expanded(
+                      child: Align(
+                        alignment: Alignment.topRight,
+                        child: ElevatedButton(
                             onPressed: () {
                               //
 
@@ -244,14 +242,14 @@ class _NewEcranState extends State<EcranCompte> {
                                     context,
                                     MaterialPageRoute(builder:
                                         (context) =>
-                                            EcranCreationCompte(listeCountry: listePays, listeVille: listeVille,)
+                                        EcranCreationCompte(listeCountry: listePays, listeVille: listeVille,)
                                     )
                                 );
 
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue[400]
+                                backgroundColor: Colors.blue[400]
                             ),
                             child: GetBuilder<UserGetController>(
                               builder: (_) {
@@ -264,26 +262,26 @@ class _NewEcranState extends State<EcranCompte> {
                               },
                             )
 
-                          ),
-                        )
-                    )
-                  ],
-                ),
+                        ),
+                      )
+                  )
+                ],
               ),
-              Container(
+            ),
+            Container(
                 padding: const EdgeInsets.only(right: 7, left: 7),
                 margin: const EdgeInsets.only(top: 10),
                 child: const Align(
                   alignment: Alignment.topLeft,
                   child: Text("MON COMPTE",
                     style: TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold
+                        color: Colors.grey,
+                        fontWeight: FontWeight.bold
                     ),
                   ),
                 )
-              ),
-              GetBuilder<UserGetController>(
+            ),
+            GetBuilder<UserGetController>(
                 builder: (_) {
                   return _userController.userData.isEmpty ?
                   Container() :
@@ -339,7 +337,7 @@ class _NewEcranState extends State<EcranCompte> {
                                 // Display DIALOG
                                 Navigator.push(context,
                                     MaterialPageRoute(builder: (context) {
-                                      return ManageNotification();
+                                      return const ManageNotification();
                                     }));
                               },
                               child: const Text('Gestion des périodes de notification',
@@ -354,11 +352,11 @@ class _NewEcranState extends State<EcranCompte> {
                     ],
                   );
                 }
-              ),
-              const SizedBox(
-                height: 100,
-              ),
-              Container(
+            ),
+            const SizedBox(
+              height: 100,
+            ),
+            Container(
                 alignment: Alignment.center,
                 child: GetBuilder<UserGetController>(
                   builder: (_) {
@@ -368,7 +366,7 @@ class _NewEcranState extends State<EcranCompte> {
                         Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) {
-                              return AuthentificationEcran();
+                              return const AuthentificationEcran();
                             }
                             )
                         );
@@ -382,92 +380,91 @@ class _NewEcranState extends State<EcranCompte> {
                     ) : Container();
                   },
                 )
-              ),
-              Container(
-                  alignment: Alignment.center,
-                  child: GetBuilder<UserGetController>(
-                    builder: (_) {
-                      return _userController.userData.isNotEmpty ? GestureDetector(
-                        onTap: () {
-                          if(!accountDeletion) {
-                            // Display
-                            showDialog(
-                                barrierDismissible: false,
-                                context: context,
-                                builder: (BuildContext context) {
-                                  dialogContext = context;
-                                  return AlertDialog(
-                                      title: const Text('Information'),
-                                      content: const Text(
-                                          "Confirmer la suppression de votre compte ?"),
-                                      actions: <Widget>[
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, 'Cancel'),
-                                          child: const Text('NON'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () {
-                                            // Send DATA :
-                                            accountDeletion = true;
-                                            deleteAccount();
+            ),
+            Container(
+                alignment: Alignment.center,
+                child: GetBuilder<UserGetController>(
+                  builder: (_) {
+                    return _userController.userData.isNotEmpty ? GestureDetector(
+                      onTap: () {
+                        if(!accountDeletion) {
+                          // Display
+                          showDialog(
+                              barrierDismissible: false,
+                              context: context,
+                              builder: (BuildContext context) {
+                                dialogContext = context;
+                                return AlertDialog(
+                                    title: const Text('Information'),
+                                    content: const Text(
+                                        "Confirmer la suppression de votre compte ?"),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, 'Cancel'),
+                                        child: const Text('NON'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          // Send DATA :
+                                          accountDeletion = true;
+                                          deleteAccount();
 
-                                            // Run TIMER :
-                                            Timer.periodic(
-                                              const Duration(seconds: 1),
-                                                  (timer) {
-                                                // Update user about remaining time
-                                                if (!accountDeletion) {
-                                                  Navigator.pop(dialogContext);
-                                                  timer.cancel();
+                                          // Run TIMER :
+                                          Timer.periodic(
+                                            const Duration(seconds: 1),
+                                                (timer) {
+                                              // Update user about remaining time
+                                              if (!accountDeletion) {
+                                                Navigator.pop(dialogContext);
+                                                timer.cancel();
 
-                                                  // if PANIER is empty, then CLOSE the INTERFACE :
-                                                  if (_userController.userData
-                                                      .isEmpty) {
-                                                    // Kill ACTIVITY :
-                                                    if (Navigator.canPop(
-                                                        context)) {
-                                                      Navigator.pop(context);
-                                                    }
-                                                  }
-                                                  else {
-                                                    setState(() {});
+                                                // if PANIER is empty, then CLOSE the INTERFACE :
+                                                if (_userController.userData
+                                                    .isEmpty) {
+                                                  // Kill ACTIVITY :
+                                                  if (Navigator.canPop(
+                                                      context)) {
+                                                    Navigator.pop(context);
                                                   }
                                                 }
-                                              },
-                                            );
-                                          },
-                                          child: const Text('OUI'),
-                                        ),
-                                      ]
-                                  );
-                                }
-                            );
-                          }
-                          else{
-                            Fluttertoast.showToast(
-                                msg: "Un processus est en cours ...",
-                                toastLength: Toast.LENGTH_SHORT,
-                                gravity: ToastGravity.CENTER,
-                                timeInSecForIosWeb: 1,
-                                backgroundColor: Colors.red,
-                                textColor: Colors.white,
-                                fontSize: 16.0
-                            );
-                          }
-                        },
-                        child: Text("Supprimez votre compte !",
-                          style: TextStyle(
-                              color: Colors.deepOrange[600],
-                              fontWeight: FontWeight.bold
-                          ),
+                                                else {
+                                                  setState(() {});
+                                                }
+                                              }
+                                            },
+                                          );
+                                        },
+                                        child: const Text('OUI'),
+                                      ),
+                                    ]
+                                );
+                              }
+                          );
+                        }
+                        else{
+                          Fluttertoast.showToast(
+                              msg: "Un processus est en cours ...",
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.CENTER,
+                              timeInSecForIosWeb: 1,
+                              backgroundColor: Colors.red,
+                              textColor: Colors.white,
+                              fontSize: 16.0
+                          );
+                        }
+                      },
+                      child: Text("Supprimez votre compte !",
+                        style: TextStyle(
+                            color: Colors.deepOrange[600],
+                            fontWeight: FontWeight.bold
                         ),
-                      ) : Container();
-                    },
-                  )
-              )
-            ],
-          ),
+                      ),
+                    ) : Container();
+                  },
+                )
+            )
+          ],
         )
     );
   }

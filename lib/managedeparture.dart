@@ -569,15 +569,16 @@ class _ManageDepartureState extends State<ManageDeparture> {
                                 border: OutlineInputBorder(),
                                 labelText: 'Réserve (kg)',
                               ),
-                              style: TextStyle(
+                              style: const TextStyle(
                                   height: 0.8
                               ),
                               textAlignVertical: TextAlignVertical.bottom,
                               textAlign: TextAlign.center,
+                              textInputAction: TextInputAction.next,
                             ),
                           ),
                           Container(
-                            margin: EdgeInsets.only(top: 17),
+                            margin: const EdgeInsets.only(top: 17),
                             child: DropdownMenu<Devises>(
                                 width: 170,
                                 menuHeight: 250,
