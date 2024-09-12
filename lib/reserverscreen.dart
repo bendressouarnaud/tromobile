@@ -14,11 +14,14 @@ import 'package:get/get_state_manager/src/simple/get_state.dart';
 import 'package:http/http.dart';
 import 'package:money_formatter/money_formatter.dart';
 import 'package:tro/getxcontroller/getpublicationcontroller.dart';
+import 'package:tro/loadingpayment.dart';
 import 'package:tro/repositories/publication_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/singletons/outil.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'getxcontroller/getreservercontroller.dart';
+import 'httpbeans/hubwaveresponseshort.dart';
 import 'httpbeans/reservationresponse.dart';
 import 'models/publication.dart';
 import 'models/user.dart';
@@ -57,6 +60,7 @@ class _ReservePaiement extends State<ReservePaiement> {
   late User localuser;
   late BuildContext dialogContext;
   bool flagSendData = false;
+  bool flagLoadingPayment = false;
   Outil outil = Outil();
   String montantFinal = "";
 
@@ -114,6 +118,99 @@ class _ReservePaiement extends State<ReservePaiement> {
         amount: price.toDouble()
     );
     return fmf.output.withoutFractionDigits;
+  }
+
+  // Display SNACK
+  void displayMessage(String message, int delay){
+    // Display SNACKBAR :
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          duration: Duration(seconds: delay),
+          content: Text(message)
+      ),
+    );
+  }
+
+  Future<void> callWaveApi() async {
+    final url = Uri.parse('${dotenv.env['URL']}generatewaveid');
+    var response = await post(url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "amount": montantFinal,
+          "currency": 'XOF',
+          "error_url": 'https://example.com/error',
+          "success_url": 'https://example.com/success',
+          "idpub": publication.id,
+          "iduser": localuser.id,
+          "reserve": reserveController.text
+        })).timeout(const Duration(seconds: 10));;
+
+    // Checks :
+    flagLoadingPayment = false;
+    if(response.statusCode == 200){
+      HubWaveResponseShort hubWaveResponse = HubWaveResponseShort.fromJson(json.decode(response.body));
+      if(hubWaveResponse.id.isNotEmpty) {
+        // Open link
+        final Uri url = Uri.parse(hubWaveResponse.wave_launch_url);
+        if (!await launchUrl(url)) {
+          //throw Exception('Could not launch $_url');
+        }
+      }
+    }
+    else{
+      displayMessage('Une erreur est survenue', 3);
+    }
+  }
+
+  // Requesting to get WAVE URL :
+  void loadingWavePayment(BuildContext dContext){
+    showDialog(
+        barrierDismissible: false,
+        context: dContext,
+        builder: (BuildContext context) {
+          dialogContext = context;
+          return WillPopScope(
+            onWillPop: () async => false,
+            child: AlertDialog(
+                title: const Text('Synchonisation'),
+                content: Container(
+                    height: 100,
+                    child: const Column(
+                      children: [
+                        Text("Chargement moyen de paiement ..."),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        SizedBox(
+                            height: 30.0,
+                            width: 30.0,
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                              strokeWidth: 3.0, // Width of the circular line
+                            )
+                        )
+                      ],
+                    )
+                )
+            ),
+          );
+        }
+    );
+
+    flagLoadingPayment = true;
+    callWaveApi();
+
+    // Run TIMER :
+    Timer.periodic(
+      const Duration(milliseconds: 1000),
+          (timer) {
+        // Update user about remaining time
+        if(!flagLoadingPayment){
+          Navigator.pop(dialogContext);
+          timer.cancel();
+        }
+      },
+    );
   }
 
   // Display INTERFACE for SENDING DATA :
@@ -380,7 +477,20 @@ class _ReservePaiement extends State<ReservePaiement> {
                           .nextInt(100000000)
                           .toString(); // Mettre en place un endpoint à contacter côté serveur pour générer des ID unique dans votre BD
 
-                      await Get.to(CinetPayCheckout(
+                      loadingWavePayment(context);
+                      /*Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context){
+                                return LoadingPayment(amount: int.parse(amount),
+                                    idpub: publication.id,
+                                    iduser: localuser.id,
+                                    reserve: int.parse(reserveController.text));
+                              }
+                          )
+                      );*/
+
+                      /*await Get.to(CinetPayCheckout(
                         title: 'Payment Checkout',
                         titleStyle: const TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold),
@@ -425,6 +535,7 @@ class _ReservePaiement extends State<ReservePaiement> {
                           }
                         },
                       ));
+                      */
                     }
                   },
                   icon: const Icon(

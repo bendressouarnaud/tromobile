@@ -24,6 +24,7 @@ import 'package:tro/services/servicegeo.dart';
 import 'package:tro/skeleton.dart';
 
 import 'constants.dart';
+import 'loadingpayment.dart';
 import 'ecrancompte.dart';
 import 'getxcontroller/getnavbarpublication.dart';
 import 'getxcontroller/getparamscontroller.dart';
@@ -254,7 +255,7 @@ class _WelcomePageState extends State<WelcomePage> {
           Ville vDest = await outil.getVilleById(int.parse(message.data['villedestination']));
           User? lUser = await outil.pickLocalUser();
           int userType = !(lUser!.id == int.parse(message.data['userid'])) ? 0 : 1;
-          openHistoriqueAnnonce(pub, vDepart, vDest, userType);
+          openHistoriqueAnnonce(pub, vDepart, vDest, userType, false);
         }
         break;
 
@@ -268,7 +269,7 @@ class _WelcomePageState extends State<WelcomePage> {
           Publication pub = await outil.refreshPublication(int.parse(message.data['idpub']));
           Ville vDepart = await outil.getVilleById(pub.villedepart);
           Ville vDest = await outil.getVilleById(pub.villedestination);
-          openHistoriqueAnnonce(pub, vDepart, vDest, 1);
+          openHistoriqueAnnonce(pub, vDepart, vDest, 1, false);
         }
         break;
 
@@ -289,7 +290,7 @@ class _WelcomePageState extends State<WelcomePage> {
     }
   }
 
-  void openHistoriqueAnnonce(Publication pub, Ville depart, Ville destination, int userType){
+  void openHistoriqueAnnonce(Publication pub, Ville depart, Ville destination, int userType, bool historique){
     Navigator.push(context,
         MaterialPageRoute(
             builder: (context) {
@@ -297,7 +298,8 @@ class _WelcomePageState extends State<WelcomePage> {
                   publication: pub,
                   ville: depart,
                   villeDepart: destination,
-                  userOrSuscriber: userType
+                  userOrSuscriber: userType,
+                historique: historique
               );
             }
         )
@@ -608,8 +610,16 @@ class _WelcomePageState extends State<WelcomePage> {
           onPressed: () async{
             User? usr = await outil.pickLocalUser();
             if(usr != null){
-              //callForCountry(context, listePays);
+              //
               callForCountry(listePays);
+              /*Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context){
+                        return InappWebViewCustom();
+                      }
+                  )
+              );*/
             }
             else{
               Fluttertoast.showToast(
@@ -636,7 +646,7 @@ class _WelcomePageState extends State<WelcomePage> {
                     builder: (PublicationGetController controller) {
                       return SingleChildScrollView(
                         child: EcranAnnonce().displayAnnonce(controller.publicationData, listePays, listeVille,
-                        _userController.userData ,context),
+                        _userController.userData ,context, false),
                       );
                     }
                 );

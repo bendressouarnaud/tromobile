@@ -40,7 +40,8 @@ class EcranAnnonce {
     return "$tampnPays ($tampnVille)";
   }
 
-  Widget displayObjectData(Publication pub, List<Pays> pays, List<Ville> villes, List<User> user, BuildContext context) {
+  Widget displayObjectData(Publication pub, List<Pays> pays, List<Ville> villes, List<User> user, BuildContext context,
+      bool historique) {
     return GestureDetector(
       onTap: () {
         // Display DIALOG
@@ -49,7 +50,8 @@ class EcranAnnonce {
               return HistoriqueAnnonce(publication: pub,
                   ville: villes.where((ville) => ville.id == pub.villedestination).single,
                   villeDepart: villes.where((ville) => ville.id == pub.villedepart).single,
-                  userOrSuscriber: !(pub.userid == user.first.id) ? 0 : 1);
+                  userOrSuscriber: !(pub.userid == user.first.id) ? 0 : 1,
+              historique: historique);
             }));
       },
       child: Container(
@@ -302,7 +304,8 @@ class EcranAnnonce {
 
 
   // Methods
-  Widget displayAnnonce(List<Publication> liste, List<Pays> pays, List<Ville> villes, List<User> user,BuildContext context){
+  Widget displayAnnonce(List<Publication> liste, List<Pays> pays, List<Ville> villes, List<User> user,BuildContext context,
+      bool historique){
     return
     liste.length > 0 ?
     ListView.builder(
@@ -330,10 +333,10 @@ class EcranAnnonce {
                         height: 5,
                       )
                     ),
-                    displayObjectData(liste[index], pays, villes, user, context)
+                    displayObjectData(liste[index], pays, villes, user, context, historique)
                   ],
                 ) :
-                displayObjectData(liste[index], pays, villes, user, context);
+                displayObjectData(liste[index], pays, villes, user, context, historique);
               }
           );
         }

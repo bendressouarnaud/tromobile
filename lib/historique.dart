@@ -42,7 +42,7 @@ class Historique extends StatelessWidget {
             return data.isNotEmpty ?
             SingleChildScrollView(
               child: EcranAnnonce().displayAnnonce(snapshot.data[0], listePays, listeVille,
-                  [localUser!] ,context),
+                  [localUser!] ,context, true),
             )
             :
             const Center(

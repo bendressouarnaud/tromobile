@@ -144,7 +144,7 @@ class _HMessagerie extends State<Messagerie> {
         }
       } on TimeoutException catch (e) {
         // handle timeout
-        print('Erreur ${e.message}');
+        //print('Erreur ${e.message}');
       }
     }
     // Now send it :
@@ -175,10 +175,10 @@ class _HMessagerie extends State<Messagerie> {
       return Column(
         children: [
           Container(
-            margin: EdgeInsets.only(top: 15),
+            margin: const EdgeInsets.only(top: 15),
             alignment: Alignment.center,
             child: Text(localDate,
-              style: TextStyle(
+              style: const TextStyle(
                   color: Colors.black,
                   fontSize: 14,
                   fontWeight: FontWeight.bold
@@ -186,8 +186,8 @@ class _HMessagerie extends State<Messagerie> {
             )
           ),
           Container(
-            margin: EdgeInsets.only(top: 10, left: 10, right: 10),
-            child: Divider(
+            margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
+            child: const Divider(
               height: 5,
               color: Colors.black,
             )
@@ -196,7 +196,7 @@ class _HMessagerie extends State<Messagerie> {
       );
     }
     else{
-      return SizedBox(
+      return const SizedBox(
         height: 5,
       );
     }
@@ -265,6 +265,9 @@ class _HMessagerie extends State<Messagerie> {
 
               return GetBuilder<ChatGetController>(
                 builder: (_){
+
+                  print('Nouvelle taille : ${listeChat.length}');
+
                   return Stack(
                       children: [
                         Positioned(
@@ -327,7 +330,7 @@ class _HMessagerie extends State<Messagerie> {
                           right: 0,
                           bottom: 70,
                           child: Container(
-                            margin: EdgeInsets.only(bottom: 7),
+                            margin: const EdgeInsets.only(bottom: 7),
                             decoration: const BoxDecoration(
                                 borderRadius: BorderRadius.all(
                                     Radius.circular(40)
@@ -351,9 +354,9 @@ class _HMessagerie extends State<Messagerie> {
                                           alignment: listeChat[index].sens == 0 ? Alignment.topRight : Alignment.topLeft,
                                           child: Container(
                                             //alignment: listeChat[index].sens == 0 ? Alignment.topRight : Alignment.topLeft,
-                                            margin: listeChat[index].sens == 0 ? EdgeInsets.only(right: 10, top: 7) :
-                                            EdgeInsets.only(left: 10, top: 7),
-                                            padding: EdgeInsets.all(10),
+                                            margin: listeChat[index].sens == 0 ? const EdgeInsets.only(right: 10, top: 7) :
+                                            const EdgeInsets.only(left: 10, top: 7),
+                                            padding: const EdgeInsets.all(10),
                                             width: listeChat[index].contenu.length > 50 ? 300 : 175,
                                             decoration: BoxDecoration(
                                                 color: listeChat[index].sens == 0 ? Colors.orange[100] : Colors.green[200],

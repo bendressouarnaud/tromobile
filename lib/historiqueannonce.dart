@@ -34,9 +34,10 @@ class HistoriqueAnnonce extends StatefulWidget {
   final Ville ville;
   final Ville villeDepart;
   final int userOrSuscriber;
+  final bool historique;
 
   HistoriqueAnnonce({Key? key, required this.publication, required this.ville, required this.villeDepart,
-    required this.userOrSuscriber}) : super(key: key);
+    required this.userOrSuscriber, required this.historique}) : super(key: key);
   //ArticleEcran.setId(this.idart, this.fromadapter, this.qte, this.client);
 
   @override
@@ -66,6 +67,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   late BuildContext dialogContext;
   late int iduser;
   late bool flagSendData;
+  late bool historique;
 
 
   // M E T H O D S
@@ -94,6 +96,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     ville = widget.ville;
     villeDepart = widget.villeDepart;
     userOrSuscriber = widget.userOrSuscriber;
+    historique = widget.historique;
 
     // Try to UPDATE :
     if(publication.read == 0) {
@@ -273,7 +276,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
         margin: const EdgeInsets.only(left: 10, top: 30, right: 10),
         child: ElevatedButton.icon(
           style: ButtonStyle(
-              backgroundColor: MaterialStateColor.resolveWith((states) => Colors.blue)
+              backgroundColor: MaterialStateColor.resolveWith((states) => historique ? Colors.grey : Colors.blue)
           ),
           label: const Text("Réserver",
               style: TextStyle(
@@ -281,14 +284,25 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
               )),
           onPressed: () {
             //displayPaymentChoice();
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context){
-                      return ReservePaiement(publication: publication);
-                    }
-                )
-            );
+            if(!historique){
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context){
+                        return ReservePaiement(publication: publication);
+                      }
+                  )
+              );
+            }
+            else{
+              // Display SNACKBAR :
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    duration: Duration(seconds: 3),
+                    content: Text("La date est échue !")
+                ),
+              );
+            }
           },
           icon: const Icon(
             Icons.money,
@@ -422,7 +436,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
         builder: (BuildContext context) {
           dialogContext = context;
           return AlertDialog(
-              title: Text('Information'),
+              title: const Text('Information'),
               content: Container(
                   height: 100,
                   child: const Column(
@@ -720,20 +734,20 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                                   //color: Colors.brown[100],   0xFFE0DDDC
                                                   child: Card(
                                                     color: (signalerLivraison && (indexSouscripteur==index)) ?
-                                                    Color(0xFFD1EAD7) :
-                                                    Color(0xFFEFEFEB),
+                                                    const Color(0xFFD1EAD7) :
+                                                    const Color(0xFFEFEFEB),
                                                     child: ListTile(
                                                       leading: ElevatedButton(
                                                           onPressed: (){},
                                                           style: ElevatedButton.styleFrom(
-                                                              shape: CircleBorder(),
+                                                              shape: const CircleBorder(),
                                                               backgroundColor: Colors.blue[50]
                                                           ),
                                                           child: Text(processInitial(listeUser[index].nom, listeUser[index].prenom))
                                                       ),
                                                       title: Text('${listeUser[index].nom} ${listeUser[index].prenom}'),
-                                                      subtitle: Text('${listeUser[index].adresse}'),
-                                                      trailing: Icon(Icons.arrow_circle_right_outlined),
+                                                      subtitle: Text(listeUser[index].adresse),
+                                                      trailing: const Icon(Icons.arrow_circle_right_outlined),
                                                     ),
                                                   )
                                               ),
