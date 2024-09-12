@@ -2,6 +2,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/src/simple/get_state.dart';
+import 'package:http/http.dart';
 import 'package:tro/models/pays.dart';
 import 'package:tro/repositories/ville_repository.dart';
 
@@ -41,7 +42,7 @@ class EcranAnnonce {
   }
 
   Widget displayObjectData(Publication pub, List<Pays> pays, List<Ville> villes, List<User> user, BuildContext context,
-      bool historique) {
+      bool historique, Client client) {
     return GestureDetector(
       onTap: () {
         // Display DIALOG
@@ -51,7 +52,8 @@ class EcranAnnonce {
                   ville: villes.where((ville) => ville.id == pub.villedestination).single,
                   villeDepart: villes.where((ville) => ville.id == pub.villedepart).single,
                   userOrSuscriber: !(pub.userid == user.first.id) ? 0 : 1,
-              historique: historique);
+              historique: historique,
+                client: client);
             }));
       },
       child: Container(
@@ -305,7 +307,7 @@ class EcranAnnonce {
 
   // Methods
   Widget displayAnnonce(List<Publication> liste, List<Pays> pays, List<Ville> villes, List<User> user,BuildContext context,
-      bool historique){
+      bool historique, Client client){
     return
     liste.length > 0 ?
     ListView.builder(
@@ -333,10 +335,10 @@ class EcranAnnonce {
                         height: 5,
                       )
                     ),
-                    displayObjectData(liste[index], pays, villes, user, context, historique)
+                    displayObjectData(liste[index], pays, villes, user, context, historique, client)
                   ],
                 ) :
-                displayObjectData(liste[index], pays, villes, user, context, historique);
+                displayObjectData(liste[index], pays, villes, user, context, historique, client);
               }
           );
         }

@@ -47,8 +47,8 @@ import 'models/user.dart';
 
 
 class WelcomePage extends StatefulWidget {
-  const WelcomePage({Key? key})
-      : super(key: key);
+  final Client client;
+  const WelcomePage({Key? key, required this.client}) : super(key: key);
 
   @override
   State<WelcomePage> createState() => _WelcomePageState();
@@ -287,6 +287,20 @@ class _WelcomePageState extends State<WelcomePage> {
           );
         }
         break;
+
+      case 4:
+        if(!fromNotification) {
+          // Create User if not exist :
+          Servicegeo().processIncommingChat(message, outil);
+        }
+        else{
+          // Open 'HistoriqueAnnonce'
+          Publication pub = await outil.refreshPublication(int.parse(message.data['publicationid']));
+          Ville vDepart = await outil.getVilleById(pub.villedepart);
+          Ville vDest = await outil.getVilleById(pub.villedestination);
+          openHistoriqueAnnonce(pub, vDepart, vDest, 0, false);
+        }
+        break;
     }
   }
 
@@ -299,7 +313,8 @@ class _WelcomePageState extends State<WelcomePage> {
                   ville: depart,
                   villeDepart: destination,
                   userOrSuscriber: userType,
-                historique: historique
+                historique: historique,
+                client: widget.client,
               );
             }
         )
@@ -311,7 +326,7 @@ class _WelcomePageState extends State<WelcomePage> {
         MaterialPageRoute(
             builder: (context) {
               return Messagerie(idpub: idpub, owner: username,
-                  idSuscriber: userId);
+                  idSuscriber: userId, client: widget.client);
             }
         )
     );
@@ -479,7 +494,9 @@ class _WelcomePageState extends State<WelcomePage> {
                       sContext,
                       MaterialPageRoute(
                           builder: (context){
-                            return ManageDeparture(id: cUser!.id, listeCountry: [paysDepart, paysDestination], nationalite: cUser!.nationnalite, idpub: 0,);
+                            return ManageDeparture(id: cUser!.id, listeCountry: [paysDepart, paysDestination],
+                              nationalite: cUser!.nationnalite, idpub: 0,
+                              client: widget.client);
                           }
                       )
                   );
@@ -646,7 +663,7 @@ class _WelcomePageState extends State<WelcomePage> {
                     builder: (PublicationGetController controller) {
                       return SingleChildScrollView(
                         child: EcranAnnonce().displayAnnonce(controller.publicationData, listePays, listeVille,
-                        _userController.userData ,context, false),
+                        _userController.userData ,context, false, widget.client),
                       );
                     }
                 );
@@ -658,8 +675,8 @@ class _WelcomePageState extends State<WelcomePage> {
               }
             }
           ),
-          Historique(),
-          EcranCompte(),
+          Historique(client: widget.client),
+          EcranCompte(client: widget.client),
         ][currentPageIndex]);
   }
 }

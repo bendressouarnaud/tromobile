@@ -1,16 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:http/http.dart';
+import 'package:http/io_client.dart';
 import 'package:tro/models/souscription.dart';
 import 'package:tro/pageaccueil.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -30,6 +33,24 @@ final PublicationGetController _publicationController = Get.put(PublicationGetCo
 final ChatGetController _chatController = Get.put(ChatGetController());
 Outil outil = Outil();
 bool processOnGoing = false;
+
+
+
+Future<SecurityContext> get globalContext async {
+  final sslCert = await rootBundle.load('assets/certificat.pem');
+  SecurityContext securityContext = SecurityContext(withTrustedRoots: false);
+  securityContext.setTrustedCertificatesBytes(sslCert.buffer.asInt8List());
+  return securityContext;
+}
+
+Future<Client> getSSLPinningClient() async {
+  HttpClient client = HttpClient(context: await globalContext);
+  client.badCertificateCallback =
+      (X509Certificate cert, String host, int port) => false;
+  IOClient ioClient = IOClient(client);
+  return ioClient;
+}
+
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -109,6 +130,50 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       //if(message.notification == null) {
       //showFlutterNotification(message, 'Nouveau message', 'C\'est un test');
       //}
+      break;
+
+
+    case 4:
+      User? user = await outil.findUserById(int.parse(message.data['id']));
+      if(user == null){
+        // Persist DATA :
+        user = User(nationnalite: message.data['nationalite'],
+            id: int.parse(message.data['id']),
+            typepieceidentite: '',
+            numeropieceidentite: '',
+            nom: message.data['nom'],
+            prenom: message.data['prenom'],
+            email: '',
+            numero: '',
+            adresse: message.data['adresse'],
+            fcmtoken: '',
+            pwd: "123",
+            codeinvitation: "123");
+        // Save :
+        outil.addUser(user);
+      }
+
+      // On PUBLICATION :
+      Publication pub = await outil.refreshPublication(int.parse(message.data['publicationid']));
+      Publication newPub = Publication(
+          id: pub.id,
+          userid: pub.userid,
+          villedepart: pub.villedepart,
+          villedestination: pub.villedestination,
+          datevoyage: pub.datevoyage,
+          datepublication: pub.datepublication,
+          reserve: pub.reserve,
+          active: 1,
+          reservereelle: int.parse(message.data['reservevalide']),
+          souscripteur: pub.souscripteur, // Use OWNER Id
+          milliseconds: pub.milliseconds,
+          identifiant: pub.identifiant,
+          devise: pub.devise,
+          prix: pub.prix,
+          read: 1
+      );
+      // Update  :
+      await outil.updatePublication(newPub);
       break;
   }
 }
@@ -301,11 +366,14 @@ Future<void> main() async {
     }*/
   }
 
-  runApp(MyApp());
+  final client = await getSSLPinningClient();
+
+  runApp(MyApp(client: client,));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final Client? client;
+  MyApp({super.key, required this.client});
 
   // This widget is the root of your application.
   @override
@@ -317,7 +385,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const WelcomePage(),
+      home: WelcomePage(client: client!),
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:badges/badges.dart' as badges;
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/simple/get_state.dart';
+import 'package:http/http.dart';
 import 'package:tro/getxcontroller/getciblecontroller.dart';
 import 'package:tro/getxcontroller/getpublicationcontroller.dart';
 import 'package:tro/repositories/pays_repository.dart';
@@ -20,8 +21,8 @@ import 'models/ville.dart';
 
 class GestionCible extends StatefulWidget {
   // Attributes
-
-  GestionCible({Key? key}) : super(key: key);
+  final Client client;
+  GestionCible({Key? key, required this.client}) : super(key: key);
 
   @override
   State<GestionCible> createState() => _GestionCible();
@@ -123,7 +124,8 @@ class _GestionCible extends State<GestionCible> {
                       idpaysdest: 1,
                       idvilledep: 1,
                       idvilledest: 1,
-                      idCible: 0
+                      idCible: 0,
+                    client: widget.client,
                   );
                 }));
           },
@@ -155,7 +157,8 @@ class _GestionCible extends State<GestionCible> {
                                         idpaysdest: listeCible[index].paysdestid,
                                         idvilledep: listeCible[index].villedepartid,
                                         idvilledest: listeCible[index].villedestid,
-                                        idCible: listeCible[index].id
+                                        idCible: listeCible[index].id,
+                                        client: widget.client
                                       );
                                     }));
                               },

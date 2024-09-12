@@ -35,9 +35,10 @@ class HistoriqueAnnonce extends StatefulWidget {
   final Ville villeDepart;
   final int userOrSuscriber;
   final bool historique;
+  final Client client;
 
   HistoriqueAnnonce({Key? key, required this.publication, required this.ville, required this.villeDepart,
-    required this.userOrSuscriber, required this.historique}) : super(key: key);
+    required this.userOrSuscriber, required this.historique, required this.client}) : super(key: key);
   //ArticleEcran.setId(this.idart, this.fromadapter, this.qte, this.client);
 
   @override
@@ -248,7 +249,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                           context,
                           MaterialPageRoute(
                               builder: (context){
-                                return ReservePaiement(publication: publication);
+                                return ReservePaiement(publication: publication, client: widget.client);
                               }
                           )
                       );
@@ -289,7 +290,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                   context,
                   MaterialPageRoute(
                       builder: (context){
-                        return ReservePaiement(publication: publication);
+                        return ReservePaiement(publication: publication, client: widget.client,);
                       }
                   )
               );
@@ -336,7 +337,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                   MaterialPageRoute(
                     builder: (context) {
                       return Messagerie(idpub: publication.id, owner: ('${outil.getPublicationOwner()!.nom} ${outil.getPublicationOwner()!.prenom}'),
-                        idSuscriber: 0,);
+                        idSuscriber: 0, client: widget.client);
                     }
                   )
                 );
@@ -384,7 +385,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   Future<void> sendLivraisonFalag() async {
 
     final url = Uri.parse('${dotenv.env['URL']}markdelivery');
-    var response = await post(url,
+    var response = await widget.client.post(url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "idpub": publication.id,
@@ -723,7 +724,8 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                                     MaterialPageRoute(
                                                         builder: (context) {
                                                           return Messagerie(idpub: publication.id, owner: ('${listeUser[index].nom} ${listeUser[index].prenom}'),
-                                                              idSuscriber: listeUser[index].id);
+                                                              idSuscriber: listeUser[index].id,
+                                                            client: widget.client);
                                                         }
                                                     )
                                                 );

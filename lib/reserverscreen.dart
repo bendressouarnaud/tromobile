@@ -31,8 +31,9 @@ class ReservePaiement extends StatefulWidget {
   // Attribute
   //int idart = 0;
   final Publication publication;
+  final Client client;
 
-  ReservePaiement({Key? key, required this.publication}) : super(key: key);
+  ReservePaiement({Key? key, required this.publication, required this.client}) : super(key: key);
   //ArticleEcran.setId(this.idart, this.fromadapter, this.qte, this.client);
 
   @override
@@ -63,6 +64,9 @@ class _ReservePaiement extends State<ReservePaiement> {
   bool flagLoadingPayment = false;
   Outil outil = Outil();
   String montantFinal = "";
+  //
+  late final AppLifecycleListener _listener;
+  bool hitServerAfterUrlPayment = false;
 
 
 
@@ -72,8 +76,58 @@ class _ReservePaiement extends State<ReservePaiement> {
     super.initState();
 
     //_reserveController.clear();
+    _listener = AppLifecycleListener(
+      onStateChange: _onStateChanged,
+    );
     publication = widget.publication;
     getLocalUser();
+  }
+
+  // Listen to the app lifecycle state changes
+  void _onStateChanged(AppLifecycleState state) {
+    if(state == AppLifecycleState.resumed && hitServerAfterUrlPayment){
+      // Check on SERVER :
+      hitServerAfterUrlPayment = false;
+      displayLoadingInterface(context);
+    }
+  }
+
+  /*void verifyPaymentOnServer() async{
+    final url = Uri.parse('${dotenv.env['URL']}generatewaveid');
+    var response = await widget.client.post(url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "idpub": publication.id,
+          "iduser": localuser.id
+        })).timeout(const Duration(seconds: 10));;
+
+    // Checks :
+    flagLoadingPayment = false;
+    if(response.statusCode == 200){
+      HubWaveResponseShort hubWaveResponse = HubWaveResponseShort.fromJson(json.decode(response.body));
+      if(hubWaveResponse.id.isNotEmpty) {
+        // Open link
+        final Uri url = Uri.parse(hubWaveResponse.wave_launch_url);
+        if (!await launchUrl(url)) {
+          //throw Exception('Could not launch $_url');
+        }
+        else{
+          //
+          hitServerAfterUrlPayment = true;
+        }
+      }
+    }
+    else{
+      displayMessage('Une erreur est survenue', 3);
+    }
+  }
+  */
+
+  @override
+  void dispose() {
+    // Do not forget to dispose the listener
+    _listener.dispose();
+    super.dispose();
   }
 
   void getLocalUser() async{
@@ -133,7 +187,7 @@ class _ReservePaiement extends State<ReservePaiement> {
 
   Future<void> callWaveApi() async {
     final url = Uri.parse('${dotenv.env['URL']}generatewaveid');
-    var response = await post(url,
+    var response = await widget.client.post(url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "amount": montantFinal,
@@ -154,6 +208,10 @@ class _ReservePaiement extends State<ReservePaiement> {
         final Uri url = Uri.parse(hubWaveResponse.wave_launch_url);
         if (!await launchUrl(url)) {
           //throw Exception('Could not launch $_url');
+        }
+        else{
+          //
+          hitServerAfterUrlPayment = true;
         }
       }
     }
@@ -227,7 +285,7 @@ class _ReservePaiement extends State<ReservePaiement> {
               height: 100,
               child: const Column(
                 children: [
-                  Text("Synchonisation paiement ..."),
+                  Text("Finalisation paiement ..."),
                   SizedBox(
                     height: 20,
                   ),
@@ -273,7 +331,7 @@ class _ReservePaiement extends State<ReservePaiement> {
   Future<void> sendReservationRequest() async {
     final hNow = DateTime.now();
     final url = Uri.parse('${dotenv.env['URL']}managereservation');
-    var response = await post(url,
+    var response = await widget.client.post(url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "idpub": publication.id,
@@ -331,8 +389,14 @@ class _ReservePaiement extends State<ReservePaiement> {
       // Set FLAG :
       flagSendData = false;
     }
-    else {
-      displayFloat("Impossible de traiter la commande !");
+    else if(response.statusCode == 403) {
+      flagSendData = false;
+      displayFloat("Opération de paiement non finalisée");
+    }
+    else{
+      flagSendData = false;
+      // Erreur Réseau :
+      displayFloat("Impossible de traiter l'opération");
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:tro/repositories/pays_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
@@ -12,7 +13,8 @@ import 'models/user.dart';
 import 'models/ville.dart';
 
 class Historique extends StatelessWidget {
-  Historique({ super.key });
+  final Client client;
+  Historique({ super.key, required this.client });
 
   // O B J E C T S :
   final _paysRepository = PaysRepository();
@@ -42,7 +44,7 @@ class Historique extends StatelessWidget {
             return data.isNotEmpty ?
             SingleChildScrollView(
               child: EcranAnnonce().displayAnnonce(snapshot.data[0], listePays, listeVille,
-                  [localUser!] ,context, true),
+                  [localUser!] ,context, true, client),
             )
             :
             const Center(

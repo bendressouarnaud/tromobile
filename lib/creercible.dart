@@ -34,8 +34,10 @@ class CreerCible extends StatefulWidget {
   final int idvilledep;
   final int idvilledest;
   final int idCible;
+  final Client client;
 
-  CreerCible({Key? key, required this.idpaysdep, required this.idpaysdest, required this.idvilledep, required this.idvilledest, required this.idCible}) : super(key: key);
+  CreerCible({Key? key, required this.idpaysdep, required this.idpaysdest, required this.idvilledep,
+    required this.idvilledest, required this.idCible, required this.client}) : super(key: key);
 
   @override
   State<CreerCible> createState() => _creerCible();
@@ -155,7 +157,7 @@ class _creerCible extends State<CreerCible> {
   // Send Account DATA :
   Future<void> sendCibleRequest() async {
     final url = Uri.parse('${dotenv.env['URL']}managecible');
-    var response = await post(url,
+    var response = await widget.client.post(url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "id": idCible,

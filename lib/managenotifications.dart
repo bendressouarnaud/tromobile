@@ -16,7 +16,8 @@ import 'models/user.dart';
 enum ChoixNotification { perpetuelle, momentane }
 
 class ManageNotification extends StatefulWidget {
-  const ManageNotification({super.key});
+  final Client client;
+  const ManageNotification({super.key, required this.client});
 
   @override
   State<ManageNotification> createState() => _ManageNotificationState();
@@ -149,7 +150,7 @@ class _ManageNotificationState extends State<ManageNotification> {
   // Send Account DATA :
   Future<void> sendNotificationRequest() async {
     final url = Uri.parse('${dotenv.env['URL']}managenotification');
-    var response = await post(url,
+    var response = await widget.client.post(url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "iduser": localuser!.id,

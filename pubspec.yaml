@@ -90,6 +90,7 @@ flutter:
   assets:
     - assets/images/
     - variable.env
+    - assets/certificat.pem
     - assets/images/launcher_new_tro.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see

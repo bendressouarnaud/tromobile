@@ -32,9 +32,10 @@ import 'models/user.dart';
 
 
 class EcranCreationCompte extends StatefulWidget {
-  const EcranCreationCompte({Key? key, required this.listeCountry, required this.listeVille}) : super(key: key);
+  const EcranCreationCompte({Key? key, required this.listeCountry, required this.listeVille, required this.client}) : super(key: key);
   final List<Pays> listeCountry;
   final List<Ville> listeVille;
+  final Client client;
   //final https.Client client;
 
   @override
@@ -176,7 +177,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
   // Send Account DATA :
   Future<void> sendAccountRequest(String abrevPays, String pays) async {
     final url = Uri.parse('${dotenv.env['URL']}manageuser');
-    var response = await post(url,
+    var response = await widget.client.post(url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "nom": nomController.text,

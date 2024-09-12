@@ -30,11 +30,13 @@ import 'models/pays.dart';
 
 
 class ManageDeparture extends StatefulWidget {
-  const ManageDeparture({Key? key, required this.id, required this.listeCountry, required this.nationalite, required this.idpub}) : super(key: key);
+  const ManageDeparture({Key? key, required this.id, required this.listeCountry, required this.nationalite,
+    required this.idpub, required this.client}) : super(key: key);
   final int id;
   final List<Pays> listeCountry;
   final String nationalite;
   final int idpub;
+  final Client client;
 
   @override
   State<ManageDeparture> createState() => _ManageDepartureState();
@@ -271,7 +273,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
   Future<void> sendOrderRequest(String abrevPays) async {
     final hNow = DateTime.now();
     final url = Uri.parse('${dotenv.env['URL']}managetravel');
-    var response = await post(url,
+    var response = await widget.client.post(url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "id": idpub,

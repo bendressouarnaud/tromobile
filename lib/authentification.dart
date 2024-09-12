@@ -31,7 +31,8 @@ import 'package:flutter/foundation.dart'
 
 
 class AuthentificationEcran extends StatefulWidget {
-  const AuthentificationEcran({Key? key}) : super(key: key);
+  final Client client;
+  const AuthentificationEcran({Key? key, required this.client}) : super(key: key);
   //final https.Client client;
 
   @override
@@ -95,7 +96,7 @@ class _NewAuth extends State<AuthentificationEcran> {
   // Send Account DATA :
   Future<void> authenicatemobilecustomer() async {
     final url = Uri.parse('${dotenv.env['URL']}authenticate');
-    var response = await post(url,
+    var response = await widget.client.post(url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "mail": emailController.text,

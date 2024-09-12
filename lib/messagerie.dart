@@ -23,8 +23,9 @@ class Messagerie extends StatefulWidget {
   final int idpub;
   final int idSuscriber;
   final String owner;
+  final Client client;
 
-  Messagerie({Key? key, required this.idpub, required this.owner, required this.idSuscriber}) : super(key: key);
+  Messagerie({Key? key, required this.idpub, required this.owner, required this.idSuscriber, required this.client}) : super(key: key);
 
   @override
   State<Messagerie> createState() => _HMessagerie();
@@ -115,7 +116,7 @@ class _HMessagerie extends State<Messagerie> {
     if(checkNetworkConnected) {
       final url = Uri.parse('${dotenv.env['URL']}sendmessage');
       try {
-        var response = await post(
+        var response = await widget.client.post(
             url,
             headers: {"Content-Type": "application/json"},
             body: jsonEncode({

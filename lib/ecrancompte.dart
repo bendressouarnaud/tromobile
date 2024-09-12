@@ -26,7 +26,8 @@ import 'models/pays.dart';
 
 
 class EcranCompte extends StatefulWidget {
-  const EcranCompte({Key? key}) : super(key: key);
+  final Client client;
+  EcranCompte({Key? key, required this.client}) : super(key: key);
 
   @override
   State<EcranCompte> createState() => _NewEcranState();
@@ -34,8 +35,6 @@ class EcranCompte extends StatefulWidget {
 
 class _NewEcranState extends State<EcranCompte> {
   // A t t r i b u t e s  :
-  //late Future<List<Produit>> futureProduit;
-  //late Future<List<Beanarticledetail>> futureBeanarticle;
   late bool _isLoading;
   int callNumber = 0;
   int currentPageIndex = 0;
@@ -242,7 +241,7 @@ class _NewEcranState extends State<EcranCompte> {
                                     context,
                                     MaterialPageRoute(builder:
                                         (context) =>
-                                        EcranCreationCompte(listeCountry: listePays, listeVille: listeVille,)
+                                        EcranCreationCompte(listeCountry: listePays, listeVille: listeVille, client: widget.client,)
                                     )
                                 );
 
@@ -302,7 +301,7 @@ class _NewEcranState extends State<EcranCompte> {
                                 // Display DIALOG
                                 Navigator.push(context,
                                     MaterialPageRoute(builder: (context) {
-                                      return GestionCible();
+                                      return GestionCible(client: widget.client,);
                                     }));
                               },
                               child: const Text('Gestion des cibles',
@@ -337,7 +336,7 @@ class _NewEcranState extends State<EcranCompte> {
                                 // Display DIALOG
                                 Navigator.push(context,
                                     MaterialPageRoute(builder: (context) {
-                                      return const ManageNotification();
+                                      return ManageNotification(client: widget.client);
                                     }));
                               },
                               child: const Text('Gestion des périodes de notification',
@@ -366,7 +365,7 @@ class _NewEcranState extends State<EcranCompte> {
                         Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) {
-                              return const AuthentificationEcran();
+                              return AuthentificationEcran(client: widget.client);
                             }
                             )
                         );

@@ -107,6 +107,52 @@ class Servicegeo {
     await outil.insertChat(newChat);
   }
 
+  // Hit USER and PUBLICATION :
+  void performReservationCheck(RemoteMessage message, Outil outil) async {
+    // Check USER's presence :
+    User? user = await outil.findUserById(int.parse(message.data['id']));
+    if(user == null){
+      // Persist DATA :
+      user = User(nationnalite: message.data['nationalite'],
+          id: int.parse(message.data['id']),
+          typepieceidentite: '',
+          numeropieceidentite: '',
+          nom: message.data['nom'],
+          prenom: message.data['prenom'],
+          email: '',
+          numero: '',
+          adresse: message.data['adresse'],
+          fcmtoken: '',
+          pwd: "123",
+          codeinvitation: "123");
+      // Save :
+      outil.addUser(user);
+    }
+    
+    // On PUBLICATION :
+    Publication pub = await outil.refreshPublication(int.parse(message.data['publicationid']));
+    Publication newPub = Publication(
+        id: pub.id,
+        userid: pub.userid,
+        villedepart: pub.villedepart,
+        villedestination: pub.villedestination,
+        datevoyage: pub.datevoyage,
+        datepublication: pub.datepublication,
+        reserve: pub.reserve,
+        active: 1,
+        reservereelle: int.parse(message.data['reservevalide']),
+        souscripteur: pub.souscripteur, // Use OWNER Id
+        milliseconds: pub.milliseconds,
+        identifiant: pub.identifiant,
+        devise: pub.devise,
+        prix: pub.prix,
+        read: 1
+    );
+    // Update  :
+    await outil.updatePublication(newPub);
+  }
+
+
   Future<Widget> processAnnonceIcon(IconData iconData) async{
     List<Publication> liste = await outil.findAllPublication();
     int taille = liste.where((element) => element.read == 0).toList().length;
