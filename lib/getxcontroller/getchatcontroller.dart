@@ -58,6 +58,13 @@ class ChatGetController extends GetxController {
   }
 
   // Get CHAT to send :
+  Future<List<Chat>> findAllChats() async{
+    data.clear();
+    data.addAll(await _repository.findAllChats());
+    return data;
+  }
+
+  // Get CHAT to send :
   /*Future<Chat> findByIdentifiant(String ids) async{
     data.clear();
     data.addAll(await _repository.findAllByStatut(statut));
@@ -72,6 +79,11 @@ class ChatGetController extends GetxController {
     // Update
     data[idx] = chat;
     update();
+    return await _repository.update(chat);
+  }
+
+  // Update this from MESSAGERIE interface to mark this CHAT as read :
+  Future<int> updateChatWithoutNotif(Chat chat) async {
     return await _repository.update(chat);
   }
 

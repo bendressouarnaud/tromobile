@@ -18,8 +18,10 @@ class ChatDao {
   Future<int> insert(Chat data) async {
     final db = await dbProvider.database;
     var result = db.rawInsert("""
-    INSERT INTO chat (idpub, milliseconds, sens, statut, contenu, identifiant, iduser, idlocaluser) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-        [data.idpub, data.milliseconds, data.sens, data.statut, data.contenu, data.identifiant, data.iduser, data.idlocaluser]);
+    INSERT INTO chat (idpub, milliseconds, sens, statut, contenu, identifiant, iduser, idlocaluser, read) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        [data.idpub, data.milliseconds, data.sens, data.statut, data.contenu, data.identifiant,
+          data.iduser, data.idlocaluser, data.read]);
     return result;
   }
 
@@ -48,6 +50,16 @@ class ChatDao {
     return liste.first;
   }
 
+  //
+  Future<List<Chat>> findAll() async {
+    final db = await dbProvider.database;
+    final List<Map<String, Object?>> results = await db.query('chat');
+    List<Chat> liste = results.isNotEmpty
+        ? results.map((c) => Chat.fromDatabaseJson(c)).toList()
+        : [];
+    return liste;
+  }
+
   Future<List<Chat>> findAllBy(int idpub) async {
     final db = await dbProvider.database;
     final List<Map<String, Object?>> results = await db.query('chat', where: 'idpub = ?', whereArgs: [idpub]);
@@ -64,9 +76,10 @@ class ChatDao {
       'identifiant': identifiant as String,
       'iduser': iduser as int,
       'idlocaluser': idlocaluser as int,
+      'read': read as int,
       } in results)
         Chat(id: id, idpub: idpub, milliseconds: milliseconds, sens: sens,statut: statut, contenu: contenu, identifiant: identifiant, iduser: iduser,
-            idlocaluser: idlocaluser)
+            idlocaluser: idlocaluser, read: read)
     ];
   }
 
@@ -86,10 +99,11 @@ class ChatDao {
       'contenu': contenu as String,
       'identifiant': identifiant as String,
       'iduser': iduser as int,
-      'idlocaluser': idlocaluser as int
+      'idlocaluser': idlocaluser as int,
+      'read': read as int,
       } in results)
-        Chat(id: id, idpub: idpub, milliseconds: milliseconds, sens: sens,statut: statut, contenu: contenu,
-            identifiant: identifiant, iduser: iduser, idlocaluser: idlocaluser)
+        Chat(id: id, idpub: idpub, milliseconds: milliseconds, sens: sens,statut: statut, contenu: contenu, identifiant: identifiant, iduser: iduser,
+            idlocaluser: idlocaluser, read: read)
     ];
   }
 
@@ -108,10 +122,11 @@ class ChatDao {
       'contenu': contenu as String,
       'identifiant': identifiant as String,
       'iduser': iduser as int,
-      'idlocaluser': idlocaluser as int
+      'idlocaluser': idlocaluser as int,
+      'read': read as int,
       } in results)
-        Chat(id: id, idpub: idpub, milliseconds: milliseconds, sens: sens,statut: statut, contenu: contenu,
-            identifiant: identifiant, iduser: iduser, idlocaluser: idlocaluser)
+        Chat(id: id, idpub: idpub, milliseconds: milliseconds, sens: sens,statut: statut, contenu: contenu, identifiant: identifiant, iduser: iduser,
+            idlocaluser: idlocaluser, read: read)
     ];
   }
 }

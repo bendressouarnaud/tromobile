@@ -13,10 +13,11 @@ class Chat {
   final int statut; // 0 : A transmettre, 1 : Envoyé, 2 : reçu
   final String contenu;
   final String identifiant;
+  final int read; // 0 : non lu , 1 : lu
 
   // M e t h o d s  :
   Chat({required this.id,required this.idpub,required this.milliseconds,required this.sens,required this.statut,required this.contenu
-    ,required this.identifiant, required this.iduser, required this.idlocaluser});
+    ,required this.identifiant, required this.iduser, required this.idlocaluser, required this.read});
   factory Chat.fromDatabaseJson(Map<String, dynamic> data) => Chat(
     //it into a Todo object
     id: data['id'],
@@ -27,7 +28,8 @@ class Chat {
     contenu: data['contenu'],
     identifiant: data['identifiant'],
     iduser: data['iduser'],
-    idlocaluser: data['idlocaluser']
+    idlocaluser: data['idlocaluser'],
+    read: data['read']
   );
 
   Map<String, dynamic> toDatabaseJson() => {
@@ -41,6 +43,7 @@ class Chat {
     "contenu": contenu,
     "identifiant": identifiant,
     "iduser": iduser,
-    "idlocaluser": idlocaluser
+    "idlocaluser": idlocaluser,
+    "read": read,
   };
 }

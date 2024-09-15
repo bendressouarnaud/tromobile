@@ -54,7 +54,7 @@ class DatabaseHelper {
     await db.execute('CREATE TABLE cible (id INTEGER PRIMARY KEY ,villedepartid INTEGER,paysdepartid INTEGER,'
         'villedestid INTEGER,paysdestid INTEGER, topic TEXT)');
     await db.execute('CREATE TABLE chat (id INTEGER PRIMARY KEY AUTOINCREMENT,idpub INTEGER,milliseconds INTEGER,'
-        'sens INTEGER,statut INTEGER, contenu TEXT, identifiant TEXT, iduser INTEGER, idlocaluser INTEGER)');
+        'sens INTEGER,statut INTEGER, contenu TEXT, identifiant TEXT, iduser INTEGER, idlocaluser INTEGER, read INTEGER)');
 
     await db.execute('CREATE TABLE souscription (id INTEGER PRIMARY KEY AUTOINCREMENT,idpub INTEGER,iduser INTEGER,'
         'millisecondes INTEGER, reserve INTEGER, statut INTEGER)');

@@ -77,6 +77,12 @@ class Outil {
     return urlPrefix;
   }
 
+
+  // C H A T
+  Future<List<Chat>> findAllChats() async{
+    return await _chatController.findAllChats();
+  }
+
   Future<List<Chat>> getChatByIdpub(int idpub) async{
     // First Clean :
     return await _chatController.getData(idpub);
@@ -104,6 +110,12 @@ class Outil {
   Future<int> updateData(Chat chat) async {
     return await _chatController.updateData(chat);
   }
+
+  //
+  Future<int> updateChatWithoutNotif(Chat chat) async {
+    return await _chatController.updateChatWithoutNotif(chat);
+  }
+
 
   // For U S E R
   User getLocalUser(){
@@ -157,6 +169,10 @@ class Outil {
       int newTaille = _navController.tableau[0];
       _navController.feed(newTaille + 1);
     }
+  }
+
+  Future<void> updatePublicationWithoutFurtherActions(Publication publication) async{
+    _publicationController.updateData(publication);
   }
 
   Future<void> updatePublication(Publication publication) async{

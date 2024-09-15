@@ -98,7 +98,8 @@ class _HMessagerie extends State<Messagerie> {
     var dateTime = DateTime.now();
     String messageId = '${outil.getLocalUser().id}${dateTime.millisecondsSinceEpoch}';
     Chat newChat = Chat(id: 0, idpub: idpub, milliseconds: time, sens: 0, contenu: messageController.text, statut: 0,
-        identifiant: messageId, iduser: idSuscriber, idlocaluser: localUser.id);
+        identifiant: messageId, iduser: idSuscriber, idlocaluser: localUser.id,
+    read: 1);
     await outil.insertChat(newChat);
 
     // Try to clear :
@@ -139,7 +140,8 @@ class _HMessagerie extends State<Messagerie> {
             statut: 1,
             identifiant: updateChat.identifiant,
             iduser: idSuscriber,
-            idlocaluser: localUser.id
+            idlocaluser: localUser.id,
+              read: 1
           );
           await outil.updateData(nChat);
         }
@@ -148,17 +150,6 @@ class _HMessagerie extends State<Messagerie> {
         //print('Erreur ${e.message}');
       }
     }
-    // Now send it :
-    /*print('startService ------- --------------------------------');
-    final service = FlutterBackgroundService();
-    bool serviceRun = await service.isRunning();
-    if(!serviceRun){
-      await service.startService();
-      print('On démarre');
-    }
-    else{
-      print('Service déjà en cours');
-    }*/
   }
 
   // Process TIME
@@ -203,6 +194,26 @@ class _HMessagerie extends State<Messagerie> {
     }
   }
 
+  //
+  void flagChat(Chat cChat) async{
+    if(cChat.read == 0){
+      // Flag it :
+      Chat nChat = Chat(
+          id: cChat.id,
+          idpub: cChat.idpub,
+          milliseconds: cChat.milliseconds,
+          sens: cChat.sens,
+          contenu: cChat.contenu,
+          statut: cChat.statut,
+          identifiant: cChat.identifiant,
+          iduser: cChat.iduser,
+          idlocaluser: cChat.idlocaluser,
+          read: 1
+      );
+      await outil.updateData(nChat);//.updateChatWithoutNotif(nChat);
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -218,43 +229,10 @@ class _HMessagerie extends State<Messagerie> {
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),
-                )),
-            actions: [
-              /*badges.Badge(
-                  position: badges.BadgePosition.topEnd(top: 0, end: 3),
-                  badgeAnimation: const badges.BadgeAnimation.slide(),
-                  showBadge: true,
-                  badgeStyle: const badges.BadgeStyle(
-                    badgeColor: Colors.red,
-                  ),
-                  badgeContent: GetBuilder<PublicationGetController>(
-                    builder: (_) {
-                      return Text(
-                        '${_achatController.taskData.length}',
-                        style: const TextStyle(color: Colors.white),
-                      );
-                    },
-                  ),
-                  child: IconButton(
-                      icon: const Icon(Icons.shopping_cart),
-                      onPressed: () {
-                        if (_achatController.taskData.isNotEmpty) {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) {
-                                return Paniercran(client: client);
-                              }));
-                        }
-                      })
-              ),
-              IconButton(
-                  onPressed: () {
-                    /*Navigator.push(context, MaterialPageRoute(builder: (context) {
-                      return SearchEcran(client: client!);
-                    }));*/
-                  },
-                  icon: const Icon(Icons.search, color: Colors.black)
-              )*/
-            ],
+                )
+            ),
+            /*actions: [
+            ],*/
         ),
         //bottomNavigationBar: BottomSection(),
         body: FutureBuilder(
@@ -265,9 +243,7 @@ class _HMessagerie extends State<Messagerie> {
               List<Chat> listeChat =  snapshot.data[0];
 
               return GetBuilder<ChatGetController>(
-                builder: (_){
-
-                  print('Nouvelle taille : ${listeChat.length}');
+                builder: (controller){
 
                   return Stack(
                       children: [
@@ -348,6 +324,10 @@ class _HMessagerie extends State<Messagerie> {
                                 shrinkWrap: true,
                                 itemCount: listeChat.length,
                                 itemBuilder: (BuildContext context, int index) {
+
+                                  // Flag CHAT if needed :
+                                  flagChat(listeChat[index]);
+
                                   return Column(
                                     children: [
                                       displayDate(listeChat[index].milliseconds),

@@ -73,7 +73,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
     case 2:
       // Create User if not exist :
-      User? user = await outil.findUserById(int.parse(message.data['sujet']));
+      User? user = await outil.findUserById(int.parse(message.data['id']));
       if(user == null){
         // Persist DATA :
         // Create new :
@@ -115,7 +115,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           statut: 2,
           identifiant: message.data['identifiant'],
           iduser: int.parse(message.data['sender']),
-          idlocaluser: localUser!.id
+          idlocaluser: localUser!.id,
+          read: 0
       );
       outil.insertChatFromBackground(newChat);
 
@@ -173,7 +174,33 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           read: 1
       );
       // Update  :
-      await outil.updatePublication(newPub);
+      //await outil.updatePublication(newPub);
+      await outil.updatePublicationWithoutFurtherActions(newPub);
+      break;
+
+    case 5:
+      // On PUBLICATION :
+      Publication pub = await outil.refreshPublication(int.parse(message.data['idpub']));
+      Publication newPub = Publication(
+          id: pub.id,
+          userid: pub.userid,
+          villedepart: pub.villedepart,
+          villedestination: pub.villedestination,
+          datevoyage: pub.datevoyage,
+          datepublication: pub.datepublication,
+          reserve: pub.reserve,
+          active: 2,
+          reservereelle: pub.reservereelle,
+          souscripteur: pub.souscripteur, // Use OWNER Id
+          milliseconds: pub.milliseconds,
+          identifiant: pub.identifiant,
+          devise: pub.devise,
+          prix: pub.prix,
+          read: 1
+      );
+      // Update  :
+      //await outil.updatePublication(newPub);
+      await outil.updatePublicationWithoutFurtherActions(newPub);
       break;
   }
 }

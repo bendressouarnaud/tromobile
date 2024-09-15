@@ -64,6 +64,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   // User for PROFILE EMETTEUR
   int resteReserve = 0;
   bool signalerLivraison = false;
+  bool signalerReception = false;
   int indexSouscripteur = -1;
   late BuildContext dialogContext;
   late int iduser;
@@ -99,6 +100,13 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     userOrSuscriber = widget.userOrSuscriber;
     historique = widget.historique;
 
+    if( userOrSuscriber == 0 ) {
+      // Feed iduser :
+      outil.pickLocalUser().then((value) => {
+        initIduserIfNecessary(value!.id)
+      });
+    }
+
     // Try to UPDATE :
     if(publication.read == 0) {
       Future.delayed(const Duration(milliseconds: 600),
@@ -109,6 +117,11 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     }
   }
 
+  // Init
+  void initIduserIfNecessary(int id) {
+    iduser = id;
+    print('Id utilisateur LOCAL : $iduser');
+  }
 
   // Update PUBLICATION if needed :
   void updatePublication() async{
@@ -331,6 +344,20 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
               color: Colors.black,
             ),
             GestureDetector(
+              onLongPress: () async{
+                if(publication.active == 1){
+                  displayFloat('Le colis n\'a pas encore été remis !', choix: 1);
+                }
+                else if(publication.active == 2){
+                  setState(() {
+                    signalerReception = true;
+                  });
+                }
+                else{
+                  displayFloat('Réception déjà établie !', choix: 1);
+                }
+              }
+              ,
               onTap: () {
                 // Display DIALOG
                 Navigator.push(context,
@@ -347,6 +374,9 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                   width: MediaQuery.of(context).size.width,
                   //color: Colors.brown[100],
                   child: Card(
+                    color: signalerReception ?
+                    const Color(0xFFD1EAD7) :
+                    const Color(0xFFEFEFEB),
                     child: ListTile(
                       leading: ElevatedButton(
                           onPressed: (){},
@@ -370,11 +400,16 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   }
 
   Future<bool> _onBackPressed() async {
-     bool retour = signalerLivraison ? false : true;
+     bool retour = (signalerLivraison || signalerReception) ? false : true;
      if(!retour){
        setState(() {
-         indexSouscripteur - 1;
-         signalerLivraison = false;
+         if(signalerLivraison) {
+           indexSouscripteur = - 1;
+           signalerLivraison = false;
+         }
+         else{
+           signalerReception = false;
+         }
        });
      }
      return retour;
@@ -383,7 +418,6 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
 
   // Send Account DATA :
   Future<void> sendLivraisonFalag() async {
-
     final url = Uri.parse('${dotenv.env['URL']}markdelivery');
     var response = await widget.client.post(url,
         headers: {"Content-Type": "application/json"},
@@ -414,17 +448,73 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     }
   }
 
+  // Send Account DATA :
+  Future<void> sendReceptionFlag() async {
+    final url = Uri.parse('${dotenv.env['URL']}markreceipt');
+    var response = await widget.client.post(url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "idpub": publication.id,
+          "iduser": iduser
+        }));
 
-  void displayFloat(String message){
-    Fluttertoast.showToast(
-        msg: message,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 3,
-        backgroundColor: Colors.black54,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
+    // Checks :
+    if(response.statusCode.toString().startsWith('2')){
+      // Update the 'PUBLICATION' :
+      Publication pub = Publication(
+          id: publication.id,
+          userid: publication.userid,
+          villedepart: publication.villedepart,
+          villedestination: publication.villedestination,
+          datevoyage: publication.datevoyage,
+          datepublication: publication.datepublication,
+          reserve: publication.reserve,
+          active: 3,
+          reservereelle: publication.reserve,
+          souscripteur: publication.souscripteur, // Use OWNER Id
+          milliseconds: publication.milliseconds,
+          identifiant: publication.identifiant,
+          devise: publication.devise,
+          prix: publication.prix,
+          read: 1
+      );
+      await outil.updatePublicationWithoutFurtherActions(pub);
+
+      // Set FLAG :
+      flagSendData = false;
+    }
+    else {
+      flagSendData = false;
+      displayFloat("Impossible de traiter la demande !");
+    }
+  }
+
+
+  void displayFloat(String message, { int choix = 0}){
+    
+    switch(choix){
+      case 0:
+        Fluttertoast.showToast(
+            msg: message,
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 3,
+            backgroundColor: Colors.black54,
+            textColor: Colors.white,
+            fontSize: 16.0
+        );
+        break;
+      
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              duration: const Duration(seconds: 3),
+              content: Text(message)
+          ),
+        );
+        break;
+    }
+    
   }
 
 
@@ -440,13 +530,13 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
               title: const Text('Information'),
               content: Container(
                   height: 100,
-                  child: const Column(
+                  child: Column(
                     children: [
-                      Text("Confirmation livraison ..."),
-                      SizedBox(
+                      Text(signalerLivraison ? "Confirmation livraison ..." : "Confirmation réception ..."),
+                      const SizedBox(
                         height: 20,
                       ),
-                      SizedBox(
+                      const SizedBox(
                           height: 30.0,
                           width: 30.0,
                           child: CircularProgressIndicator(
@@ -462,7 +552,12 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     );
 
     flagSendData = true;
-    sendLivraisonFalag();
+    if(signalerLivraison){
+      sendLivraisonFalag();
+    }
+    else{
+      sendReceptionFlag();
+    }
 
     // Run TIMER :
     Timer.periodic(
@@ -474,11 +569,17 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
           timer.cancel();
 
           // Display message :
-          displayFloat('Confirmation effectuée !');
+          displayFloat('Opération effectuée !');
 
-          setState(() {
-            signalerLivraison = false;
-          });
+          // Leave SCREEN :
+          if(signalerReception){
+            Navigator.pop(context);
+          }
+          else{
+            setState(() {
+              signalerLivraison = false;
+            });
+          }
         }
       },
     );
@@ -487,7 +588,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
 
   // Display ACTION BUTTON for 'CONFIRMER LA LIVRAISON'
   Widget displayActionButton (BuildContext context) {
-    return signalerLivraison ?
+    return (signalerLivraison || signalerReception) ?
     IconButton(
         onPressed: () {
           // Send DATA to server :
@@ -501,6 +602,15 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     );
   }
 
+  String displayTitle() {
+    if(userOrSuscriber == 1){
+      return !signalerLivraison ? publication.identifiant : 'Confirmer la livraison';
+    }
+    else{
+      return !signalerReception ? publication.identifiant : 'Confirmer la réception';
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -510,7 +620,8 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
           backgroundColor: Colors.white,
           appBar: AppBar(
               backgroundColor: Colors.white,
-              title: Text( !signalerLivraison ? publication.identifiant : 'Confirmer la livraison',
+              title: Text(
+                displayTitle(),
                 textAlign: TextAlign.start,
               ),
               shape: const RoundedRectangleBorder(
@@ -605,7 +716,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                         ),
                                         Row(
                                           children: [
-                                            const Text('Reste : '),
+                                            Text(userOrSuscriber == 0 ? 'Réservé : ' : 'Reste : '),
                                             Text(userOrSuscriber == 0 ?
                                             outil.getPublicationSuscribed() != null ?
                                             '${outil.getPublicationSuscribed()!.reservereelle} Kg' :
@@ -664,6 +775,46 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                   ],
                                 ),
                               ),
+                              userOrSuscriber == 0 ?
+                              (publication.active == 2 ?
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 10, top: 20, right: 10),
+                                    child: const Column(
+                                      children: [
+                                        Divider(
+                                          color: Colors.black,
+                                          height: 5,
+                                        ),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.clean_hands,
+                                              size: 25,
+                                              color: Color(0xFF037C0D),
+                                            ),
+                                            SizedBox(
+                                              width: 20,
+                                            ),
+                                            Text('Le colis a été remis',
+                                              style: TextStyle(
+                                                  fontSize: 18
+                                              ),
+                                            )
+                                          ],
+                                        )
+                                      ],
+                                    ),
+                                  )
+                              :
+                                  const SizedBox(
+                                    height: 2,
+                                  )
+                              )
+                              :
+                              const SizedBox(
+                                height: 2,
+                              )
+                              ,
                               userOrSuscriber == 0 ?
                               displayOwnerOrReserverButton() :
                               GetBuilder<SouscriptionGetController>(

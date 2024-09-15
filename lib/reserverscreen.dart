@@ -280,16 +280,16 @@ class _ReservePaiement extends State<ReservePaiement> {
         builder: (BuildContext context) {
           dialogContext = context;
           return AlertDialog(
-            title: Text('Information'),
+            title: const Text('Information'),
             content: Container(
               height: 100,
-              child: const Column(
+              child: Column(
                 children: [
-                  Text("Finalisation paiement ..."),
-                  SizedBox(
+                  Text(montantFinal == "0" ? "Réservation encours ..." : "Finalisation paiement ..."),
+                  const SizedBox(
                     height: 20,
                   ),
-                  SizedBox(
+                  const SizedBox(
                       height: 30.0,
                       width: 30.0,
                       child: CircularProgressIndicator(
@@ -330,7 +330,8 @@ class _ReservePaiement extends State<ReservePaiement> {
   // Send Account DATA :
   Future<void> sendReservationRequest() async {
     final hNow = DateTime.now();
-    final url = Uri.parse('${dotenv.env['URL']}managereservation');
+    final url = montantFinal == "0" ? Uri.parse('${dotenv.env['URL']}bookreservation') :
+      Uri.parse('${dotenv.env['URL']}managereservation');
     var response = await widget.client.post(url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({

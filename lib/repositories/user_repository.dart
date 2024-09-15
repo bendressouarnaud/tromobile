@@ -8,6 +8,7 @@ class UserRepository {
   Future<User?> findById(int id) => userDao.findById(id);
   Future<User?> getConnectedUser() => userDao.getConnectedUser();
   Future<List<User>> findAllByIdIn(List<int> ids) => userDao.findAllByIdIn(ids);
+  Future<List<User>> findAllUsers() => userDao.findAllUsers();
   Future<User?> findConnectedUser() => userDao.findConnectedUser(["id"
     ,"nom"
     ,"prenom"

@@ -23,6 +23,7 @@ import 'package:tro/screens/listannonce.dart';
 import 'package:tro/services/servicegeo.dart';
 import 'package:tro/skeleton.dart';
 
+import 'chatmanagement.dart';
 import 'constants.dart';
 import 'loadingpayment.dart';
 import 'ecrancompte.dart';
@@ -291,7 +292,7 @@ class _WelcomePageState extends State<WelcomePage> {
       case 4:
         if(!fromNotification) {
           // Create User if not exist :
-          Servicegeo().processIncommingChat(message, outil);
+          Servicegeo().performReservationCheck(message, outil);
         }
         else{
           // Open 'HistoriqueAnnonce'
@@ -300,6 +301,11 @@ class _WelcomePageState extends State<WelcomePage> {
           Ville vDest = await outil.getVilleById(pub.villedestination);
           openHistoriqueAnnonce(pub, vDepart, vDest, 0, false);
         }
+        break;
+
+      case 5:
+        //
+        Servicegeo().trackPublicationDelivery(message, outil);
         break;
     }
   }
@@ -569,6 +575,11 @@ class _WelcomePageState extends State<WelcomePage> {
               }
             ),
             const NavigationDestination(
+              selectedIcon: Icon(Icons.chat_bubble),
+              icon: Icon(Icons.chat_bubble_outline),
+              label: 'Chat',
+            ),
+            const NavigationDestination(
               selectedIcon: Icon(Icons.access_time_filled),
               icon: Icon(Icons.access_time),
               label: 'Historique',
@@ -627,16 +638,11 @@ class _WelcomePageState extends State<WelcomePage> {
           onPressed: () async{
             User? usr = await outil.pickLocalUser();
             if(usr != null){
+              // Init if needed 
+              cUser ??= usr;
+
               //
               callForCountry(listePays);
-              /*Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context){
-                        return InappWebViewCustom();
-                      }
-                  )
-              );*/
             }
             else{
               Fluttertoast.showToast(
@@ -661,8 +667,12 @@ class _WelcomePageState extends State<WelcomePage> {
                 listePublication = snapshot.data[0];
                 return GetBuilder<PublicationGetController>(
                     builder: (PublicationGetController controller) {
+                      // Sort :
+                      controller.publicationData.sort((a,b) =>
+                          b.id.compareTo(a.id));
                       return SingleChildScrollView(
-                        child: EcranAnnonce().displayAnnonce(controller.publicationData, listePays, listeVille,
+                        child: EcranAnnonce().displayAnnonce(controller.publicationData
+                            , listePays, listeVille,
                         _userController.userData ,context, false, widget.client),
                       );
                     }
@@ -675,6 +685,7 @@ class _WelcomePageState extends State<WelcomePage> {
               }
             }
           ),
+          ChatManagement(client: widget.client),
           Historique(client: widget.client),
           EcranCompte(client: widget.client),
         ][currentPageIndex]);
