@@ -14,6 +14,7 @@ import 'package:http/src/response.dart' as mreponse;
 import 'package:tro/models/cible.dart';
 import 'package:tro/models/ville.dart';
 import 'package:tro/pageaccueil.dart';
+import 'package:tro/repositories/cible_repsository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
 
@@ -32,10 +33,11 @@ import 'models/user.dart';
 
 
 class EcranCreationCompte extends StatefulWidget {
-  const EcranCreationCompte({Key? key, required this.listeCountry, required this.listeVille, required this.client}) : super(key: key);
+  const EcranCreationCompte({Key? key, required this.listeCountry, required this.listeVille, required this.client, required this.gUser}) : super(key: key);
   final List<Pays> listeCountry;
   final List<Ville> listeVille;
   final Client client;
+  final User? gUser;
   //final https.Client client;
 
   @override
@@ -65,8 +67,10 @@ class _NewCreationState extends State<EcranCreationCompte> {
   final typePiece = ["CNI", "TITRE SEJOUR", "PASSEPORT"];
   final _userRepository = UserRepository();
   final _villeRepository = VilleRepository();
+  final _cibleRepository = CibleRepository();
   late BuildContext dialogContext;
   bool flagSendData = false;
+  bool flagServerResponse = false;
   //
   final UserGetController _userController = Get.put(UserGetController());
   final CibleGetController _cibleController = Get.put(CibleGetController());
@@ -93,9 +97,8 @@ class _NewCreationState extends State<EcranCreationCompte> {
     // Order LIST :
     listeVille.sort((a,b) => a.name.compareTo(b.name));
 
-    //client = widget.client!;
-    /*Future.delayed(const Duration(milliseconds: 1000), () {
-    });*/
+    // Set DATA if needed :
+    checkUserPresence();
   }
 
   @override
@@ -123,6 +126,24 @@ class _NewCreationState extends State<EcranCreationCompte> {
       villeResidence = listeVille.first;
     }
     );
+  }
+
+  void checkUserPresence() async{
+    //User? usr = await _userRepository.getConnectedUser();
+    if(widget.gUser != null){
+      nomController = TextEditingController(text: widget.gUser!.nom );
+      prenomController = TextEditingController(text: widget.gUser!.prenom );
+      emailController = TextEditingController(text: widget.gUser!.email );
+      numeroController = TextEditingController(text: widget.gUser!.numero );
+      adresseController = TextEditingController(text: widget.gUser!.adresse );
+      pieceController = TextEditingController(text: widget.gUser!.numeropieceidentite );
+      // NATIONALITE :
+      paysDepartMenu = listeCountry.where((pays) => pays.iso2 == widget.gUser!.nationnalite).first;
+      // Ville residence , From CIBLE :
+      villeResidence = listeVille.where((ville) => ville.id == widget.gUser!.villeresidence).first;
+      // PIECE IDENTITE :
+      dropdownvalueTitre = widget.gUser!.typepieceidentite;
+    }
   }
 
 
@@ -194,7 +215,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
           "ville": villeResidence!.name,
           "typepieceidentite": dropdownvalueTitre,
           "token": getToken,
-        }));
+        })).timeout(const Duration(seconds: timeOutValue));
 
     // Checks :
     if(response.statusCode == 200){
@@ -214,15 +235,24 @@ class _NewCreationState extends State<EcranCreationCompte> {
             adresse: adresseController.text,
             fcmtoken: getToken!,
             pwd: "",
-            codeinvitation: "");
+            codeinvitation: "",
+            villeresidence: villeResidence!.id);
         // Save :
         _userController.addData(user);
         
         // Add default CIBLE :
-        Cible cible = Cible(id: ur.cibleid,
-            villedepartid: villeResidence!.id,
-            paysdepartid: paysDepartMenu!.id, villedestid: villeResidence!.id, paysdestid: paysDepartMenu!.id, topic: '');
-        _cibleController.addData(cible);
+        if(ur.cibleid > 0) {
+          Cible cible = Cible(id: ur.cibleid,
+              villedepartid: villeResidence!.id,
+              paysdepartid: paysDepartMenu!.id,
+              villedestid: villeResidence!.id,
+              paysdestid: paysDepartMenu!.id,
+              topic: '');
+          _cibleController.addData(cible);
+        }
+
+        // Can close WINDOW :
+        flagServerResponse = false;
       }
 
       // Set FLAG :
@@ -497,15 +527,37 @@ class _NewCreationState extends State<EcranCreationCompte> {
                                   context: context,
                                   builder: (BuildContext context) {
                                     dialogContext = context;
-                                    return const AlertDialog(
-                                      title: Text('Information'),
-                                      content: Text("Veuillez patienter ..."),
+                                    return WillPopScope(
+                                      onWillPop: () async => false,
+                                      child: const AlertDialog(
+                                        title: Text('Information'),
+                                        content: SizedBox(
+                                            height: 100,
+                                            child: Column(
+                                              children: [
+                                                Text("Création du compte ..."),
+                                                SizedBox(
+                                                  height: 20,
+                                                ),
+                                                SizedBox(
+                                                    height: 30.0,
+                                                    width: 30.0,
+                                                    child: CircularProgressIndicator(
+                                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                                      strokeWidth: 3.0, // Width of the circular line
+                                                    )
+                                                )
+                                              ],
+                                            )
+                                        )
+                                      )
                                     );
                                   }
                               );
 
                               // Send DATA :
                               flagSendData = true;
+                              flagServerResponse = true;
                               if(defaultTargetPlatform == TargetPlatform.android){
                                 generateTokenSuscription(abrevPays, paysDepartMenu!.name); // FOr TOKEN
                               }
@@ -524,9 +576,11 @@ class _NewCreationState extends State<EcranCreationCompte> {
                                     timer.cancel();
 
                                     // Kill ACTIVITY :
-                                    if(Navigator.canPop(context)){
-                                      Navigator.pop(context);
-                                      //Navigator.of(context).pop({'selection': '1'});
+                                    if(!flagServerResponse) {
+                                      if (Navigator.canPop(context)) {
+                                        Navigator.pop(context);
+                                        //Navigator.of(context).pop({'selection': '1'});
+                                      }
                                     }
                                   }
                                 },

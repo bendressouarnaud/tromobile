@@ -10,6 +10,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:tro/models/ville.dart';
 import 'package:tro/repositories/pays_repository.dart';
+import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
 import 'authentification.dart';
 import 'constants.dart';
@@ -22,6 +23,7 @@ import 'getxcontroller/getusercontroller.dart';
 import 'httpbeans/countrydata.dart';
 import 'managenotifications.dart';
 import 'models/pays.dart';
+import 'models/user.dart';
 
 
 
@@ -48,9 +50,11 @@ class _NewEcranState extends State<EcranCompte> {
   bool accountDeletion = false;
   final _paysRepository = PaysRepository();
   final _villeRepository = VilleRepository();
+  final _userRepository = UserRepository();
   int cptInit = 0;
   late List<Pays> listePays;
   late List<Ville> listeVille;
+  User? usr;
 
 
 
@@ -64,6 +68,8 @@ class _NewEcranState extends State<EcranCompte> {
 
   //
   void loadingPays() async {
+    //
+    usr = await _userRepository.getConnectedUser();
     listePays = await _paysRepository.findAll();
     listeVille = await _villeRepository.findAll();
   }
@@ -234,14 +240,13 @@ class _NewEcranState extends State<EcranCompte> {
                         alignment: Alignment.topRight,
                         child: ElevatedButton(
                             onPressed: () {
-                              //
 
                               if(listePays.isNotEmpty){
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(builder:
                                         (context) =>
-                                        EcranCreationCompte(listeCountry: listePays, listeVille: listeVille, client: widget.client,)
+                                        EcranCreationCompte(listeCountry: listePays, listeVille: listeVille, client: widget.client, gUser: usr)
                                     )
                                 );
 

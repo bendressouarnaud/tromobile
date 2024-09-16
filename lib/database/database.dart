@@ -43,7 +43,7 @@ class DatabaseHelper {
   Future _onCreate(Database db, int version) async {
     await db.execute('CREATE TABLE user (id INTEGER PRIMARY KEY,typepieceidentite TEXT,numeropieceidentite TEXT,'
         'nom TEXT, prenom TEXT, email TEXT,numero TEXT,adresse TEXT,fcmtoken TEXT,pwd TEXT, codeinvitation TEXT,'
-        'nationnalite TEXT)');
+        'nationnalite TEXT, villeresidence INTEGER)');
     await db.execute('CREATE TABLE pays (id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT,iso2 TEXT,iso3 TEXT,unicodeFlag TEXT)');
 
     await db.execute('CREATE TABLE publication (id INTEGER PRIMARY KEY,userid INTEGER,villedepart INTEGER,'

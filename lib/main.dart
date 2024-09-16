@@ -88,7 +88,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
             adresse: message.data['adresse'],
             fcmtoken: '',
             pwd: "123",
-            codeinvitation: "123");
+            codeinvitation: "123",
+            villeresidence: 0);
         // Save :
         outil.addUser(user);
       }
@@ -149,7 +150,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
             adresse: message.data['adresse'],
             fcmtoken: '',
             pwd: "123",
-            codeinvitation: "123");
+            codeinvitation: "123",
+            villeresidence: 0);
         // Save :
         outil.addUser(user);
       }

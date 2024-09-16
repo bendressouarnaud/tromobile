@@ -102,7 +102,7 @@ class _NewAuth extends State<AuthentificationEcran> {
           "mail": emailController.text,
           "pwd": pwdController.text,
           "fcmtoken": getToken
-        }));
+        })).timeout(const Duration(seconds: timeOutValue));
 
     // Checks :
     if(response.statusCode == 200){
@@ -121,7 +121,8 @@ class _NewAuth extends State<AuthentificationEcran> {
           adresse: bn.adresse,
           fcmtoken: getToken!,
           pwd: "",
-          codeinvitation: "");
+          codeinvitation: "",
+          villeresidence: bn.villeresidence);
       // Save :
       _userController.addData(user);
       // Persist CIBLE :
@@ -170,7 +171,8 @@ class _NewAuth extends State<AuthentificationEcran> {
               adresse: userbean.adresse,
               fcmtoken: '',
               pwd: "123",
-              codeinvitation: "123");
+              codeinvitation: "123",
+              villeresidence: 0);
           // Save :
           _userController.addData(user);
         }

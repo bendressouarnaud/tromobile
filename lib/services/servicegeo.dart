@@ -75,7 +75,8 @@ class Servicegeo {
           adresse: message.data['adresse'],
           fcmtoken: '',
           pwd: "123",
-          codeinvitation: "123");
+          codeinvitation: "123",
+          villeresidence: 0);
       // Save :
       outil.addUser(user);
     }
@@ -125,7 +126,8 @@ class Servicegeo {
           adresse: message.data['adresse'],
           fcmtoken: '',
           pwd: "123",
-          codeinvitation: "123");
+          codeinvitation: "123",
+          villeresidence: 0);
       // Save :
       outil.addUser(user);
     }

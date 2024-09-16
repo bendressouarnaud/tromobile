@@ -360,7 +360,8 @@ class _ReservePaiement extends State<ReservePaiement> {
             adresse: data.adresse,
             fcmtoken: '',
             pwd: "123",
-            codeinvitation: "123");
+            codeinvitation: "123",
+            villeresidence: 0);
         // Save :
         outil.addUser(user);
         //await _userRepository.insertUser(user);

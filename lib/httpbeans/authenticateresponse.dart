@@ -12,6 +12,7 @@ class AuthenticateResponse {
 
   // A t t r i b u t e s  :
   final int id;
+  final int villeresidence;
   final String typepieceidentite;
   final String numeropieceidentite;
   final String nationnalite;
@@ -31,13 +32,14 @@ class AuthenticateResponse {
   // M e t h o d s  :
   AuthenticateResponse({required this.nationnalite, required this.id, required this.typepieceidentite, required this.numeropieceidentite, required this.nom, required this.prenom, required this.email, required this.numero,
     required this.adresse, required this.fcmtoken, required this.pwd, required this.codeinvitation, required this.cibles
-    , required this.publications, required this.souscripteurs, required this.sosucriptions});
+    , required this.publications, required this.souscripteurs, required this.sosucriptions, required this.villeresidence});
   factory AuthenticateResponse.fromJson(Map<String, dynamic> json) {
     return AuthenticateResponse(
       //This will be used to convert JSON objects that
       //are coming from querying the database and converting
       //it into a Todo object
       id: json['id'],
+      villeresidence: json['villeresidence'],
       typepieceidentite: json['typepieceidentite'],
       numeropieceidentite: json['numeropieceidentite'],
       nom: json['nom'],

@@ -638,7 +638,7 @@ class _WelcomePageState extends State<WelcomePage> {
           onPressed: () async{
             User? usr = await outil.pickLocalUser();
             if(usr != null){
-              // Init if needed 
+              // Init if needed
               cUser ??= usr;
 
               //
