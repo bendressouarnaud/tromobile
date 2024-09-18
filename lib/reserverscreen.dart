@@ -20,6 +20,7 @@ import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/singletons/outil.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'constants.dart';
 import 'getxcontroller/getreservercontroller.dart';
 import 'httpbeans/hubwaveresponseshort.dart';
 import 'httpbeans/reservationresponse.dart';
@@ -62,6 +63,7 @@ class _ReservePaiement extends State<ReservePaiement> {
   late BuildContext dialogContext;
   bool flagSendData = false;
   bool flagLoadingPayment = false;
+  bool closeAlertDialog = false;
   Outil outil = Outil();
   String montantFinal = "";
   //
@@ -91,37 +93,6 @@ class _ReservePaiement extends State<ReservePaiement> {
       displayLoadingInterface(context);
     }
   }
-
-  /*void verifyPaymentOnServer() async{
-    final url = Uri.parse('${dotenv.env['URL']}generatewaveid');
-    var response = await widget.client.post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "idpub": publication.id,
-          "iduser": localuser.id
-        })).timeout(const Duration(seconds: 10));;
-
-    // Checks :
-    flagLoadingPayment = false;
-    if(response.statusCode == 200){
-      HubWaveResponseShort hubWaveResponse = HubWaveResponseShort.fromJson(json.decode(response.body));
-      if(hubWaveResponse.id.isNotEmpty) {
-        // Open link
-        final Uri url = Uri.parse(hubWaveResponse.wave_launch_url);
-        if (!await launchUrl(url)) {
-          //throw Exception('Could not launch $_url');
-        }
-        else{
-          //
-          hitServerAfterUrlPayment = true;
-        }
-      }
-    }
-    else{
-      displayMessage('Une erreur est survenue', 3);
-    }
-  }
-  */
 
   @override
   void dispose() {
@@ -197,7 +168,7 @@ class _ReservePaiement extends State<ReservePaiement> {
           "idpub": publication.id,
           "iduser": localuser.id,
           "reserve": reserveController.text
-        })).timeout(const Duration(seconds: 10));;
+        })).timeout(const Duration(seconds: timeOutValue));;
 
     // Checks :
     flagLoadingPayment = false;
@@ -279,32 +250,36 @@ class _ReservePaiement extends State<ReservePaiement> {
         context: dContext,
         builder: (BuildContext context) {
           dialogContext = context;
-          return AlertDialog(
-            title: const Text('Information'),
-            content: Container(
-              height: 100,
-              child: Column(
-                children: [
-                  Text(montantFinal == "0" ? "Réservation encours ..." : "Finalisation paiement ..."),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  const SizedBox(
-                      height: 30.0,
-                      width: 30.0,
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                        strokeWidth: 3.0, // Width of the circular line
-                      )
-                  )
-                ],
-              )
+          return WillPopScope(
+            onWillPop: () async => false,
+            child: AlertDialog(
+                title: const Text('Information'),
+                content: Container(
+                    height: 100,
+                    child: Column(
+                      children: [
+                        Text(montantFinal == "0" ? "Réservation encours ..." : "Finalisation paiement ..."),
+                        const SizedBox(
+                          height: 20,
+                        ),
+                        const SizedBox(
+                            height: 30.0,
+                            width: 30.0,
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                              strokeWidth: 3.0, // Width of the circular line
+                            )
+                        )
+                      ],
+                    )
+                )
             )
           );
         }
     );
 
     flagSendData = true;
+    closeAlertDialog = true;
     sendReservationRequest();
 
     // Run TIMER :
@@ -317,9 +292,11 @@ class _ReservePaiement extends State<ReservePaiement> {
           timer.cancel();
 
           // Kill ACTIVITY :
-          if(Navigator.canPop(dContext)){
-            Navigator.pop(dContext);
-            //Navigator.of(context).pop({'selection': '1'});
+          if(!closeAlertDialog) {
+            if (Navigator.canPop(dContext)) {
+              Navigator.pop(dContext);
+              //Navigator.of(context).pop({'selection': '1'});
+            }
           }
         }
       },
@@ -339,7 +316,7 @@ class _ReservePaiement extends State<ReservePaiement> {
           "iduser": localuser.id, // CHANGE THAT :
           "montant": montantFinal,
           "reserve": reserveController.text
-        }));
+        })).timeout(const Duration(seconds: timeOutValue));
 
     // Checks :
     if(response.statusCode == 200){
@@ -390,6 +367,7 @@ class _ReservePaiement extends State<ReservePaiement> {
 
       // Set FLAG :
       flagSendData = false;
+      closeAlertDialog = false;
     }
     else if(response.statusCode == 403) {
       flagSendData = false;
@@ -544,64 +522,6 @@ class _ReservePaiement extends State<ReservePaiement> {
                           .toString(); // Mettre en place un endpoint à contacter côté serveur pour générer des ID unique dans votre BD
 
                       loadingWavePayment(context);
-                      /*Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context){
-                                return LoadingPayment(amount: int.parse(amount),
-                                    idpub: publication.id,
-                                    iduser: localuser.id,
-                                    reserve: int.parse(reserveController.text));
-                              }
-                          )
-                      );*/
-
-                      /*await Get.to(CinetPayCheckout(
-                        title: 'Payment Checkout',
-                        titleStyle: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                        titleBackgroundColor: Colors.green,
-                        configData: <String, dynamic>{
-                          'apikey': '13013879545bdc3a5579f458.42836232',
-                          'site_id': int.parse("448173"),
-                          'notify_url': 'http://51.91.101.20/taxsika'
-                        },
-                        paymentData: <String, dynamic>{
-                          'transaction_id': transactionId,
-                          'amount': _amount,
-                          'currency': 'XOF',
-                          'channels': 'ALL',
-                          'description': 'Payment test',
-                        },
-                        waitResponse: (data) {
-                          if (mounted) {
-
-                            // Check:
-                            if(data['status'] == 'ACCEPTED'){
-                              // Display SYNCHRO :
-                              displayLoadingInterface(context);
-                            }
-
-                            /*setState(() {
-                            Get.back();
-                          });*/
-                          }
-                        },
-                        onError: (data) {
-                          if (mounted) {
-                            setState(() {
-                              response = data;
-                              message = response!['description'];
-                              print(response);
-                              icon = Icons.warning_rounded;
-                              color = Colors.yellowAccent;
-                              show = true;
-                              Get.back();
-                            });
-                          }
-                        },
-                      ));
-                      */
                     }
                   },
                   icon: const Icon(

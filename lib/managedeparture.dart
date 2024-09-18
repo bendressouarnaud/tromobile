@@ -156,6 +156,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
   //final _userRepository = UserRepository();
   late BuildContext dialogContext;
   bool flagSendData = false;
+  bool closeAlertDialog = false;
   int retour = 0;
   //
   //final PublicationGetController _publicationController = Get.put(PublicationGetController());
@@ -299,11 +300,10 @@ class _ManageDepartureState extends State<ManageDeparture> {
           "deviseid": devises.id,
           "deviselib": devises.libelle,
           "prix": prixController.text,
-        }));
+        })).timeout(const Duration(seconds: timeOutValue));
 
     // Checks :
     if(response.statusCode == 200){
-
       DepartureResponse reponse =  DepartureResponse.fromJson(json.decode(response.body));
       displayToast("Annonce créée !");
       // create 'PUBLICATION' :
@@ -330,7 +330,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
       //_publicationRepository.insert(pub);
 
       // Set FLAG :
-      flagSendData = false;
+      closeAlertDialog = false;
     }
     else {
       retour = 1;
@@ -344,6 +344,9 @@ class _ManageDepartureState extends State<ManageDeparture> {
           fontSize: 16.0
       );
     }
+
+    //
+    flagSendData = false;
   }
 
   @override
@@ -685,9 +688,30 @@ class _ManageDepartureState extends State<ManageDeparture> {
                                     context: context,
                                     builder: (BuildContext context) {
                                       dialogContext = context;
-                                      return const AlertDialog(
-                                        title: Text('Information'),
-                                        content: Text("Veuillez patienter ..."),
+                                      return WillPopScope(
+                                          onWillPop: () async => false,
+                                          child: const AlertDialog(
+                                              title: Text('Information'),
+                                              content: SizedBox(
+                                                  height: 100,
+                                                  child: Column(
+                                                    children: [
+                                                      Text("Création de l'annonce ..."),
+                                                      SizedBox(
+                                                        height: 20,
+                                                      ),
+                                                      SizedBox(
+                                                          height: 30.0,
+                                                          width: 30.0,
+                                                          child: CircularProgressIndicator(
+                                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                                            strokeWidth: 3.0, // Width of the circular line
+                                                          )
+                                                      )
+                                                    ],
+                                                  )
+                                              )
+                                          )
                                       );
                                     }
                                 );
@@ -698,6 +722,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
 
                                 // Send DATA :
                                 flagSendData = true;
+                                closeAlertDialog = true;
                                 // Currently not running FCM for iphone
                                 sendOrderRequest(abrevPays);
 
@@ -711,13 +736,12 @@ class _ManageDepartureState extends State<ManageDeparture> {
                                       timer.cancel();
 
                                       // Kill ACTIVITY :
-                                      if(Navigator.canPop(context)){
-                                        Navigator.pop(context);
-                                        //Navigator.of(context).pop({'selection': '1'});
+                                      if(!closeAlertDialog) {
+                                        if (Navigator.canPop(context)) {
+                                          Navigator.pop(context);
+                                          //Navigator.of(context).pop({'selection': '1'});
+                                        }
                                       }
-                                      /*else{
-                                          SystemNavigator.pop();
-                                        }*/
                                     }
                                     else if(retour > 0){
                                       Navigator.pop(dialogContext);

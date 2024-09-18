@@ -55,6 +55,7 @@ class _NewAuth extends State<AuthentificationEcran> {
   final _userRepository = UserRepository();
   late BuildContext dialogContext;
   bool flagSendData = false;
+  bool closeAlertDialog = false;
   //
   final UserGetController _userController = Get.put(UserGetController());
   final CibleGetController _cibleController = Get.put(CibleGetController());
@@ -96,13 +97,15 @@ class _NewAuth extends State<AuthentificationEcran> {
   // Send Account DATA :
   Future<void> authenicatemobilecustomer() async {
     final url = Uri.parse('${dotenv.env['URL']}authenticate');
-    var response = await widget.client.post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "mail": emailController.text,
-          "pwd": pwdController.text,
-          "fcmtoken": getToken
-        })).timeout(const Duration(seconds: timeOutValue));
+    var response = await widget.client.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "mail": emailController.text,
+        "pwd": pwdController.text,
+        "fcmtoken": getToken
+      })
+    ).timeout(const Duration(seconds: timeOutValue));
 
     // Checks :
     if(response.statusCode == 200){
@@ -191,8 +194,10 @@ class _NewAuth extends State<AuthentificationEcran> {
       }
 
       // Set FLAG :
-      flagSendData = false;
+      closeAlertDialog = false;
     }
+    // Notify :
+    flagSendData = false;
   }
 
   @override
@@ -320,6 +325,7 @@ class _NewAuth extends State<AuthentificationEcran> {
 
                                 // Send DATA :
                                 flagSendData = true;
+                                closeAlertDialog = true;
                                 if(defaultTargetPlatform == TargetPlatform.android){
                                   generateTokenSuscription();//
                                 }
@@ -337,14 +343,16 @@ class _NewAuth extends State<AuthentificationEcran> {
                                       Navigator.pop(dialogContext);
                                       timer.cancel();
 
-                                      if(user_Company){
-                                        // Kill APPLICATION :
-                                        SystemNavigator.pop();
-                                      }
-                                      else if(_userController.userData.isNotEmpty){
-                                        // Kill ACTIVITY :
-                                        if(Navigator.canPop(context)){
-                                          Navigator.pop(context);
+                                      if(!closeAlertDialog) {
+                                        if (user_Company) {
+                                          // Kill APPLICATION :
+                                          SystemNavigator.pop();
+                                        }
+                                        else if (_userController.userData.isNotEmpty) {
+                                          // Kill ACTIVITY :
+                                          if (Navigator.canPop(context)) {
+                                            Navigator.pop(context);
+                                          }
                                         }
                                       }
                                     }

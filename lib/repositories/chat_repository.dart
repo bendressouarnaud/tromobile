@@ -10,6 +10,7 @@ class ChatRepository {
   Future<Chat> findById(int data) => chatDao.findById(data);
   Future<Chat> findByIdentifiant(String data) => chatDao.findByIdentifiant(data);
   Future<List<Chat>> findAll(int data) => chatDao.findAllBy(data);
+  Future<List<Chat>> findAllByRead(int read) => chatDao.findAllByRead(read);
   Future<List<Chat>> findAllChats() => chatDao.findAll();
   Future<List<Chat>> findAllByIdpubAndIduser(int idpub, int iduser, int idlocaluser) =>
       chatDao.findAllByIdpubAndIduser(idpub, iduser, idlocaluser);

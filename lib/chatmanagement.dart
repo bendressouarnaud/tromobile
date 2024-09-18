@@ -55,6 +55,26 @@ class _ChatManagementState extends State<ChatManagement> {
     super.initState();
   }
 
+  //
+  /*Future<void> flagChat(Chat cChat) async{
+    if(cChat.read == 0){
+      // Flag it :
+      Chat nChat = Chat(
+          id: cChat.id,
+          idpub: cChat.idpub,
+          milliseconds: cChat.milliseconds,
+          sens: cChat.sens,
+          contenu: cChat.contenu,
+          statut: cChat.statut,
+          identifiant: cChat.identifiant,
+          iduser: cChat.iduser,
+          idlocaluser: cChat.idlocaluser,
+          read: 1
+      );
+      await outil.updateChatWithoutNotif(nChat); //  updateData
+    }
+  }*/
+
   Future<List<User>> getUsersList() async{
     await outil.findAllChats();
     ownersChat = await _userRepository.findAllUsers();
@@ -81,16 +101,11 @@ class _ChatManagementState extends State<ChatManagement> {
     return lesPublications.where((element) => element.id == idpub).first.identifiant;
   }
 
-  String processChat(Chat chat) {
-    /*if(feedPublications.where((pub) => pub == chat.idpub).isEmpty){
-      // Do the necessary :
-      feedPublications.add(chat.idpub);
-      // Find PEPOLE name :
-      User tUser = ownersChat.where((user) => user.id == chat.iduser).first;
-      // Display message :
-      String leMessage = chat.contenu;
-    }*/
+  int processChatForGettingUserId(Chat chat) {
+    return ownersChat.where((user) => user.id == chat.iduser).first.id;
+  }
 
+  String processChat(Chat chat) {
     // Find PEPOLE name :
     tUser = ownersChat.where((user) => user.id == chat.iduser).first;
     // Display message :
@@ -100,7 +115,7 @@ class _ChatManagementState extends State<ChatManagement> {
   List<Chat> filterChatList(List<Chat> readList) {
     List<Chat> tampon = [];
     for(Chat mChat in readList){
-      if(tampon.where((chat) => chat.idpub == mChat.idpub).isEmpty){
+      if(tampon.where((chat) => ((chat.idpub == mChat.idpub) && (chat.iduser == mChat.iduser))).isEmpty){
         tampon.add(mChat);
       }
     }
@@ -131,6 +146,7 @@ class _ChatManagementState extends State<ChatManagement> {
                     controller.data.sort((a,b) =>
                         b.id.compareTo(a.id));
                     var liste = filterChatList(controller.data);
+                    //var liste = controller.data;
 
                     return controller.data.isEmpty ?
                     const Center(
@@ -153,17 +169,27 @@ class _ChatManagementState extends State<ChatManagement> {
                               return Column(
                                 children: [
                                   GestureDetector(
-                                    onTap: () {
+                                    onTap: () async{
                                       //
-                                      Navigator.push(context,
+                                      //await outil.updateData(liste[index]);
+
+                                      final result = await Navigator.push(context,
                                         MaterialPageRoute(
                                             builder: (context) {
                                               return Messagerie(idpub: liste[index].idpub,
                                                   owner: processChat(liste[index]),
-                                                  idSuscriber: 0, client: widget.client);
+                                                  idSuscriber: processChatForGettingUserId(liste[index]),
+                                                  client: widget.client);
                                             }
                                         )
                                       );
+
+                                      if(result == '1'){
+                                        // Update from there :
+                                        //outil.callChatUpdate();
+                                        await outil.findAllChats( refreshNav: true );
+                                        outil.callChatUpdate();
+                                      }
                                     },
                                     child: Container(
                                         decoration: BoxDecoration(
@@ -219,7 +245,7 @@ class _ChatManagementState extends State<ChatManagement> {
                                                         margin: const EdgeInsets.only(right: 10),
                                                         child: Text(
                                                             liste[index].contenu.length > 30 ?
-                                                            '${liste[index].contenu.substring(0,26)} ...' :
+                                                            '${liste[index].contenu.substring(0,20)} ...' :
                                                             liste[index].contenu,
                                                             style: const TextStyle(
                                                                 color: Colors.black87

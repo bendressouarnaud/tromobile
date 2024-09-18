@@ -72,6 +72,7 @@ class _creerCible extends State<CreerCible> {
   int init = 0;
   late BuildContext dialogContext;
   bool flagSendData = false;
+  bool closeAlertDialog = false;
   String topic = "";
 
 
@@ -104,16 +105,6 @@ class _creerCible extends State<CreerCible> {
       listeVilleDestination.sort((a,b) => a.name.compareTo(b.name));
       villeDepart = idvilledep != 0 ? listeVille.where((ville) => ville.id == idvilledep).first : listeVille.first;
       villeDestination = idvilledest != 0 ? listeVilleDestination.where((ville) => ville.id == idvilledest).first : listeVilleDestination.first;
-
-      /*Fluttertoast.showToast(
-          msg: 'Essai $init',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.CENTER,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0
-      );*/
     }
 
     return 0;
@@ -173,7 +164,7 @@ class _creerCible extends State<CreerCible> {
           "idvilledest": villeDestination!.id,
           "villedestlib": villeDestination!.name,
           "topic": topic,
-        }));
+        })).timeout(const Duration(seconds: timeOutValue));
 
     // Checks :
     if(response.statusCode == 200){
@@ -194,11 +185,12 @@ class _creerCible extends State<CreerCible> {
       }
 
       // Set FLAG :
-      flagSendData = false;
+      closeAlertDialog = false;
     }
     else {
       displayToast("Erreur apparue");
     }
+    flagSendData = false;
   }
 
   // Our TOAST :
@@ -412,6 +404,7 @@ class _creerCible extends State<CreerCible> {
 
                           // Send DATA :
                           flagSendData = true;
+                          closeAlertDialog = true;
                           generateTopic();
 
                           // Run TIMER :
@@ -423,9 +416,11 @@ class _creerCible extends State<CreerCible> {
                                 Navigator.pop(dialogContext);
                                 timer.cancel();
 
-                                // Kill ACTIVITY :
-                                if(Navigator.canPop(context)){
-                                  Navigator.pop(context);
+                                if(!closeAlertDialog) {
+                                  // Kill ACTIVITY :
+                                  if (Navigator.canPop(context)) {
+                                    Navigator.pop(context);
+                                  }
                                 }
                               }
                             },

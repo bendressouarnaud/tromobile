@@ -10,6 +10,7 @@ import 'package:http/http.dart';
 import 'package:tro/repositories/parameters_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 
+import 'constants.dart';
 import 'models/parameters.dart';
 import 'models/user.dart';
 
@@ -39,6 +40,7 @@ class _ManageNotificationState extends State<ManageNotification> {
   User? localuser;
   Parameters? parameters;
   bool flagSendData = false;
+  bool closeAlertDialog = false;
   late BuildContext dialogContext;
 
 
@@ -128,6 +130,7 @@ class _ManageNotificationState extends State<ManageNotification> {
     );
 
     flagSendData = true;
+    closeAlertDialog = true;
     sendNotificationRequest();
 
     // Run TIMER :
@@ -157,7 +160,7 @@ class _ManageNotificationState extends State<ManageNotification> {
           "choix": _notification == ChoixNotification.perpetuelle ? 0 : 1, // CHANGE THAT :
           "startdatetime": millisecondsDebut,
           "enddatetime": millisecondsFin
-        }));
+        })).timeout(const Duration(seconds: timeOutValue));
 
     // Checks :
     if(response.statusCode.toString().startsWith('2')){
@@ -173,11 +176,12 @@ class _ManageNotificationState extends State<ManageNotification> {
       );
       await _repository.update(updateParam);
       // Set FLAG :
-      flagSendData = false;
+      closeAlertDialog = false;
     }
     else {
       displayFloat("Erreur de traitement : ${response.statusCode}", 0);
     }
+    flagSendData = false;
   }
 
   void displayFloat(String message, int choix){

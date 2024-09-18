@@ -11,6 +11,7 @@ import 'package:get/get.dart';
 import 'package:get/get_connect/http/src/response/response.dart';
 import 'package:http/http.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:tro/getxcontroller/getchatcontroller.dart';
 import 'package:tro/models/pays.dart';
 import 'package:tro/models/publication.dart';
 import 'package:tro/models/ville.dart';
@@ -25,6 +26,7 @@ import 'package:tro/skeleton.dart';
 
 import 'chatmanagement.dart';
 import 'constants.dart';
+import 'getxcontroller/getnavbarchat.dart';
 import 'loadingpayment.dart';
 import 'ecrancompte.dart';
 import 'getxcontroller/getnavbarpublication.dart';
@@ -84,6 +86,8 @@ class _WelcomePageState extends State<WelcomePage> {
   late final AppLifecycleListener _listener;
   int taillePublicationNotRead = 0;
   int cptInitTaillePublication = 0;
+  //
+  int tailleChatNotRead = 0;
 
 
   // M e t h o d  :
@@ -100,7 +104,8 @@ class _WelcomePageState extends State<WelcomePage> {
       onStateChange: _onStateChanged,
     );
 
-    // Init FireBase :
+    // Run this to check :
+    //outil.refreshAllChatsFromResumed(0);
     super.initState();
   }
 
@@ -137,7 +142,7 @@ class _WelcomePageState extends State<WelcomePage> {
       case AppLifecycleState.resumed:
         // Try to refresh PUBLICATION from THERE :
         outil.refreshAllPublicationsFromResumed();
-        //print('--------->      resumed');
+        //outil.refreshAllChatsFromResumed(0);
         //updateAppState('resumed');
       case AppLifecycleState.inactive:
         //print('--------->      inactive');
@@ -277,7 +282,7 @@ class _WelcomePageState extends State<WelcomePage> {
       case 3:
         if(!fromNotification) {
           // Create User if not exist :
-          Servicegeo().processIncommingChat(message, outil);
+          Servicegeo().processIncommingChat(message, outil, widget.client);
         }
         else{
           // Open 'CHAT'
@@ -306,6 +311,11 @@ class _WelcomePageState extends State<WelcomePage> {
       case 5:
         //
         Servicegeo().trackPublicationDelivery(message, outil);
+        break;
+
+      case 6:
+      //
+        Servicegeo().markChatReceipt(message);
         break;
     }
   }
@@ -544,6 +554,23 @@ class _WelcomePageState extends State<WelcomePage> {
     }
   }
 
+  //
+  Widget processChatIcon(List<int> liste, IconData iconData) {
+    tailleChatNotRead = liste[0];
+    if(tailleChatNotRead > 0){
+
+      // From There we can clear NOTIFICATIONS :
+      clearNotifications();
+
+      return Badge.count(
+          count: tailleChatNotRead,
+          child: Icon(iconData)
+      );
+    }
+    else {
+      return Icon(iconData);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -574,10 +601,14 @@ class _WelcomePageState extends State<WelcomePage> {
                 );
               }
             ),
-            const NavigationDestination(
-              selectedIcon: Icon(Icons.chat_bubble),
-              icon: Icon(Icons.chat_bubble_outline),
-              label: 'Chat',
+            GetBuilder<NavChatGetController>(
+                builder: (controller) {
+                  return NavigationDestination(
+                    selectedIcon: processChatIcon(controller.tableau, Icons.chat_bubble),
+                    icon: processChatIcon(controller.tableau, Icons.chat_bubble_outline),
+                    label: 'Chat',
+                  );
+                }
             ),
             const NavigationDestination(
               selectedIcon: Icon(Icons.access_time_filled),

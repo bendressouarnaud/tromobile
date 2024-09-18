@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart';
 import 'package:tro/main.dart';
 
+import '../constants.dart';
 import '../httpbeans/countrydata.dart';
 import '../models/chat.dart';
 import '../models/publication.dart';
@@ -11,6 +16,9 @@ import '../models/user.dart';
 import '../singletons/outil.dart';
 
 class Servicegeo {
+
+  // A T T R I B U T E S :
+
 
 
   //
@@ -92,7 +100,7 @@ class Servicegeo {
     outil.addSouscription(souscription);
   }
 
-  void processIncommingChat(RemoteMessage message, Outil outil) async{
+  void processIncommingChat(RemoteMessage message, Outil outil, Client client) async{
     User localUser = outil.getLocalUser();
     Chat newChat = Chat(
         id: 0,
@@ -107,6 +115,9 @@ class Servicegeo {
         read: 0
     );
     await outil.insertChat(newChat);
+
+    // Send back 'ACCUSé DE RéCEPTION'
+    sendAccuseReception(message.data['identifiant'], int.parse(message.data['idpub']), client);
   }
 
   // Hit USER and PUBLICATION :
@@ -182,6 +193,25 @@ class Servicegeo {
   }
 
 
+  // Refresh CHAT
+  void markChatReceipt(RemoteMessage message) async {
+    Chat ct = await outil.findChatByIdentifiant(message.data['identifiant']);
+    Chat newChat = Chat(
+        id: ct.id,
+        idpub: ct.idpub,
+        milliseconds: ct.milliseconds,
+        sens: ct.sens,
+        contenu: ct.contenu,
+        statut: 3, // Accusé de réception
+        identifiant: ct.identifiant,
+        iduser: ct.iduser,
+        idlocaluser: ct.idlocaluser,
+        read: ct.read
+    );
+    await outil.updateData(newChat);
+  }
+
+
   Future<Widget> processAnnonceIcon(IconData iconData) async{
     List<Publication> liste = await outil.findAllPublication();
     int taille = liste.where((element) => element.read == 0).toList().length;
@@ -194,5 +224,17 @@ class Servicegeo {
     else {
       return Icon(iconData);
     }
+  }
+
+  // Send Account DATA :
+  Future<void> sendAccuseReception(String identifiant, int idpub, Client client) async {
+    final url = Uri.parse('${dotenv.env['URL']}sendaccusereception');
+    await client.post(url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "identifiant": identifiant,
+          "idpub": idpub
+        })
+    ).timeout(const Duration(seconds: timeOutValue));
   }
 }

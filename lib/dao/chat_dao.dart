@@ -28,7 +28,7 @@ class ChatDao {
   Future<int> update(Chat data) async {
     final db = await dbProvider.database;
     var result = await db.update("chat", data.toDatabaseJson(),
-        where: "id = ?", whereArgs: [data.id]);
+        where: "identifiant = ?", whereArgs: [data.identifiant]);
     return result;
   }
 
@@ -39,6 +39,15 @@ class ChatDao {
         ? data.map((c) => Chat.fromDatabaseJson(c)).toList()
         : [];
     return liste.first;
+  }
+
+  Future<List<Chat>> findAllByRead(int read) async {
+    final db = await dbProvider.database;
+    var data = await db.query('chat', where: 'read = ?', whereArgs: [read]);
+    List<Chat> liste = data.isNotEmpty
+        ? data.map((c) => Chat.fromDatabaseJson(c)).toList()
+        : [];
+    return liste;
   }
 
   Future<Chat> findByIdentifiant(String id) async {

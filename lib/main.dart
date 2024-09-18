@@ -20,6 +20,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:tro/services/servicegeo.dart';
 import 'package:tro/singletons/outil.dart';
 
+import 'constants.dart';
 import 'firebase_options.dart';
 import 'getxcontroller/getchatcontroller.dart';
 import 'getxcontroller/getpublicationcontroller.dart';
@@ -33,6 +34,7 @@ final PublicationGetController _publicationController = Get.put(PublicationGetCo
 final ChatGetController _chatController = Get.put(ChatGetController());
 Outil outil = Outil();
 bool processOnGoing = false;
+late Client client;
 
 
 
@@ -121,6 +123,16 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       );
       outil.insertChatFromBackground(newChat);
 
+      // Send back 'ACCUsé DE RéCEPTION'
+      final url = Uri.parse('${dotenv.env['URL']}sendaccusereception');
+      await client.post(url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "identifiant": message.data['identifiant'],
+            "idpub": int.parse(message.data['idpub'])
+          })
+      ).timeout(const Duration(seconds: timeOutValue));
+
       // Display NOTIFICATIONS :
       // Check lastest APP state, if DETACHED or PAUSED, then display NOTIFICATION and persist DATA :
       Parameters? prms = await outil.getParameter();
@@ -203,6 +215,24 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       // Update  :
       //await outil.updatePublication(newPub);
       await outil.updatePublicationWithoutFurtherActions(newPub);
+      break;
+      
+    case 6:
+      // Réception ACCUSé DE RéCEPTION :
+      Chat ct = await outil.findChatByIdentifiant(message.data['identifiant']);
+      Chat newChat = Chat(
+        id: ct.id,
+        idpub: ct.idpub,
+        milliseconds: ct.milliseconds,
+        sens: ct.sens,
+        contenu: ct.contenu,
+        statut: 3, // Accusé de réception
+        identifiant: ct.identifiant,
+        iduser: ct.iduser,
+        idlocaluser: ct.idlocaluser,
+        read: ct.read
+      );
+      await outil.updateChatWithoutNotif(newChat);
       break;
   }
 }
@@ -395,9 +425,9 @@ Future<void> main() async {
     }*/
   }
 
-  final client = await getSSLPinningClient();
+  client = await getSSLPinningClient();
 
-  runApp(MyApp(client: client,));
+  runApp(MyApp(client: client));
 }
 
 class MyApp extends StatelessWidget {

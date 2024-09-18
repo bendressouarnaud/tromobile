@@ -120,7 +120,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   // Init
   void initIduserIfNecessary(int id) {
     iduser = id;
-    print('Id utilisateur LOCAL : $iduser');
+    //print('Id utilisateur LOCAL : $iduser');
   }
 
   // Update PUBLICATION if needed :
@@ -358,9 +358,9 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                 }
               }
               ,
-              onTap: () {
+              onTap: () async {
                 // Display DIALOG
-                Navigator.push(context,
+                final result = await Navigator.push(context,
                   MaterialPageRoute(
                     builder: (context) {
                       return Messagerie(idpub: publication.id, owner: ('${outil.getPublicationOwner()!.nom} ${outil.getPublicationOwner()!.prenom}'),
@@ -368,6 +368,10 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                     }
                   )
                 );
+
+                if(result == '1'){
+                  await outil.refreshAllChatsFromResumed(0);
+                }
               },
               child: Container(
                   //margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
@@ -869,9 +873,9 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                                   displayFloat('Livraison déjà effectuée');
                                                 }
                                               },
-                                              onTap: () {
+                                              onTap: () async {
                                                 // Display DIALOG
-                                                Navigator.push(context,
+                                                final result = await Navigator.push(context,
                                                     MaterialPageRoute(
                                                         builder: (context) {
                                                           return Messagerie(idpub: publication.id, owner: ('${listeUser[index].nom} ${listeUser[index].prenom}'),
@@ -880,6 +884,11 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                                         }
                                                     )
                                                 );
+
+                                                //
+                                                if(result == '1'){
+                                                  await outil.refreshAllChatsFromResumed(0);
+                                                }
                                               },
                                               child: Container(
                                                 //margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
