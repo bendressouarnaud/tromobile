@@ -71,43 +71,8 @@ class _HMessagerie extends State<Messagerie> {
         checkNetworkConnected = false;
       }
     });
-
-    /*_listener = AppLifecycleListener(
-      onStateChange: _onStateChanged,
-    );
-
-    WidgetsBinding.instance.addPostFrameCallback(
-            (timeStamp) {
-          /*for(Chat ct in listeChat){
-            //flagChat(ct);
-          }*/
-
-          // Set a boolean :
-          canFlagStraight = true;
-          print('--------  addPostFrameCallback   --------');
-        }
-    );*/
   }
 
-  // Listen to the app lifecycle state changes
-  /*void _onStateChanged(AppLifecycleState state) {
-    switch (state) {
-      case AppLifecycleState.detached:
-      print('--------->      detached');
-      //updateAppState('detached');
-      case AppLifecycleState.resumed:
-        print('--------->      detached');
-      case AppLifecycleState.inactive:
-      print('--------->      inactive');
-      //updateAppState('inactive');
-      case AppLifecycleState.hidden:
-      print('--------->      hidden');
-      //updateAppState('hidden');
-      case AppLifecycleState.paused:
-      print('--------->      paused');
-      //updateAppState('paused');
-    }
-  }*/
 
   @override
   void dispose() async{
@@ -213,7 +178,6 @@ class _HMessagerie extends State<Messagerie> {
         }
       } on TimeoutException catch (e) {
         // handle timeout
-        //print('Erreur ${e.message}');
       }
     }
   }
@@ -290,8 +254,93 @@ class _HMessagerie extends State<Messagerie> {
 
 
   void _backPressed() {
-    print('--------->      canFlagStraight : $canFlagStraight');
     Navigator.pop(context, canFlagStraight ? '1' : '0');
+  }
+
+  Widget displayChat (Chat chat) {
+    // Flag CHAT if needed :
+    flagChat(chat);
+
+    return Column(
+      children: [
+        displayDate(chat.milliseconds),
+        Container(
+            alignment: chat.sens == 0 ? Alignment.topRight : Alignment.topLeft,
+            child: Container(
+              //alignment: listeChat[index].sens == 0 ? Alignment.topRight : Alignment.topLeft,
+              margin: chat.sens == 0 ? const EdgeInsets.only(right: 10, top: 7) :
+              const EdgeInsets.only(left: 10, top: 7),
+              padding: const EdgeInsets.all(10),
+              width: chat.contenu.length > 50 ? 300 : 175,
+              decoration: BoxDecoration(
+                  color: chat.sens == 0 ? Colors.orange[100] : Colors.green[200],
+                  borderRadius: const BorderRadius.all(Radius.circular(25))
+              ),
+              child: Column(
+                children: [
+                  Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                          chat.contenu
+                      )
+                  ),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          processDateTime(chat.milliseconds),
+                          style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        chat.statut == 0 ?
+                        const SizedBox(
+                            height: 10.0,
+                            width: 10.0,
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                              strokeWidth: 0.8, // Width of the circular line
+                            )
+                        ) :
+                        chat.statut == 3 ?
+                        const Row(
+                          children: [
+                            SizedBox(
+                              child: Icon(
+                                  size: 15,
+                                  Icons.check_circle
+                              ),
+                            ),
+                            SizedBox(
+                              child: Icon(
+                                  size: 15,
+                                  Icons.check_circle
+                              ),
+                            )
+                          ],
+                        )
+                            :
+                        const SizedBox(
+                          child: Icon(
+                              size: 15,
+                              Icons.check_circle
+                          ),
+                        )
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            )
+        )
+      ],
+    );
   }
 
 
@@ -410,89 +459,10 @@ class _HMessagerie extends State<Messagerie> {
                                               itemCount: listeChat.length,
                                               itemBuilder: (BuildContext context, int index) {
 
-                                                // Flag CHAT if needed :
-                                                flagChat(listeChat[index]);
-
-                                                return Column(
-                                                  children: [
-                                                    displayDate(listeChat[index].milliseconds),
-                                                    Container(
-                                                        alignment: listeChat[index].sens == 0 ? Alignment.topRight : Alignment.topLeft,
-                                                        child: Container(
-                                                          //alignment: listeChat[index].sens == 0 ? Alignment.topRight : Alignment.topLeft,
-                                                          margin: listeChat[index].sens == 0 ? const EdgeInsets.only(right: 10, top: 7) :
-                                                          const EdgeInsets.only(left: 10, top: 7),
-                                                          padding: const EdgeInsets.all(10),
-                                                          width: listeChat[index].contenu.length > 50 ? 300 : 175,
-                                                          decoration: BoxDecoration(
-                                                              color: listeChat[index].sens == 0 ? Colors.orange[100] : Colors.green[200],
-                                                              borderRadius: const BorderRadius.all(Radius.circular(25))
-                                                          ),
-                                                          child: Column(
-                                                            children: [
-                                                              Align(
-                                                                  alignment: Alignment.centerRight,
-                                                                  child: Text(
-                                                                      listeChat[index].contenu
-                                                                  )
-                                                              ),
-                                                              Align(
-                                                                alignment: Alignment.bottomRight,
-                                                                child: Row(
-                                                                  mainAxisAlignment: MainAxisAlignment.end,
-                                                                  children: [
-                                                                    Text(
-                                                                      processDateTime(listeChat[index].milliseconds),
-                                                                      style: const TextStyle(
-                                                                          fontSize: 10,
-                                                                          fontWeight: FontWeight.bold
-                                                                      ),
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      width: 10,
-                                                                    ),
-                                                                    listeChat[index].statut == 0 ?
-                                                                    const SizedBox(
-                                                                        height: 10.0,
-                                                                        width: 10.0,
-                                                                        child: CircularProgressIndicator(
-                                                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
-                                                                          strokeWidth: 0.8, // Width of the circular line
-                                                                        )
-                                                                    ) :
-                                                                    listeChat[index].statut == 3 ?
-                                                                    const Row(
-                                                                      children: [
-                                                                        SizedBox(
-                                                                          child: Icon(
-                                                                              size: 15,
-                                                                              Icons.check_circle
-                                                                          ),
-                                                                        ),
-                                                                        SizedBox(
-                                                                          child: Icon(
-                                                                              size: 15,
-                                                                              Icons.check_circle
-                                                                          ),
-                                                                        )
-                                                                      ],
-                                                                    )
-                                                                        :
-                                                                    const SizedBox(
-                                                                      child: Icon(
-                                                                          size: 15,
-                                                                          Icons.check_circle
-                                                                      ),
-                                                                    )
-                                                                  ],
-                                                                ),
-                                                              )
-                                                            ],
-                                                          ),
-                                                        )
-                                                    )
-                                                  ],
-                                                );
+                                                return ((widget.idpub == listeChat[index].idpub) &&
+                                                    (widget.idSuscriber == listeChat[index].iduser)) ?
+                                                    displayChat(listeChat[index]) :
+                                                    Container();
                                               }
                                           )
                                       ),

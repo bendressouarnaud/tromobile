@@ -61,9 +61,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   //showFlutterNotification(message, 'Num. : ${message.data['identifiant']}', 'Réserve initiale : ${message.data['reserve']} Kg');
   // If you're going to use other Firebase services in the background, such as Firestore,
   // make sure you call `initializeApp` before using other Firebase services.
-  print('Handling a background message ');
   User? localUser = await outil.pickLocalUser();
-  //print('Handling a background message ${message.messageId}');
   int sujet = int.parse(message.data['sujet']);
   switch(sujet){
     case 1:

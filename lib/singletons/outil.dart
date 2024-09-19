@@ -90,7 +90,6 @@ class Outil {
     List<Chat> lte = await _chatController.findAllChats( refreshNav: false );
     if(refreshNav){
       int taille = lte.where((chat) => chat.read ==0).toList().length;
-      print('--------->      taille : $taille');
       _navChatController.feed(taille);
     }
     return lte;

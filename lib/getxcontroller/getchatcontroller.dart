@@ -47,7 +47,7 @@ class ChatGetController extends GetxController {
 
   Future<void> addDataFromBackgroundHandler(Chat chat) async {
     await _repository.insert(chat);
-    data.add(chat);
+    data.add(await _repository.findByIdentifiant(chat.identifiant));
   }
 
   // Get CHAT to send :

@@ -34,7 +34,9 @@ class SouscriptionGetController extends GetxController {
 
   Future<void> addData(Souscription souscription) async {
     await _repository.insert(souscription);
-    data.add(souscription);
+    // Look for the save value :
+    Souscription newSous = await _repository.findByIdpubAndIduser(souscription.idpub, souscription.iduser);
+    data.add(newSous);
 
     // Set timer to
     Future.delayed(const Duration(milliseconds: 600),

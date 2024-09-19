@@ -364,7 +364,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                   MaterialPageRoute(
                     builder: (context) {
                       return Messagerie(idpub: publication.id, owner: ('${outil.getPublicationOwner()!.nom} ${outil.getPublicationOwner()!.prenom}'),
-                        idSuscriber: 0, client: widget.client);
+                        idSuscriber: outil.getPublicationOwner()!.id, client: widget.client);
                     }
                   )
                 );
