@@ -110,7 +110,7 @@ class _NewAuth extends State<AuthentificationEcran> {
     // Checks :
     if(response.statusCode == 200){
       //List<dynamic> body = jsonDecode(response.body);
-      AuthenticateResponse bn = AuthenticateResponse.fromJson(json.decode(response.body));
+      AuthenticateResponse bn = AuthenticateResponse.fromJson(jsonDecode(const Utf8Decoder().convert(response.bodyBytes)));
       // Persist user :
       User user = User(
           nationnalite: bn.nationnalite,

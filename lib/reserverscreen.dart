@@ -320,7 +320,7 @@ class _ReservePaiement extends State<ReservePaiement> {
 
     // Checks :
     if(response.statusCode == 200){
-      ReservationResponse data =  ReservationResponse.fromJson(json.decode(response.body));
+      ReservationResponse data =  ReservationResponse.fromJson(jsonDecode(const Utf8Decoder().convert(response.bodyBytes)));
       // Check USER's presence :
       User? user = await _userRepository.findById(data.id);
       if(user == null){
