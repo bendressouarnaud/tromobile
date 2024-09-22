@@ -196,6 +196,17 @@ class _NewAuth extends State<AuthentificationEcran> {
       // Set FLAG :
       closeAlertDialog = false;
     }
+    else{
+      Fluttertoast.showToast(
+          msg: "Identifiants incorrects",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0
+      );
+    }
     // Notify :
     flagSendData = false;
   }
@@ -254,128 +265,129 @@ class _NewAuth extends State<AuthentificationEcran> {
                     ),
                   ),
                 ),
-                Expanded(
-                  child: Align(
-                    alignment: FractionalOffset.bottomLeft,
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          ElevatedButton.icon(
-                            style: ButtonStyle(
-                                backgroundColor: MaterialStateColor.resolveWith((states) => Colors.blueGrey)
-                            ),
-                            label: const Text("Retour",
-                                style: TextStyle(
-                                    color: Colors.white
-                                )),
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            icon: const Icon(
-                              Icons.arrow_back_ios_new,
-                              size: 20,
-                              color: Colors.white,
-                            ),
-                          ),
-                          ElevatedButton.icon(
-                            style: ButtonStyle(
-                                backgroundColor: MaterialStateColor.resolveWith((states) => Colors.brown)
-                            ),
-                            label: const Text("Enregistrer",
-                                style: TextStyle(
-                                    color: Colors.white
-                                )
-                            ),
-                            onPressed: () {
-                              if(checkField()){
-                                Fluttertoast.showToast(
-                                    msg: "Veuillez renseigner les champs !",
-                                    toastLength: Toast.LENGTH_SHORT,
-                                    gravity: ToastGravity.CENTER,
-                                    timeInSecForIosWeb: 1,
-                                    backgroundColor: Colors.red,
-                                    textColor: Colors.white,
-                                    fontSize: 16.0
-                                );
-                              }
-                              else{
-                                showDialog(
-                                    barrierDismissible: false,
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      dialogContext = context;
-                                      return const AlertDialog(
-                                        title: Text('Information'),
-                                        content: Text("Veuillez patienter ..."),
-                                        /*actions: <Widget>[
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(context, 'Cancel'),
-                                            child: const Text('Cancel'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(context, 'OK'),
-                                            child: const Text('OK'),
-                                          ),
-                                        ]*/
-                                      );
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ElevatedButton.icon(
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateColor.resolveWith((states) => Colors.blueGrey)
+                        ),
+                        label: const Text("Retour",
+                            style: TextStyle(
+                                color: Colors.white
+                            )),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateColor.resolveWith((states) => Colors.brown)
+                        ),
+                        label: const Text("Soumettre",
+                            style: TextStyle(
+                                color: Colors.white
+                            )
+                        ),
+                        onPressed: () {
+                          if(checkField()){
+                            Fluttertoast.showToast(
+                                msg: "Veuillez renseigner les champs !",
+                                toastLength: Toast.LENGTH_SHORT,
+                                gravity: ToastGravity.CENTER,
+                                timeInSecForIosWeb: 1,
+                                backgroundColor: Colors.black,
+                                textColor: Colors.white,
+                                fontSize: 16.0
+                            );
+                          }
+                          else{
+                            showDialog(
+                                barrierDismissible: false,
+                                context: context,
+                                builder: (BuildContext context) {
+                                  dialogContext = context;
+                                  return WillPopScope(
+                                      onWillPop: () async => false,
+                                      child: const AlertDialog(
+                                          title: Text('Information'),
+                                          content: SizedBox(
+                                              height: 100,
+                                              child: Column(
+                                                children: [
+                                                  Text("Veuillez patienter ..."),
+                                                  SizedBox(
+                                                    height: 20,
+                                                  ),
+                                                  SizedBox(
+                                                      height: 30.0,
+                                                      width: 30.0,
+                                                      child: CircularProgressIndicator(
+                                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                                        strokeWidth: 3.0, // Width of the circular line
+                                                      )
+                                                  )
+                                                ],
+                                              )
+                                          )
+                                      )
+                                  );
+                                }
+                            );
+
+                            // Send DATA :
+                            flagSendData = true;
+                            closeAlertDialog = true;
+                            if(defaultTargetPlatform == TargetPlatform.android){
+                              generateTokenSuscription();//
+                            }
+                            else{
+                              // Currently not running FCM for iphone
+                              authenicatemobilecustomer();
+                            }
+
+                            // Run TIMER :
+                            Timer.periodic(
+                              const Duration(seconds: 1),
+                                  (timer) {
+                                // Update user about remaining time
+                                if(!flagSendData){
+                                  Navigator.pop(dialogContext);
+                                  timer.cancel();
+
+                                  if(!closeAlertDialog) {
+                                    if (user_Company) {
+                                      // Kill APPLICATION :
+                                      SystemNavigator.pop();
                                     }
-                                );
-
-                                // Send DATA :
-                                flagSendData = true;
-                                closeAlertDialog = true;
-                                if(defaultTargetPlatform == TargetPlatform.android){
-                                  generateTokenSuscription();//
-                                }
-                                else{
-                                  // Currently not running FCM for iphone
-                                  authenicatemobilecustomer();
-                                }
-
-                                // Run TIMER :
-                                Timer.periodic(
-                                  const Duration(seconds: 1),
-                                      (timer) {
-                                    // Update user about remaining time
-                                    if(!flagSendData){
-                                      Navigator.pop(dialogContext);
-                                      timer.cancel();
-
-                                      if(!closeAlertDialog) {
-                                        if (user_Company) {
-                                          // Kill APPLICATION :
-                                          SystemNavigator.pop();
-                                        }
-                                        else if (_userController.userData.isNotEmpty) {
-                                          // Kill ACTIVITY :
-                                          if (Navigator.canPop(context)) {
-                                            Navigator.pop(context);
-                                          }
-                                        }
+                                    else if (_userController.userData.isNotEmpty) {
+                                      // Kill ACTIVITY :
+                                      if (Navigator.canPop(context)) {
+                                        Navigator.pop(context);
                                       }
                                     }
-                                  },
-                                );
-                              }
-                            },
-                            icon: const Icon(
-                              Icons.save,
-                              size: 20,
-                              color: Colors.white,
-                            ),
-                          )
-                        ],
-                      ),
-                    )
-
-                    /*MaterialButton(
-                        onPressed: () => {},
-                        child: Text('REGISTER'),
-                      )*/,
+                                  }
+                                }
+                              },
+                            );
+                          }
+                        },
+                        icon: const Icon(
+                          Icons.save,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                      )
+                    ],
                   ),
-                ),
+                )
               ],
             ),
           ),

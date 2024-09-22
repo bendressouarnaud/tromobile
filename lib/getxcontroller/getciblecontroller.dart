@@ -55,4 +55,8 @@ class CibleGetController extends GetxController {
     update();
   }
 
+  Future<int> deleteAllCibles() async{
+    return await _repository.deleteAllCibles();
+  }
+
 }

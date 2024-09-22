@@ -9,6 +9,7 @@ class PublicationRepository {
   Future<int> update(Publication data) => publicationDao.update(data);
   Future<Publication> findPublicationById(int id) => publicationDao.findPublicationById(id);
   Future<int> deleteById(int id) => publicationDao.deleteById(id);
+  Future<int> deleteAllPublications() => publicationDao.deleteAllPublications();
   Future<List<Publication>> findAll() => publicationDao.findAll();
   // These PUBLICATIONs that are still ongoing :
   Future<List<Publication>> findOngoingAll(int milliseconds) => publicationDao.findOngoingAll(milliseconds);

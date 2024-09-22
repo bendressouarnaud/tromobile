@@ -132,7 +132,7 @@ class UserDao {
   }
 
   //We are not going to use this in the demo
-  Future deleteAllUsers() async {
+  Future<int> deleteAllUsers() async {
     final db = await dbProvider.database;
     var result = await db.delete(
       "user",

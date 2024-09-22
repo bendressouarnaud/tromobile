@@ -165,6 +165,10 @@ class Outil {
     return _userController.getLocalUser();
   }
 
+  Future<int> deleteAllUsers() async{
+    return await _userController.deleteAllUsers();
+  }
+
   Future<User?> pickLocalUser() async{
     return await _userController.pickLocalUser();
   }
@@ -205,6 +209,13 @@ class Outil {
   }
 
   // for  P U B L I C A T I O N
+  Future<int> deleteAllPublications() async{
+    // Delete OTHERS
+    await _chatController.deleteAllChats();
+    await _souscriptionController.deleteAllSouscriptions();
+    return await _publicationController.deleteAllPublications();
+  }
+
   void addPublication(Publication publication){
     _publicationController.addData(publication);
     // Update this :

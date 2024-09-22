@@ -138,4 +138,12 @@ class ChatDao {
             idlocaluser: idlocaluser, read: read)
     ];
   }
+
+  Future<int> deleteAllChats() async {
+    final db = await dbProvider.database;
+    var result = await db.delete(
+      "chat",
+    );
+    return result;
+  }
 }

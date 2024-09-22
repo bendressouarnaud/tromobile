@@ -201,6 +201,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
     var response = await widget.client.post(url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
+          "iduser": widget.gUser == null ? 0 : widget.gUser!.id,
           "nom": nomController.text,
           "prenom": prenomController.text,
           "email": emailController.text,
@@ -258,7 +259,14 @@ class _NewCreationState extends State<EcranCreationCompte> {
       // Set FLAG :
       flagSendData = false;
     }
+    else if(response.statusCode == 500){
+      // Set FLAG :
+      flagSendData = false;
+      displayToast("Cette adresse est déjà utilisée !");
+    }
     else {
+      // Set FLAG :
+      flagSendData = false;
       displayToast("Erreur apparue");
     }
   }
@@ -506,7 +514,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
                           onPressed: () {
                             if(checkField()){
                               Fluttertoast.showToast(
-                                  msg: "Veuillez renseigner les champs (NOM, PRENOM, EMAIL) !",
+                                  msg: "Veuillez renseigner tous les champs !",
                                   toastLength: Toast.LENGTH_LONG,
                                   gravity: ToastGravity.CENTER,
                                   timeInSecForIosWeb: 3,

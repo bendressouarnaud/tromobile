@@ -15,4 +15,5 @@ class ChatRepository {
   Future<List<Chat>> findAllByIdpubAndIduser(int idpub, int iduser, int idlocaluser) =>
       chatDao.findAllByIdpubAndIduser(idpub, iduser, idlocaluser);
   Future<List<Chat>> findAllByStatut(int data) => chatDao.findAllByStatut(data);
+  Future<int> deleteAllChats() => chatDao.deleteAllChats();
 }

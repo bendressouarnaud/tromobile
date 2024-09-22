@@ -119,29 +119,30 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           idlocaluser: localUser!.id,
           read: 0
       );
-      outil.insertChatFromBackground(newChat);
+      await outil.insertChatFromBackground(newChat);
 
       // Send back 'ACCUsé DE RéCEPTION'
-      final url = Uri.parse('${dotenv.env['URL']}sendaccusereception');
-      await client.post(url,
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode({
-            "identifiant": message.data['identifiant'],
-            "idpub": int.parse(message.data['idpub'])
-          })
-      ).timeout(const Duration(seconds: timeOutValue));
+      try {
+        final url = Uri.parse('https://vps-b2e0c1f2.vps.ovh.net/trobackend/sendaccusereception');
+        //final url = Uri.parse('${dotenv.env['URL']}sendaccusereception');
+        await client.post(url,
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({
+              "identifiant": message.data['identifiant'],
+              "idpub": int.parse(message.data['idpub'])
+            })
+        ).timeout(const Duration(seconds: timeOutValue));
+      }
+      catch (e) {
+        //print('Exception durant CASE 3 : ${e.toString()}');
+      }
 
       // Display NOTIFICATIONS :
       // Check lastest APP state, if DETACHED or PAUSED, then display NOTIFICATION and persist DATA :
-      Parameters? prms = await outil.getParameter();
+      /*Parameters? prms = await outil.getParameter();
       if(prms != null && prms.state != 'resumed'){
 
-      }
-
-
-      //if(message.notification == null) {
-      //showFlutterNotification(message, 'Nouveau message', 'C\'est un test');
-      //}
+      }*/
       break;
 
 

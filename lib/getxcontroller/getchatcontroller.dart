@@ -110,4 +110,11 @@ class ChatGetController extends GetxController {
     return data.where((chat) => (chat.statut == statut && chat.id == 0)).toList();
   }
 
+  Future<int> deleteAllChats() async {
+    data.clear();
+    int ret = await _repository.deleteAllChats();
+    update();
+    return ret;
+  }
+
 }

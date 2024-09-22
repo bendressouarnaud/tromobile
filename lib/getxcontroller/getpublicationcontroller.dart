@@ -72,4 +72,11 @@ class PublicationGetController extends GetxController {
   Future<Publication> refreshPublication(int idpub) async {
     return await _publicationRepository.findPublicationById(idpub);
   }
+
+  Future<int> deleteAllPublications() async {
+    publicationData.clear();
+    int ret = await _publicationRepository.deleteAllPublications();
+    update();
+    return ret;
+  }
 }

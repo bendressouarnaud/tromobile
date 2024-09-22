@@ -223,20 +223,7 @@ class _WelcomePageState extends State<WelcomePage> {
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
 
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        //
         //showFlutterNotification(message, "Notification Commande", "");
-
-        Fluttertoast.showToast(
-            msg: "Notification Commande ${message.data['sujet']}",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            timeInSecForIosWeb: 1,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            fontSize: 16.0
-        );
-
-        //
         processIncomingFCMessage(message, false);
       });
     }
@@ -286,7 +273,7 @@ class _WelcomePageState extends State<WelcomePage> {
         }
         else{
           // Open 'CHAT'
-          User usr = (await outil.findAllUserByIdin([0])).single;
+          User usr = (await outil.findAllUserByIdin([int.parse(message.data['sender'])])).single;
           openMessage(int.parse(message.data['idpub']),
               ("${usr.nom} ${usr.prenom}"),
               usr.id
@@ -635,29 +622,6 @@ class _WelcomePageState extends State<WelcomePage> {
                 bottomRight: Radius.circular(30),
               )),
           actions: [
-            /*badges.Badge(
-                position: badges.BadgePosition.topEnd(top: 0, end: 3),
-                badgeAnimation: const badges.BadgeAnimation.slide(),
-                showBadge: true,
-                badgeStyle: const badges.BadgeStyle(
-                  badgeColor: Colors.red,
-                ),
-                badgeContent: GetBuilder<AchatGetController>(
-                  builder: (_) {
-                    return Text(
-                      '${_achatController.taskData.length}',
-                      style: const TextStyle(color: Colors.white),
-                    );
-                  },
-                ),
-                child: IconButton(
-                    icon: const Icon(Icons.shopping_cart),
-                    onPressed: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                            return Paniercran(client: client);
-                          }));
-                    })),*/
             IconButton(
                 onPressed: () {},
                 icon: const Icon(Icons.search, color: Colors.black))
@@ -671,7 +635,6 @@ class _WelcomePageState extends State<WelcomePage> {
             if(usr != null){
               // Init if needed
               cUser ??= usr;
-
               //
               callForCountry(listePays);
             }

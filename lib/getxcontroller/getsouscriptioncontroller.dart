@@ -46,4 +46,11 @@ class SouscriptionGetController extends GetxController {
     );
   }
 
+  Future<int> deleteAllSouscriptions() async{
+    data.clear();
+    int ret = await _repository.deleteAllSouscriptions();
+    update();
+    return ret;
+  }
+
 }

@@ -8,7 +8,9 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:tro/main.dart';
 import 'package:tro/models/ville.dart';
+import 'package:tro/repositories/cible_repsository.dart';
 import 'package:tro/repositories/pays_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
@@ -51,6 +53,7 @@ class _NewEcranState extends State<EcranCompte> {
   final _paysRepository = PaysRepository();
   final _villeRepository = VilleRepository();
   final _userRepository = UserRepository();
+  final _cibleRepository = CibleRepository();
   int cptInit = 0;
   late List<Pays> listePays;
   late List<Ville> listeVille;
@@ -158,41 +161,11 @@ class _NewEcranState extends State<EcranCompte> {
 
   // Delete ACHAT
   void deleteAccount() async {
-    final url = Uri.parse(
-        '${dotenv.env['URL']}backendcommerce/deleteaccountfromphone');
-    // client.
-    var response = await post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "id": _userController.userData.isNotEmpty ? _userController.userData[0].id : 0,
-          "lib": 'deletion',
-        }));
-
-    // Checks :
-    if (response.statusCode == 200) {
-      //List<dynamic> body = jsonDecode(response.body);
-      /*RequestBean rn = RequestBean.fromJson(jsonDecode(const Utf8Decoder().convert(response.bodyBytes)));
-      if (rn != null) {
-        if (rn.id == 1) {
-          // Clear the USER's ACCOUNT :
-          await _userController.deleteUser(_userController.userData[0].idcli);
-        }
-        else {
-          Fluttertoast.showToast(
-              msg: "Suppression du compte imposible !",
-              toastLength: Toast.LENGTH_SHORT,
-              gravity: ToastGravity.CENTER,
-              timeInSecForIosWeb: 1,
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
-              fontSize: 16.0
-          );
-        }
-      }
-
-      // Set FLAG :
-      accountDeletion = false;*/
-    }
+    // Delete account from USER :
+    await _cibleRepository.deleteAllCibles();
+    await outil.deleteAllUsers();
+    await outil.deleteAllPublications();
+    accountDeletion = false;
   }
 
   @override
@@ -398,51 +371,62 @@ class _NewEcranState extends State<EcranCompte> {
                               context: context,
                               builder: (BuildContext context) {
                                 dialogContext = context;
-                                return AlertDialog(
-                                    title: const Text('Information'),
-                                    content: const Text(
-                                        "Confirmer la suppression de votre compte ?"),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(context, 'Cancel'),
-                                        child: const Text('NON'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          // Send DATA :
-                                          accountDeletion = true;
-                                          deleteAccount();
+                                return WillPopScope(
+                                    onWillPop: () async => false,
+                                    child: AlertDialog(
+                                        title: const Text('Information'),
+                                        content: const SizedBox(
+                                          height: 80,
+                                          child: Column(
+                                            children: [
+                                              Text("Confirmer la suppression de votre compte ?"),
+                                              SizedBox(
+                                                height: 20,
+                                              )
+                                            ],
+                                          )
+                                        ),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, 'Cancel'),
+                                            child: const Text('NON'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              accountDeletion = true;
 
-                                          // Run TIMER :
-                                          Timer.periodic(
-                                            const Duration(seconds: 1),
-                                                (timer) {
-                                              // Update user about remaining time
-                                              if (!accountDeletion) {
-                                                Navigator.pop(dialogContext);
-                                                timer.cancel();
+                                              deleteAccount();
 
-                                                // if PANIER is empty, then CLOSE the INTERFACE :
-                                                if (_userController.userData
-                                                    .isEmpty) {
-                                                  // Kill ACTIVITY :
-                                                  if (Navigator.canPop(
-                                                      context)) {
-                                                    Navigator.pop(context);
+                                              // Run TIMER :
+                                              Timer.periodic(
+                                                const Duration(milliseconds: 500),
+                                                    (timer) {
+                                                  // Update user about remaining time
+                                                  if (!accountDeletion) {
+                                                    timer.cancel();
+                                                    Navigator.pop(dialogContext);
+
+                                                    //
+                                                    if (_userController.userData
+                                                        .isEmpty) {
+                                                      // Kill ACTIVITY :
+                                                      if (Navigator.canPop(
+                                                          context)) {
+                                                        Navigator.pop(context);
+                                                      }
+                                                    }
+                                                    else {
+                                                      setState(() {});
+                                                    }
                                                   }
-                                                }
-                                                else {
-                                                  setState(() {});
-                                                }
-                                              }
+                                                },
+                                              );
                                             },
-                                          );
-                                        },
-                                        child: const Text('OUI'),
-                                      ),
-                                    ]
-                                );
+                                            child: const Text('OUI'),
+                                          ),
+                                        ]
+                                    ) );
                               }
                           );
                         }

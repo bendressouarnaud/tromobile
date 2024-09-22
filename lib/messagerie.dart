@@ -379,6 +379,10 @@ class _HMessagerie extends State<Messagerie> {
                     return GetBuilder<ChatGetController>(
                         builder: (controller){
 
+                          var listeCourante = controller.data.where((chat) => (widget.idpub == chat.idpub) &&
+                              (widget.idSuscriber == chat.iduser)).toList();
+                          listeCourante.sort((a,b) => a.id.compareTo(b.id));
+
                           return Stack(
                               children: [
                                 Positioned(
@@ -426,7 +430,17 @@ class _HMessagerie extends State<Messagerie> {
                                           suffixIcon: IconButton(
                                             icon: const Icon(Icons.send),
                                             onPressed: (){
-                                              persistMessage();
+                                              if(checkNetworkConnected) {
+                                                persistMessage();
+                                              }
+                                              else{
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                      duration: Duration(seconds: 3),
+                                                      content: Text("Le terminal n'est pas connecté !")
+                                                  ),
+                                                );
+                                              }
                                             },
                                           ),
                                         ),
@@ -456,12 +470,12 @@ class _HMessagerie extends State<Messagerie> {
                                               physics: const NeverScrollableScrollPhysics(),
                                               scrollDirection: Axis.vertical,
                                               shrinkWrap: true,
-                                              itemCount: listeChat.length,
+                                              itemCount: listeCourante.length, //listeChat.length,
                                               itemBuilder: (BuildContext context, int index) {
 
-                                                return ((widget.idpub == listeChat[index].idpub) &&
-                                                    (widget.idSuscriber == listeChat[index].iduser)) ?
-                                                    displayChat(listeChat[index]) :
+                                                return ((widget.idpub == listeCourante[index].idpub) &&
+                                                    (widget.idSuscriber == listeCourante[index].iduser)) ?
+                                                    displayChat(listeCourante[index]) :
                                                     Container();
                                               }
                                           )

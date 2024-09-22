@@ -31,5 +31,5 @@ class UserRepository {
   Future<int> deleteUserById(int id) => userDao.deleteUserById(id);
 
   //We are not going to use this in the demo
-  //Future deleteAllUsers() => userDao.deleteAllTodos();
+  Future<int> deleteAllUsers() => userDao.deleteAllUsers();
 }
