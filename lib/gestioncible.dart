@@ -76,33 +76,7 @@ class _GestionCible extends State<GestionCible> {
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
               )),
-          actions: [
-            /*badges.Badge(
-                  position: badges.BadgePosition.topEnd(top: 0, end: 3),
-                  badgeAnimation: const badges.BadgeAnimation.slide(),
-                  showBadge: true,
-                  badgeStyle: const badges.BadgeStyle(
-                    badgeColor: Colors.red,
-                  ),
-                  badgeContent: GetBuilder<PublicationGetController>(
-                    builder: (_) {
-                      return Text(
-                        '${_achatController.taskData.length}',
-                        style: const TextStyle(color: Colors.white),
-                      );
-                    },
-                  ),
-                  child: IconButton(
-                      icon: const Icon(Icons.shopping_cart),
-                      onPressed: () {
-                        if (_achatController.taskData.isNotEmpty) {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) {
-                                return Paniercran(client: client);
-                              }));
-                        }
-                      })
-              ),*/
+          /*actions: [
             IconButton(
                 onPressed: () {
                   /*Navigator.push(context, MaterialPageRoute(builder: (context) {
@@ -111,7 +85,7 @@ class _GestionCible extends State<GestionCible> {
                 },
                 icon: const Icon(Icons.search, color: Colors.black)
             )
-          ]
+          ]*/
       ),
         floatingActionButton: FloatingActionButton(
           backgroundColor: const Color.fromRGBO(51, 159, 255, 1.0),

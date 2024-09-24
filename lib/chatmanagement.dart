@@ -136,6 +136,7 @@ class _ChatManagementState extends State<ChatManagement> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: FutureBuilder(
           future: Future.wait([getUsersList()]),
           builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot){
@@ -274,9 +275,6 @@ class _ChatManagementState extends State<ChatManagement> {
             }
           }
       )
-
-
-
     );
   }
 }

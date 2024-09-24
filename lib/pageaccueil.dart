@@ -613,7 +613,7 @@ class _WelcomePageState extends State<WelcomePage> {
         appBar: AppBar(
           backgroundColor: Colors.white,
           title: const Text(
-            "Trô",
+            "CoBagage",
             textAlign: TextAlign.start,
           ),
           shape: const RoundedRectangleBorder(
@@ -621,11 +621,11 @@ class _WelcomePageState extends State<WelcomePage> {
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
               )),
-          actions: [
+          /*actions: [
             IconButton(
                 onPressed: () {},
                 icon: const Icon(Icons.search, color: Colors.black))
-          ],
+          ],*/
         ),
         floatingActionButton: FloatingActionButton(
           backgroundColor: const Color.fromRGBO(51, 159, 255, 1.0),

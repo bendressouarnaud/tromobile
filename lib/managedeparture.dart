@@ -189,7 +189,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
     keep_idpub = widget.idpub;
     nationalite = widget.nationalite;
     listeCountry = widget.listeCountry;
-    paysDepartMenu = listeCountry.where((element) => element.iso2 == nationalite).first;
+    //paysDepartMenu = listeCountry.where((element) => element.iso2 == nationalite).first;
     devises = lesDevises.first;
     // Init : things
     _departureController.clear();
@@ -240,6 +240,30 @@ class _ManageDepartureState extends State<ManageDeparture> {
     super.dispose();
   }
 
+  bool destinationSameDeparture() {
+    return villeDepartMenu!.id == villeDestinationMenu!.id ;
+  }
+
+  bool verifyPrix() {
+    try{
+      int res = int.parse(prixController.text);
+    }
+    catch (e){
+      return false;
+    }
+    return true;
+  }
+
+  bool verifyReserve() {
+    try{
+      int res = int.parse(reserveController.text);
+    }
+    catch (e){
+      return false;
+    }
+    return true;
+  }
+
   // Process :
   bool checkField(){
     if(dateDepartController.text.isEmpty || heureDepartController.text.isEmpty){
@@ -250,8 +274,20 @@ class _ManageDepartureState extends State<ManageDeparture> {
       displayToast("Veuillez définir la réserve");
       return true;
     }
+    else if(!verifyReserve()){
+      displayToast("La valeur de la réserve est incorrecte");
+      return true;
+    }
     else if(prixController.text.isEmpty){
       displayToast("Veuillez fixer le prix");
+      return true;
+    }
+    else if(!verifyPrix()){
+      displayToast("Le prix renseigné est incorrect");
+      return true;
+    }
+    else if(destinationSameDeparture()){
+      displayToast("Les 2 villes doivent être différentes");
       return true;
     }
     return false;
@@ -271,7 +307,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
   }
 
   // Send Account DATA :
-  Future<void> sendOrderRequest(String abrevPays) async {
+  Future<void> sendOrderRequest() async {
     final hNow = DateTime.now();
     final url = Uri.parse('${dotenv.env['URL']}managetravel');
     var response = await widget.client.post(url,
@@ -462,34 +498,42 @@ class _ManageDepartureState extends State<ManageDeparture> {
                           ],
                         )
                     ),
-                    Align(
+                    Container(
+                      margin: const EdgeInsets.only(left: 10, right: 10, top: 10, bottom: 10),
                       alignment: Alignment.centerLeft,
-                      child: TextButton(
-                          onPressed: () {
+                      child: ElevatedButton.icon(
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateColor.resolveWith((states) => Colors.blue)
+                        ),
+                        label: const Text("Date de départ",
+                            style: TextStyle(
+                                color: Colors.white
+                            )
+                        ),
+                        onPressed: () {
+                          // get current datetime :
+                          final now = DateTime.now();
 
-                            // get current datetime :
-                            final now = DateTime.now();
-
-                            picker.DatePicker.showDateTimePicker(context,
-                                showTitleActions: true,
-                                minTime: DateTime(now.year, now.month, now.day, now.hour, now.minute),
-                                maxTime: DateTime(2026, 6, 7, 05, 09),
-                                onChanged: (date) {
-                                  /*//dateLecture = date.timeZoneOffset.inHours.toString();
+                          picker.DatePicker.showDateTimePicker(context,
+                              showTitleActions: true,
+                              minTime: DateTime(now.year, now.month, now.day, now.hour, now.minute),
+                              maxTime: DateTime(2026, 6, 7, 05, 09),
+                              onChanged: (date) {
+                                /*//dateLecture = date.timeZoneOffset.inHours.toString();
                                 print('change $date in time zone ' +
                                     date.timeZoneOffset.inHours.toString());*/
-                                },
-                                onConfirm: (date) {
-                                  milliseconds = date.millisecondsSinceEpoch;
-                                  _departureController.addData(date);
-                                },
-                                locale: picker.LocaleType.fr);
-                          },
-                          child: const Text(
-                            'Date de départ',
-                            style: TextStyle(
-                                color: Colors.blue),
-                          )
+                              },
+                              onConfirm: (date) {
+                                milliseconds = date.millisecondsSinceEpoch;
+                                _departureController.addData(date);
+                              },
+                              locale: picker.LocaleType.fr);
+                        },
+                        icon: const Icon(
+                          Icons.access_time_outlined,
+                          size: 20,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                     GetBuilder<DepartureGetController>(
@@ -671,18 +715,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
                                 )
                             ),
                             onPressed: () {
-                              if(checkField()){
-                                Fluttertoast.showToast(
-                                    msg: "Veuillez renseigner tous les champs !",
-                                    toastLength: Toast.LENGTH_LONG,
-                                    gravity: ToastGravity.CENTER,
-                                    timeInSecForIosWeb: 3,
-                                    backgroundColor: Colors.red,
-                                    textColor: Colors.white,
-                                    fontSize: 16.0
-                                );
-                              }
-                              else{
+                              if(!checkField() && verifyReserve() && verifyPrix()){
                                 showDialog(
                                     barrierDismissible: false,
                                     context: context,
@@ -717,14 +750,14 @@ class _ManageDepartureState extends State<ManageDeparture> {
                                 );
 
                                 // Get Country ABREVIATION :
-                                var abrevPays = listeCountry.where((element) => element == paysDepartMenu!)
-                                    .first.iso2;
+                                /*var abrevPays = listeCountry.where((element) => element == paysDepartMenu!)
+                                    .first.iso2;*/
 
                                 // Send DATA :
                                 flagSendData = true;
                                 closeAlertDialog = true;
                                 // Currently not running FCM for iphone
-                                sendOrderRequest(abrevPays);
+                                sendOrderRequest();
 
                                 // Run TIMER :
                                 Timer.periodic(

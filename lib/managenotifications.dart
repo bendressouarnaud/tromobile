@@ -91,9 +91,19 @@ class _ManageNotificationState extends State<ManageNotification> {
   // Display INTERFACE for SENDING DATA :
   void displayLoadingInterface(BuildContext dContext) {
 
+    if(dateDebutController.text.isEmpty){
+      displayFloat('Veuillez définir la date de début', 1);
+      return;
+    }
+
+    if(dateFinController.text.isEmpty){
+      displayFloat('Veuillez définir la date de fin', 1);
+      return;
+    }
+
     if(_notification == ChoixNotification.momentane){
       if(millisecondsFin <= millisecondsDebut){
-        displayFloat('La date de fin doit être supérieure celle du début', 1);
+        displayFloat('La date de fin doit être supérieure à celle du début', 1);
         return;
       }
     }
