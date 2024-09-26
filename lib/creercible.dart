@@ -15,6 +15,7 @@ import 'package:get/get_state_manager/src/simple/get_state.dart';
 import 'package:http/http.dart';
 import 'package:tro/getxcontroller/getciblecontroller.dart';
 import 'package:tro/getxcontroller/getpublicationcontroller.dart';
+import 'package:tro/main.dart';
 import 'package:tro/repositories/pays_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
@@ -182,6 +183,28 @@ class _creerCible extends State<CreerCible> {
       else{
         // UPDATE :
         _cibleController.updateData(cible);
+      }
+
+      // Persist PUBLICATION
+      for(Publication publication in ce.publications){
+        Publication pub = Publication(
+            id: publication.id,
+            userid: publication.userid,
+            villedepart: publication.villedepart,
+            villedestination: publication.villedestination,
+            datevoyage: publication.datevoyage,
+            datepublication: publication.datepublication,
+            reserve: publication.reserve,
+            active: 1,
+            reservereelle: publication.reserve,
+            souscripteur: publication.souscripteur, // Use OWNER Id
+            milliseconds: publication.milliseconds,
+            identifiant: publication.identifiant,
+            devise: publication.devise,
+            prix: publication.prix,
+            read: 1
+        );
+        outil.addPublication(pub);
       }
 
       // Set FLAG :
