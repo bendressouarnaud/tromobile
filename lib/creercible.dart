@@ -187,6 +187,9 @@ class _creerCible extends State<CreerCible> {
 
       // Persist PUBLICATION
       for(Publication publication in ce.publications){
+        // First SPLIT :
+        List<String> tamponDateTime = publication.datevoyage.split("T");
+        var dateVoyageFinal = DateTime.parse('${tamponDateTime[0]} ${tamponDateTime[1]}Z');
         Publication pub = Publication(
             id: publication.id,
             userid: publication.userid,
@@ -198,7 +201,7 @@ class _creerCible extends State<CreerCible> {
             active: 1,
             reservereelle: publication.reserve,
             souscripteur: publication.souscripteur, // Use OWNER Id
-            milliseconds: publication.milliseconds,
+            milliseconds: dateVoyageFinal.millisecondsSinceEpoch, // publication.milliseconds,
             identifiant: publication.identifiant,
             devise: publication.devise,
             prix: publication.prix,
