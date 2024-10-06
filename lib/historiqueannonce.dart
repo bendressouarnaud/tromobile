@@ -16,13 +16,17 @@ import 'package:tro/getxcontroller/getpublicationcontroller.dart';
 import 'package:tro/getxcontroller/getsouscriptioncontroller.dart';
 import 'package:tro/messagerie.dart';
 import 'package:tro/models/souscription.dart';
+import 'package:tro/repositories/pays_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/reserverscreen.dart';
 import 'package:tro/singletons/outil.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'constants.dart';
 import 'httpbeans/hubwaveresponse.dart';
 import 'main.dart';
+import 'managedeparture.dart';
+import 'models/pays.dart';
 import 'models/publication.dart';
 import 'models/user.dart';
 import 'models/ville.dart';
@@ -53,7 +57,9 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   late Ville villeDepart;
   late int userOrSuscriber; // 0 : Suscriber, 1 : Owner
   final _userRepository = UserRepository();
+  final _paysRepository = PaysRepository();
   User? owner;
+  User? cUser;
   late List<User> listeUser;
   late BuildContext dialogContextPaiement;
   int choixpaiement = 0;
@@ -69,7 +75,14 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   late BuildContext dialogContext;
   late int iduser;
   late bool flagSendData;
+  late bool flagDeletionData;
+  late bool publicationDeletionDone;
   late bool historique;
+  //
+  Pays? paysDepart;
+  Pays? paysDestination;
+  late List<Souscription> lesSouscriptions;
+  late Souscription suscriberSouscription;
 
 
   // M E T H O D S
@@ -88,6 +101,19 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
 
   String pickDateTime(int choice, String datetime){
     return datetime.split("T")[choice];
+  }
+
+  void openTravelForUpdate() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context){
+              return ManageDeparture(id: cUser!.id, listeCountry: [paysDepart!, paysDestination!],
+                  nationalite: cUser!.nationnalite, idpub: publication.id,
+                  client: widget.client);
+            }
+        )
+    );
   }
 
   @override
@@ -172,7 +198,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     }
     else{
       // Load 'SUSCRIBERS' :
-      List<Souscription> lesSouscriptions = await outil.getAllSouscriptionByIdpub(publication.id);
+      lesSouscriptions = await outil.getAllSouscriptionByIdpub(publication.id);
       if(lesSouscriptions.isNotEmpty){
         // Get User Ids list :
         List<int> userIds = lesSouscriptions.map((e) => e.iduser).toList();
@@ -185,6 +211,12 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
       }
     }
     return retour;
+  }
+
+  // Update this :
+  int updateReserveBagage(List<Publication> listePub) {
+    return (listePub.where((pub) => pub.id == publication.id).first.reserve -
+        (lesSouscriptions.isNotEmpty ? lesSouscriptions.map((e) => e.reserve).reduce((a, b) => a + b) : 0));
   }
 
 
@@ -330,6 +362,26 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
         margin: const EdgeInsets.only(top: 50, left: 10, right: 10),
         child: Column(
           children: [
+            ElevatedButton.icon(
+              style: ButtonStyle(
+                  backgroundColor: MaterialStateColor.resolveWith((states) => const Color(
+                      0xFFCB7228))
+              ),
+              label: const Text("Annuler",
+                  style: TextStyle(
+                      color: Colors.white
+                  )),
+              onPressed: () {
+                // Delete the 'PUBLICATION' :
+                dialogForPublicationDeletion(context);
+              },
+              icon: const Icon(
+                Icons.cancel,
+                size: 20,
+                color: Colors.white,
+              ),
+            )
+            ,
             const Align(
               alignment: Alignment.centerLeft,
               child: Text('Emetteur',
@@ -452,6 +504,76 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     }
   }
 
+  // Subscription DELETION :
+  void subscriptionDeletion() async {
+    final url = Uri.parse('${dotenv.env['URL']}cancelsuscription');
+    var response = await widget.client.post(url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "idpub": publication.id,
+          "iduser": iduser
+        })).timeout(const Duration(seconds: timeOutValue));
+    if(response.statusCode == 200){
+      // Deactivate PUBLICATION :
+      Publication pub = Publication(
+          id: publication.id,
+          userid: publication.userid,
+          villedepart: publication.id,
+          villedestination: publication.id,
+          datevoyage: publication.datevoyage,
+          datepublication: publication.datepublication,
+          reserve: publication.reserve,
+          active: 0,
+          reservereelle: publication.reservereelle,
+          souscripteur: publication.souscripteur,
+          milliseconds: publication.milliseconds,
+          identifiant: publication.identifiant,
+          devise: publication.devise,
+          prix: publication.prix,
+          read: publication.read
+      );
+      await outil.updatePublicationWithoutFurtherActions(pub);
+      publicationDeletionDone = true;
+    }
+    flagDeletionData = false;
+  }
+
+
+  // Send DELETION request
+  void publicationDeletion() async {
+    final url = Uri.parse('${dotenv.env['URL']}canceltravel');
+    var response = await widget.client.post(url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "idpub": publication.id,
+          "iduser": 0
+        })).timeout(const Duration(seconds: timeOutValue));
+    if(response.statusCode == 200){
+      // Deactivate PUBLICATION :
+      Publication pub = Publication(
+          id: publication.id,
+          userid: publication.userid,
+          villedepart: publication.id,
+          villedestination: publication.id,
+          datevoyage: publication.datevoyage,
+          datepublication: publication.datepublication,
+          reserve: publication.reserve,
+          active: 0,
+          reservereelle: publication.reservereelle,
+          souscripteur: publication.souscripteur,
+          milliseconds: publication.milliseconds,
+          identifiant: publication.identifiant,
+          devise: publication.devise,
+          prix: publication.prix,
+          read: publication.read
+      );
+      await outil.updatePublicationWithoutFurtherActions(pub);
+      publicationDeletionDone = true;
+    }
+    flagDeletionData = false;
+  }
+
+
   // Send Account DATA :
   Future<void> sendReceptionFlag() async {
     final url = Uri.parse('${dotenv.env['URL']}markreceipt');
@@ -518,8 +640,113 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
         );
         break;
     }
-    
   }
+
+
+  void dialogForPublicationDeletion(BuildContext fContext) {
+    showDialog(
+        barrierDismissible: false,
+        context: fContext,
+        builder: (BuildContext context) {
+          dialogContext = context;
+          return WillPopScope(
+              onWillPop: () async => false,
+              child: AlertDialog(
+                  title: const Text('Attention'),
+                  content: const SizedBox(
+                      height: 70,
+                      child: Column(
+                        children: [
+                          Text("Confirmer la suppression de cette publication ?"),
+                          SizedBox(
+                            height: 20,
+                          )
+                        ],
+                      )
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.pop(context, 'Cancel'),
+                      child: const Text('NON'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                        // Dispay new ALERTDIALOG
+                        displayPublicationDeletion(fContext);
+                      },
+                      child: const Text('OUI'),
+                    ),
+                  ]
+              ) );
+        }
+    );
+  }
+
+
+  void displayPublicationDeletion(BuildContext dContext) {
+    // Display SYNCHRO :
+    showDialog(
+        barrierDismissible: false,
+        context: dContext,
+        builder: (BuildContext context) {
+          dialogContext = context;
+          return WillPopScope(
+            onWillPop: () async => false,
+            child: AlertDialog(
+                title: const Text('Information'),
+                content: Container(
+                    height: 100,
+                    child: const Column(
+                      children: [
+                        Text("Suppression en cours ..."),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        SizedBox(
+                            height: 30.0,
+                            width: 30.0,
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                              strokeWidth: 3.0, // Width of the circular line
+                            )
+                        )
+                      ],
+                    )
+                )
+            )
+          );
+        }
+    );
+
+    flagDeletionData = true;
+    publicationDeletionDone = false;
+    userOrSuscriber == 0 ? subscriptionDeletion() : publicationDeletion();
+
+    // Run TIMER :
+    Timer.periodic(
+      const Duration(milliseconds: 1500),
+          (timer) {
+        // Update user about remaining time
+        if(!flagDeletionData){
+          Navigator.pop(dialogContext);
+          timer.cancel();
+
+          if(publicationDeletionDone) {
+            // Display message :
+            displayFloat('Opération effectuée !');
+            // Leave SCREEN :
+            Navigator.pop(context);
+          }
+          else{
+            displayFloat('Suppression de l\'annonce impossible');
+          }
+        }
+      },
+    );
+  }
+
 
 
   // Display INTERFACE for SENDING DATA :
@@ -711,7 +938,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                         Row(
                                           children: [
                                             const Text('Initial : '),
-                                            Text('${publication.reserve} Kg',
+                                            Text('${ controller.publicationData.where((pub) => pub.id == publication.id).first.reserve} Kg',
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.bold
                                               ),
@@ -722,9 +949,8 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                           children: [
                                             Text(userOrSuscriber == 0 ? 'Réservé : ' : 'Reste : '),
                                             Text(userOrSuscriber == 0 ?
-                                            outil.getPublicationSuscribed() != null ?
-                                            '${outil.getPublicationSuscribed()!.reservereelle} Kg' :
-                                            '0 Kg' : '$resteReserve Kg',
+                                            '${ controller.publicationData.where((pub) => pub.id == publication.id).first.reservereelle} Kg' :
+                                            '${updateReserveBagage(controller.publicationData)} Kg',
                                                 style: const TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     color: Colors.blue
@@ -768,13 +994,17 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                             fontSize: 17
                                         )
                                     ),
-                                    Text(
-                                      formatPrice(publication.prix),
-                                      style: const TextStyle(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 17
-                                      ),
+                                    GetBuilder<PublicationGetController>(
+                                      builder: (PublicationGetController controller) {
+                                        return Text(
+                                          formatPrice(controller.publicationData.where((pub) => pub.id == publication.id).first.prix),
+                                          style: const TextStyle(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 17
+                                          ),
+                                        );
+                                      }
                                     )
                                   ],
                                 ),
@@ -828,6 +1058,57 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                       Container(
                                         alignment: Alignment.topLeft,
                                         margin: const EdgeInsets.only(left: 10, top: 30, right: 10),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            ElevatedButton.icon(
+                                              style: ButtonStyle(
+                                                  backgroundColor: MaterialStateColor.resolveWith((states) => const Color(
+                                                      0xFFCB7228))
+                                              ),
+                                              label: const Text("Annuler",
+                                                  style: TextStyle(
+                                                      color: Colors.white
+                                                  )),
+                                              onPressed: () {
+                                                // Delete the 'PUBLICATION' :
+                                                dialogForPublicationDeletion(context);
+                                              },
+                                              icon: const Icon(
+                                                Icons.cancel,
+                                                size: 20,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            ElevatedButton.icon(
+                                              style: ButtonStyle(
+                                                  backgroundColor: MaterialStateColor.resolveWith((states) => const Color(
+                                                      0xFF049829))
+                                              ),
+                                              label: const Text("Modifier",
+                                                  style: TextStyle(
+                                                      color: Colors.white
+                                                  )),
+                                              onPressed: () async{
+                                                cUser ??= await outil.pickLocalUser();
+                                                // Get Paydepart from Ville depart :
+                                                paysDepart ??= await _paysRepository.findPaysById(villeDepart.paysid);
+                                                paysDestination ??= await _paysRepository.findPaysById(ville.paysid);
+                                                // Call :
+                                                openTravelForUpdate();
+                                              },
+                                              icon: const Icon(
+                                                Icons.update,
+                                                size: 20,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        alignment: Alignment.topLeft,
+                                        margin: const EdgeInsets.only(left: 10, top: 30, right: 10),
                                         child: Text(listeUser.length == 1 ? 'Souscripteur' : 'Souscripteurs',
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
@@ -862,6 +1143,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                             return GestureDetector(
                                               onLongPress: () async{
                                                 Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(publication.id, listeUser[index].id);
+                                                suscriberSouscription = souscription;
                                                 if(souscription.statut == 0){
                                                   setState(() {
                                                     iduser = listeUser[index].id;

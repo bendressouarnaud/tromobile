@@ -6,7 +6,7 @@ class Souscription {
   final int iduser;
   final int millisecondes;
   final int reserve;
-  final int statut; // 0 : encours , 1 : traité
+  final int statut; // 0 : encours , 1 : traité, 2 : annulé par le souscripteur
 
   // M e t h o d s  :
   Souscription({required this.id, required this.idpub, required this.iduser, required this.millisecondes, required this.reserve

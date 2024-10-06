@@ -66,8 +66,17 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   switch(sujet){
     case 1:
       Publication? publication = Servicegeo().generatePublication(message);
-      if(publication != null){
-        _publicationController.addData(publication);
+      if (publication != null) {
+        // Check if this ONE exists ALREADY or NOT :
+        Publication? pubCheck = await _publicationController.findOptionalPublicationById(publication.id);
+        if(pubCheck == null){
+          // Create
+          _publicationController.addData(publication);
+        }
+        else{
+          // Update :
+          await _publicationController.updateData(publication);
+        }
       }
       break;
 
@@ -232,6 +241,72 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         read: ct.read
       );
       await outil.updateChatWithoutNotif(newChat);
+      break;
+
+    case 7:
+      Publication? pub = await outil.findOptionalPublicationById(int.parse(message.data['idpub']));
+      if(pub != null) {
+        Publication newPub = Publication(
+            id: pub.id,
+            userid: pub.userid,
+            villedepart: pub.villedepart,
+            villedestination: pub.villedestination,
+            datevoyage: pub.datevoyage,
+            datepublication: pub.datepublication,
+            reserve: pub.reserve,
+            active: pub.active,
+            reservereelle: int.parse(message.data['poids']),
+            souscripteur: pub.souscripteur,
+            // Use OWNER Id
+            milliseconds: pub.milliseconds,
+            identifiant: pub.identifiant,
+            devise: pub.devise,
+            prix: pub.prix,
+            read: pub.read
+        );
+        // Update  :
+        await outil.updatePublicationWithoutFurtherActions(newPub);
+      }
+      break;
+
+    case 8:
+      Publication? pub = await outil.findOptionalPublicationById(int.parse(message.data['idpub']));
+      if(pub != null) {
+        Publication newPub = Publication(
+            id: pub.id,
+            userid: pub.userid,
+            villedepart: pub.villedepart,
+            villedestination: pub.villedestination,
+            datevoyage: pub.datevoyage,
+            datepublication: pub.datepublication,
+            reserve: pub.reserve,
+            active: 0,
+            reservereelle: pub.reservereelle,
+            souscripteur: pub.souscripteur,
+            // Use OWNER Id
+            milliseconds: pub.milliseconds,
+            identifiant: pub.identifiant,
+            devise: pub.devise,
+            prix: pub.prix,
+            read: pub.read
+        );
+        // Update  :
+        await outil.updatePublicationWithoutFurtherActions(newPub);
+      }
+      break;
+
+    case 9:
+      Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(int.parse(message.data['idpub']),
+          int.parse(message.data['iduser']));
+      Souscription souscriptionUpdate = Souscription(
+          id: souscription.id,
+          idpub: souscription.idpub,
+          iduser: souscription.iduser,
+          millisecondes: souscription.millisecondes,
+          reserve: souscription.reserve,
+          statut: 2 // To cancel
+      );
+      await outil.updateSouscription(souscriptionUpdate);
       break;
   }
 }

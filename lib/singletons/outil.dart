@@ -200,6 +200,11 @@ class Outil {
     return await _souscriptionController.getData(idpub); // Ajout du AWAIT le 29/08/2024
   }
 
+  //
+  Future<List<Souscription>> findAllSuscriptionByIdpub(int idpub) async{
+    return await _souscriptionController.findAllSuscriptionByIdpub(idpub);
+  }
+
   Future<Souscription> getSouscriptionByIdpubAndIduser(int idpub, int iduser) async{
     return await _souscriptionController.getByIdpubAndIduser(idpub, iduser); // Ajout du AWAIT le 29/08/2024
   }
@@ -243,6 +248,10 @@ class Outil {
     return await _publicationController.refreshPublication(idpub);
   }
 
+  Future<Publication?> findOptionalPublicationById(int idpub) async {
+    return await _publicationController.findOptionalPublicationById(idpub);
+  }
+
   Future<List<Publication>> findAllPublication() async {
     List<Publication> mList = await _publicationController.findAllPublication();
     int taille = mList.where((element) => element.read == 0).toList().length;
@@ -255,9 +264,14 @@ class Outil {
     return await _publicationController.findOldAll();
   }
 
+  List<Publication> readCurrentPublication() {
+    return _publicationController.publicationData();
+  }
+
   Future<void> refreshAllPublicationsFromResumed() async {
     List<Publication> mList = await _publicationController.refreshAllPublicationsFromResumed();
-    int taille = mList.where((element) => element.read == 0).toList().length;
+    int taille = mList.where((element) => (element.read == 0 && element.milliseconds >= DateTime.now().millisecondsSinceEpoch))
+        .toList().length;
     _navController.feed(taille);
   }
 

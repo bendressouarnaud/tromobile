@@ -142,8 +142,6 @@ class _WelcomePageState extends State<WelcomePage> {
       case AppLifecycleState.resumed:
         // Try to refresh PUBLICATION from THERE :
         outil.refreshAllPublicationsFromResumed();
-        //outil.refreshAllChatsFromResumed(0);
-        //updateAppState('resumed');
       case AppLifecycleState.inactive:
         //print('--------->      inactive');
         //updateAppState('inactive');
@@ -238,7 +236,16 @@ class _WelcomePageState extends State<WelcomePage> {
         if(!fromNotification) {
           Publication? publication = Servicegeo().generatePublication(message);
           if (publication != null) {
-            outil.addPublication(publication);
+            // Check if this ONE exists ALREADY or NOT :
+            Publication? pubCheck = await outil.findOptionalPublicationById(publication.id);
+            if(pubCheck == null){
+              // Create
+              outil.addPublication(publication);
+            }
+            else{
+              // Update :
+              await outil.updatePublicationWithoutFurtherActions(publication);
+            }
           }
         }
         else{
@@ -301,8 +308,19 @@ class _WelcomePageState extends State<WelcomePage> {
         break;
 
       case 6:
-      //
         Servicegeo().markChatReceipt(message);
+        break;
+
+      case 7:
+        Servicegeo().updatePublicationReserve(message);
+        break;
+
+      case 8:
+        Servicegeo().deactivatePublicationFromOwner(message);
+        break;
+
+      case 9:
+        Servicegeo().deactivateSubscription(message);
         break;
     }
   }
@@ -662,10 +680,13 @@ class _WelcomePageState extends State<WelcomePage> {
                 return GetBuilder<PublicationGetController>(
                     builder: (PublicationGetController controller) {
                       // Sort :
-                      controller.publicationData.sort((a,b) =>
+                      var milliseconds = DateTime.now().millisecondsSinceEpoch;
+                      List<Publication> reste = controller.publicationData.where((pub) => (pub.milliseconds >= milliseconds && pub.active == 1))
+                          .toList();
+                      reste.sort((a,b) =>
                           b.id.compareTo(a.id));
                       return SingleChildScrollView(
-                        child: EcranAnnonce().displayAnnonce(controller.publicationData
+                        child: EcranAnnonce().displayAnnonce(reste
                             , listePays, listeVille,
                         _userController.userData ,context, false, widget.client),
                       );

@@ -35,9 +35,6 @@ class Servicegeo {
     if(message.data.isNotEmpty){
       // Date voyage :
       String tamponDateVoyage = message.data['datevoyage'].toString().replaceFirst('Z', ':00Z');
-      //List<String> tamponVoyage = message.data['datevoyage'].toString().split(":");
-      //String offSet = "${tamponVoyage[1].substring(2)}:${tamponVoyage[2]}";
-      //final hNow = DateTime.parse(tamponVoyage[0]+offSet.replaceFirst('Z', '+00:00'));
       final hNow = DateTime.parse(tamponDateVoyage);
       String tamponNow = hNow.toString();
       List<String> tamponFinal = tamponNow.split(" ");
@@ -53,7 +50,7 @@ class Servicegeo {
           datepublication: message.data['datepublication'],
           reserve: int.parse(message.data['reserve']),
           active: 1,
-          reservereelle: int.parse(message.data['reserve']),
+          reservereelle: 0, // int.parse(message.data['reserve'])
           souscripteur: 0,
           milliseconds: hNow.millisecondsSinceEpoch,
           identifiant: message.data['identifiant'],
@@ -209,6 +206,73 @@ class Servicegeo {
         read: ct.read
     );
     await outil.updateData(newChat);
+  }
+
+  // Update PUBLICATION
+  void updatePublicationReserve(RemoteMessage message) async {
+    Publication? pub = await outil.findOptionalPublicationById(int.parse(message.data['idpub']));
+    if(pub != null) {
+      Publication newPub = Publication(
+          id: pub.id,
+          userid: pub.userid,
+          villedepart: pub.villedepart,
+          villedestination: pub.villedestination,
+          datevoyage: pub.datevoyage,
+          datepublication: pub.datepublication,
+          reserve: pub.reserve,
+          active: pub.active,
+          reservereelle: int.parse(message.data['poids']),
+          souscripteur: pub.souscripteur,
+          // Use OWNER Id
+          milliseconds: pub.milliseconds,
+          identifiant: pub.identifiant,
+          devise: pub.devise,
+          prix: pub.prix,
+          read: pub.read
+      );
+      // Update  :
+      await outil.updatePublicationWithoutFurtherActions(newPub);
+    }
+  }
+
+  void deactivatePublicationFromOwner(RemoteMessage message) async {
+    Publication? pub = await outil.findOptionalPublicationById(int.parse(message.data['idpub']));
+    if(pub != null) {
+      Publication newPub = Publication(
+          id: pub.id,
+          userid: pub.userid,
+          villedepart: pub.villedepart,
+          villedestination: pub.villedestination,
+          datevoyage: pub.datevoyage,
+          datepublication: pub.datepublication,
+          reserve: pub.reserve,
+          active: 0,
+          reservereelle: pub.reservereelle,
+          souscripteur: pub.souscripteur,
+          // Use OWNER Id
+          milliseconds: pub.milliseconds,
+          identifiant: pub.identifiant,
+          devise: pub.devise,
+          prix: pub.prix,
+          read: pub.read
+      );
+      // Update  :
+      await outil.updatePublicationWithoutFurtherActions(newPub);
+    }
+  }
+
+  void deactivateSubscription(RemoteMessage message) async {
+    Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(int.parse(message.data['idpub']),
+        int.parse(message.data['iduser']));
+    Souscription souscriptionUpdate = Souscription(
+        id: souscription.id,
+        idpub: souscription.idpub,
+        iduser: souscription.iduser,
+        millisecondes: souscription.millisecondes,
+        reserve: souscription.reserve,
+        statut: 2 // To cancel
+    );
+    await outil.updateSouscription(souscriptionUpdate);
   }
 
 
