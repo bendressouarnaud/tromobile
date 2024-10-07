@@ -262,17 +262,21 @@ class Servicegeo {
   }
 
   void deactivateSubscription(RemoteMessage message) async {
-    Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(int.parse(message.data['idpub']),
-        int.parse(message.data['iduser']));
-    Souscription souscriptionUpdate = Souscription(
-        id: souscription.id,
-        idpub: souscription.idpub,
-        iduser: souscription.iduser,
-        millisecondes: souscription.millisecondes,
-        reserve: souscription.reserve,
-        statut: 2 // To cancel
-    );
-    await outil.updateSouscription(souscriptionUpdate);
+    try {
+      Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(int.parse(message.data['idpub']),
+          int.parse(message.data['iduser']));
+      Souscription souscriptionUpdate = Souscription(
+          id: souscription.id,
+          idpub: souscription.idpub,
+          iduser: souscription.iduser,
+          millisecondes: souscription.millisecondes,
+          reserve: souscription.reserve,
+          statut: 2 // To cancel
+      );
+      await outil.updateSouscription(souscriptionUpdate);
+    }
+    catch (e){
+    }
   }
 
 

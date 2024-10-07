@@ -198,7 +198,9 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     }
     else{
       // Load 'SUSCRIBERS' :
-      lesSouscriptions = await outil.getAllSouscriptionByIdpub(publication.id);
+      var tampon = await outil.getAllSouscriptionByIdpub(publication.id);
+      // Eliminate SOUSCRIPTION CANCELLED :
+      lesSouscriptions = tampon.where((souscrip) => souscrip.statut != 2).toList();
       if(lesSouscriptions.isNotEmpty){
         // Get User Ids list :
         List<int> userIds = lesSouscriptions.map((e) => e.iduser).toList();
@@ -1187,7 +1189,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                                               shape: const CircleBorder(),
                                                               backgroundColor: Colors.blue[50]
                                                           ),
-                                                          child: Text(processInitial(listeUser[index].nom, listeUser[index].prenom))
+                                                          child: Text('${lesSouscriptions.where((souscript) => souscript.iduser == listeUser[index].id).first.reserve} k')
                                                       ),
                                                       title: Text('${listeUser[index].nom} ${listeUser[index].prenom}'),
                                                       subtitle: Text(listeUser[index].adresse),
