@@ -557,7 +557,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: Text(idpub == 0 ? 'Nouvelle annonce' : 'Modification annonce',
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.black,
                               fontWeight: FontWeight.bold,
                               fontSize: 20,

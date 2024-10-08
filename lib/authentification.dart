@@ -12,6 +12,7 @@ import 'package:http/http.dart';
 import 'package:group_radio_button/group_radio_button.dart';
 import 'package:http/src/response.dart' as mreponse;
 import 'package:tro/getxcontroller/getsouscriptioncontroller.dart';
+import 'package:tro/repositories/filiation_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 
 import 'constants.dart';
@@ -22,6 +23,7 @@ import 'httpbeans/authenticateresponse.dart';
 import 'httpbeans/souscriptionbean.dart';
 import 'httpbeans/userbean.dart';
 import 'models/cible.dart';
+import 'models/filiation.dart';
 import 'models/publication.dart';
 import 'models/souscription.dart';
 import 'models/user.dart';
@@ -61,6 +63,7 @@ class _NewAuth extends State<AuthentificationEcran> {
   final CibleGetController _cibleController = Get.put(CibleGetController());
   final PublicationGetController _publicationController = Get.put(PublicationGetController());
   final SouscriptionGetController _souscriptionController = Get.put(SouscriptionGetController());
+  final _filiationRepository = FiliationRepository();
   //late https.Client client;
   //
   String? getToken = "";
@@ -128,6 +131,11 @@ class _NewAuth extends State<AuthentificationEcran> {
           villeresidence: bn.villeresidence);
       // Save :
       _userController.addData(user);
+
+      // From there, Hit NEW FILIATION :
+      Filiation filiation = Filiation(id: 1, code: bn.codeparrainage, bonus: bn.bonus);
+      await _filiationRepository.insert(filiation);
+
       // Persist CIBLE :
       for(Cible ce in bn.cibles){
         Cible cible = Cible(id: ce.id,

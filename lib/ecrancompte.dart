@@ -8,6 +8,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:tro/ecranfiliation.dart';
 import 'package:tro/main.dart';
 import 'package:tro/models/ville.dart';
 import 'package:tro/repositories/cible_repsository.dart';
@@ -75,6 +76,13 @@ class _NewEcranState extends State<EcranCompte> {
     usr = await _userRepository.getConnectedUser();
     listePays = await _paysRepository.findAll();
     listeVille = await _villeRepository.findAll();
+  }
+
+  void callFiliationInterface() {
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) {
+          return GestionFiliation(client: widget.client, userId: usr!.id);
+        }));
   }
 
   // Display Notification when ACCOUNT Created and NOTIFICATION PERMISSION not given yet :
@@ -282,7 +290,7 @@ class _NewEcranState extends State<EcranCompte> {
                                       return GestionCible(client: widget.client,);
                                     }));
                               },
-                              child: const Text('Gestion des cibles',
+                              child: const Text('Cibles',
                                 style: TextStyle(
                                     fontSize: 18
                                 ),
@@ -317,7 +325,7 @@ class _NewEcranState extends State<EcranCompte> {
                                       return ManageNotification(client: widget.client);
                                     }));
                               },
-                              child: const Text('Gestion des périodes de notification',
+                              child: const Text('Périodes de notification',
                                 style: TextStyle(
                                     fontSize: 18
                                 ),
@@ -326,6 +334,40 @@ class _NewEcranState extends State<EcranCompte> {
                           ],
                         ),
                       ),
+                      Container(
+                          margin: const EdgeInsets.only(top: 10, left: 15, right: 15),
+                          child: const Divider(
+                            height: 2,
+                            color: Colors.black,
+                          )
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(top: 10, left: 7),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.arrow_right_sharp,
+                              color: Colors.black,
+                              size: 30,
+                            ),
+                            GestureDetector(
+                              onTap: () async{
+                                // Display DIALOG
+                                usr ??= await _userRepository.getConnectedUser();
+                                callFiliationInterface();
+                              },
+                              child: const Text('Filiations',
+                                style: TextStyle(
+                                    fontSize: 18
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+
+
                     ],
                   );
                 }

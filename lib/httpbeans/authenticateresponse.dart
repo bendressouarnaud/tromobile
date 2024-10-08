@@ -28,11 +28,14 @@ class AuthenticateResponse {
   final List<Publication> publications;
   final List<UserBean> souscripteurs;
   final List<SouscriptionBean> sosucriptions;
+  final String codeparrainage;
+  final double bonus;
 
   // M e t h o d s  :
   AuthenticateResponse({required this.nationnalite, required this.id, required this.typepieceidentite, required this.numeropieceidentite, required this.nom, required this.prenom, required this.email, required this.numero,
     required this.adresse, required this.fcmtoken, required this.pwd, required this.codeinvitation, required this.cibles
-    , required this.publications, required this.souscripteurs, required this.sosucriptions, required this.villeresidence});
+    , required this.publications, required this.souscripteurs, required this.sosucriptions, required this.villeresidence
+    , required this.codeparrainage, required this.bonus});
   factory AuthenticateResponse.fromJson(Map<String, dynamic> json) {
     return AuthenticateResponse(
       //This will be used to convert JSON objects that
@@ -55,6 +58,8 @@ class AuthenticateResponse {
       publications: List<dynamic>.from(json['publications']).map((i) => Publication.fromDatabaseJson(i)).toList(),
       souscripteurs: List<dynamic>.from(json['publicationowner']).map((i) => UserBean.fromJson(i)).toList(),
       sosucriptions: List<dynamic>.from(json['subscriptions']).map((i) => SouscriptionBean.fromJson(i)).toList(),
+      codeparrainage: json['codeparrainage'],
+      bonus: json['bonus']
     );
   }
 }

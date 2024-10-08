@@ -62,6 +62,8 @@ class DatabaseHelper {
     await db.execute('CREATE TABLE parameters (id INTEGER PRIMARY KEY,state TEXT,travellocal INTEGER,'
         'travelabroad INTEGER, notification INTEGER, epochdebut INTEGER, epochfin INTEGER)');
 
+    await db.execute('CREATE TABLE filiation (id INTEGER PRIMARY KEY,code TEXT,bonus REAL)');
+
     // Init values :
     _createCountry(db);
 

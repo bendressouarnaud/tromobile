@@ -361,7 +361,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
       )
       :
       Container(
-        margin: const EdgeInsets.only(top: 50, left: 10, right: 10),
+        margin: const EdgeInsets.only(top: 40, left: 10, right: 10),
         child: Column(
           children: [
             ElevatedButton.icon(
@@ -382,8 +382,10 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                 size: 20,
                 color: Colors.white,
               ),
-            )
-            ,
+            ),
+            const SizedBox(
+              height: 20,
+            ),
             const Align(
               alignment: Alignment.centerLeft,
               child: Text('Emetteur',

@@ -12,9 +12,11 @@ import 'package:http/http.dart';
 import 'package:group_radio_button/group_radio_button.dart';
 import 'package:http/src/response.dart' as mreponse;
 import 'package:tro/models/cible.dart';
+import 'package:tro/models/filiation.dart';
 import 'package:tro/models/ville.dart';
 import 'package:tro/pageaccueil.dart';
 import 'package:tro/repositories/cible_repsository.dart';
+import 'package:tro/repositories/filiation_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
 
@@ -58,6 +60,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
   TextEditingController pieceController = TextEditingController();
   TextEditingController menuCountryNationaliteController = TextEditingController();
   TextEditingController villeResidenceController = TextEditingController();
+  TextEditingController codeParrainageController = TextEditingController();
   late bool _isLoading;
   // Initial value :
   var dropdownvaluePays = "France";
@@ -68,6 +71,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
   final _userRepository = UserRepository();
   final _villeRepository = VilleRepository();
   final _cibleRepository = CibleRepository();
+  final _filiationRepository = FiliationRepository();
   late BuildContext dialogContext;
   bool flagSendData = false;
   bool flagServerResponse = false;
@@ -82,6 +86,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
   Pays? paysDepartMenu;
   Ville? villeResidence;
   int init = 0;
+  Filiation? filiation = null;
 
 
 
@@ -143,6 +148,8 @@ class _NewCreationState extends State<EcranCreationCompte> {
       villeResidence = listeVille.where((ville) => ville.id == widget.gUser!.villeresidence).first;
       // PIECE IDENTITE :
       dropdownvalueTitre = widget.gUser!.typepieceidentite;
+      // Pick CODE PARRAINAGE :
+      codeParrainageController = TextEditingController(text: widget.gUser!.codeinvitation );
     }
   }
 
@@ -207,7 +214,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
           "email": emailController.text,
           "contact": numeroController.text,
           "adresse": adresseController.text,
-          "codeinvitation": "", // Set default :
+          "codeinvitation": codeParrainageController.text, // Set default :
           "numeropieceidentite": pieceController.text,
           "idpays": paysDepartMenu!.id,
           "pays": pays,
@@ -236,7 +243,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
             adresse: adresseController.text,
             fcmtoken: getToken!,
             pwd: "",
-            codeinvitation: "",
+            codeinvitation: codeParrainageController.text,
             villeresidence: villeResidence!.id);
         // Save :
         _userController.addData(user);
@@ -250,6 +257,10 @@ class _NewCreationState extends State<EcranCreationCompte> {
               paysdestid: paysDepartMenu!.id,
               topic: '');
           _cibleController.addData(cible);
+          
+          // From there, Hit NEW FILIATION :
+          Filiation filiation = Filiation(id: 1, code: ur.codeparrainage, bonus: 0);
+          await _filiationRepository.insert(filiation);
         }
 
         // Can close WINDOW :
@@ -263,6 +274,11 @@ class _NewCreationState extends State<EcranCreationCompte> {
       // Set FLAG :
       flagSendData = false;
       displayToast("Cette adresse est déjà utilisée !");
+    }
+    else if(response.statusCode == 501){
+      // Set FLAG :
+      flagSendData = false;
+      displayToast("Code parrainage inexistant !");
     }
     else {
       // Set FLAG :
@@ -453,28 +469,49 @@ class _NewCreationState extends State<EcranCreationCompte> {
                   ),
                   textInputAction: TextInputAction.next,
                 ),
+              )              ,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 10, right: 5, top: 10),
+                      child: TextField(
+                        keyboardType: TextInputType.phone,
+                        controller: numeroController,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Contact...',
+                        ),
+                        textInputAction: TextInputAction.next,
+                      )
+                    ),
+                  ),
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 5, right: 10, top: 10),
+                      child: TextField(
+                        keyboardType: TextInputType.streetAddress,
+                        controller: adresseController,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Adresse...',
+                        ),
+                      )
+                    ),
+                  ),
+                ],
               ),
               Container(
                 padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
                 child: TextField(
-                  keyboardType: TextInputType.phone,
-                  controller: numeroController,
+                  keyboardType: TextInputType.text,
+                  controller: codeParrainageController,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    labelText: 'Contact...',
+                    labelText: 'Code Parrainage...',
                   ),
                   textInputAction: TextInputAction.next,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
-                child: TextField(
-                  keyboardType: TextInputType.streetAddress,
-                  controller: adresseController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Adresse...',
-                  ),
                 ),
               ),
               Expanded(
