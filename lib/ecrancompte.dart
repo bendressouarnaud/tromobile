@@ -166,6 +166,18 @@ class _NewEcranState extends State<EcranCompte> {
     );
   }
 
+  void displayCreationAccount() {
+    if(listePays.isNotEmpty){
+      Navigator.push(
+          context,
+          MaterialPageRoute(builder:
+              (context) =>
+              EcranCreationCompte(listeCountry: listePays, listeVille: listeVille, client: widget.client, gUser: usr)
+          )
+      );
+    }
+  }
+
 
   // Delete ACHAT
   void deleteAccount() async {
@@ -220,18 +232,9 @@ class _NewEcranState extends State<EcranCompte> {
                       child: Align(
                         alignment: Alignment.topRight,
                         child: ElevatedButton(
-                            onPressed: () {
-
-                              if(listePays.isNotEmpty){
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder:
-                                        (context) =>
-                                        EcranCreationCompte(listeCountry: listePays, listeVille: listeVille, client: widget.client, gUser: usr)
-                                    )
-                                );
-
-                              }
+                            onPressed: () async {
+                              usr = await _userRepository.getConnectedUser();
+                              displayCreationAccount();
                             },
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue[400]

@@ -492,6 +492,12 @@ class _ReservePaiement extends State<ReservePaiement> {
                       return;
                     }
 
+                    // Reserve SHOULD NOT BE > to the AVAILABLE :
+                    if(reservation > publication.reserve){
+                      displayFloat("Votre réserve est supérieure à la disponiblité !");
+                      return;
+                    }
+
                     if(publication.prix == 0){
                       // Launch PAYMENT :
                       displayLoadingInterface(context);

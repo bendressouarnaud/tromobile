@@ -17,6 +17,7 @@ import 'package:http/io_client.dart';
 import 'package:tro/models/souscription.dart';
 import 'package:tro/pageaccueil.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:tro/repositories/filiation_repository.dart';
 import 'package:tro/services/servicegeo.dart';
 import 'package:tro/singletons/outil.dart';
 
@@ -25,6 +26,7 @@ import 'firebase_options.dart';
 import 'getxcontroller/getchatcontroller.dart';
 import 'getxcontroller/getpublicationcontroller.dart';
 import 'models/chat.dart';
+import 'models/filiation.dart';
 import 'models/parameters.dart';
 import 'models/publication.dart';
 import 'models/user.dart';
@@ -309,6 +311,20 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
             statut: 2 // To cancel
         );
         await outil.updateSouscription(souscriptionUpdate);
+      }
+      catch (e){
+      }
+      break;
+
+    case 10:
+      try {
+        final filiationRepository = FiliationRepository();
+        Filiation? filiation = await filiationRepository.findById(1);
+        if(filiation != null){
+          Filiation upDateFiliation = Filiation(id: 1, code: filiation.code,
+              bonus: double.parse(message.data['montant']));
+          filiationRepository.update(upDateFiliation);
+        }
       }
       catch (e){
       }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart';
 import 'package:tro/main.dart';
+import 'package:tro/models/filiation.dart';
 
 import '../constants.dart';
 import '../httpbeans/countrydata.dart';
@@ -13,6 +14,7 @@ import '../models/chat.dart';
 import '../models/publication.dart';
 import '../models/souscription.dart';
 import '../models/user.dart';
+import '../repositories/filiation_repository.dart';
 import '../singletons/outil.dart';
 
 class Servicegeo {
@@ -274,6 +276,20 @@ class Servicegeo {
           statut: 2 // To cancel
       );
       await outil.updateSouscription(souscriptionUpdate);
+    }
+    catch (e){
+    }
+  }
+  
+  void upgradeBonus(RemoteMessage message) async {
+    try {
+      final filiationRepository = FiliationRepository();
+      Filiation? filiation = await filiationRepository.findById(1);
+      if(filiation != null){
+        Filiation upDateFiliation = Filiation(id: 1, code: filiation.code,
+            bonus: double.parse(message.data['montant']));
+        filiationRepository.update(upDateFiliation);
+      }
     }
     catch (e){
     }

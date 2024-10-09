@@ -322,6 +322,10 @@ class _WelcomePageState extends State<WelcomePage> {
       case 9:
         Servicegeo().deactivateSubscription(message);
         break;
+
+      case 10:
+        Servicegeo().upgradeBonus(message);
+        break;
     }
   }
 

@@ -134,22 +134,24 @@ class _NewCreationState extends State<EcranCreationCompte> {
   }
 
   void checkUserPresence() async{
-    //User? usr = await _userRepository.getConnectedUser();
-    if(widget.gUser != null){
-      nomController = TextEditingController(text: widget.gUser!.nom );
-      prenomController = TextEditingController(text: widget.gUser!.prenom );
-      emailController = TextEditingController(text: widget.gUser!.email );
-      numeroController = TextEditingController(text: widget.gUser!.numero );
-      adresseController = TextEditingController(text: widget.gUser!.adresse );
-      pieceController = TextEditingController(text: widget.gUser!.numeropieceidentite );
+    User? usr = widget.gUser;
+    if(usr != null){
+      nomController = TextEditingController(text: usr.nom );
+      prenomController = TextEditingController(text: usr.prenom );
+      emailController = TextEditingController(text: usr.email );
+      numeroController = TextEditingController(text: usr.numero );
+      adresseController = TextEditingController(text: usr.adresse );
+      pieceController = TextEditingController(text: usr.numeropieceidentite );
       // NATIONALITE :
-      paysDepartMenu = listeCountry.where((pays) => pays.iso2 == widget.gUser!.nationnalite).first;
+      paysDepartMenu = listeCountry.where((pays) => pays.iso2 == usr.nationnalite).first;
+      // Refresh this :
+      listeVille = await _villeRepository.findAllByPaysId(paysDepartMenu!.id);
       // Ville residence , From CIBLE :
-      villeResidence = listeVille.where((ville) => ville.id == widget.gUser!.villeresidence).first;
+      villeResidence = listeVille.where((ville) => ville.id == usr.villeresidence).first;
       // PIECE IDENTITE :
-      dropdownvalueTitre = widget.gUser!.typepieceidentite;
+      dropdownvalueTitre = usr.typepieceidentite;
       // Pick CODE PARRAINAGE :
-      codeParrainageController = TextEditingController(text: widget.gUser!.codeinvitation );
+      codeParrainageController = TextEditingController(text: usr.codeinvitation );
     }
   }
 

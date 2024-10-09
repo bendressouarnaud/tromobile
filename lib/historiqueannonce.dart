@@ -160,7 +160,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
         datepublication: publication.datepublication,
         reserve: publication.reserve,
         active: publication.active,
-        reservereelle: publication.reserve,
+        reservereelle: publication.reservereelle,
         souscripteur: publication.souscripteur, // Use OWNER Id
         milliseconds: publication.milliseconds,
         identifiant: publication.identifiant,
