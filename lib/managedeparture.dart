@@ -235,7 +235,11 @@ class _ManageDepartureState extends State<ManageDeparture> {
     Pays paysDest = await _paysRepository.findPaysByIso(listeCountry.last.iso2);
     // Get the towns
     listeVilleDepart = await _villeRepository.findAllByPaysId(paysDep.id);
+    listeVilleDepart.sort((a,b) =>
+        a.name.compareTo(b.name));
     listeVilleDestination = await _villeRepository.findAllByPaysId(paysDest.id);
+    listeVilleDestination.sort((a,b) =>
+        a.name.compareTo(b.name));
     if(idpub == 0) {
       villeDepartMenu = listeVilleDepart.first;
       villeDestinationMenu = listeVilleDestination.first;

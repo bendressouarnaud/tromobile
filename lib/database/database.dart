@@ -14,7 +14,7 @@ class DatabaseHelper {
   static final _databaseName = "fluttercommerce.db";
 
   // Increment this version when you need to change the schema.
-  static final _databaseVersion = 1;
+  static final _databaseVersion = 2;
 
 
   // Make this a singleton class.
@@ -51,7 +51,7 @@ class DatabaseHelper {
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    for (int version = 0; version < newVersion; version++) {
+    for (int version = oldVersion; version < newVersion; version++) {
       await _performDbOperationsVersionWise(db, version + 1);
     }
   }
@@ -60,6 +60,9 @@ class DatabaseHelper {
     switch (version) {
       case 1:
         await _createDatabase(db);
+        break;
+      case 2:
+        await _addTownsFirstBatch(db);
         break;
     }
   }
@@ -121,5 +124,25 @@ class DatabaseHelper {
     // Add parameters :
     await database.insert('parameters', Parameters(id: 1, state: 'resumed', travellocal: 500, travelabroad: 5000
         , notification: 0, epochdebut: 0, epochfin: 0).toDatabaseJson());
+  }
+
+  Future<void> _addTownsFirstBatch(Database database) async {
+    // Ville Côte d\'Ivoire
+    await database.insert('ville', Ville(id: 11, name: 'Korhogo', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 12, name: 'San-Pédro', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 13, name: 'Anyama', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 14, name: 'Divo', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 15, name: 'Soubré', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 16, name: 'Duékoué', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 17, name: 'Bouaflé', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 18, name: 'Bingerville', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 19, name: 'Guiglo', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 20, name: 'Lakota', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 21, name: 'Abengourou', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 22, name: 'Ferké', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 23, name: 'Adzopé', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 24, name: 'Méagui', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 25, name: 'Bondoukou', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 26, name: 'Dabou', paysid: 2).toDatabaseJson());
   }
 }
