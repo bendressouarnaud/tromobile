@@ -30,6 +30,15 @@ class PaysDao {
     return liste.first;
   }
 
+  Future<Pays> findPaysById(int id) async {
+    final db = await dbProvider.database;
+    var pays = await db.query('pays', where: 'id = ?', whereArgs: [id]);
+    List<Pays> liste = pays.isNotEmpty
+        ? pays.map((c) => Pays.fromDatabaseJson(c)).toList()
+        : [];
+    return liste.first;
+  }
+
   Future<List<Pays>> findAll() async {
     final db = await dbProvider.database;
     final List<Map<String, Object?>> results = await db.query('pays');

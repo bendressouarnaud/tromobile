@@ -10,13 +10,15 @@ import 'package:http/http.dart';
 import 'package:tro/repositories/parameters_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 
+import 'constants.dart';
 import 'models/parameters.dart';
 import 'models/user.dart';
 
 enum ChoixNotification { perpetuelle, momentane }
 
 class ManageNotification extends StatefulWidget {
-  const ManageNotification({super.key});
+  final Client client;
+  const ManageNotification({super.key, required this.client});
 
   @override
   State<ManageNotification> createState() => _ManageNotificationState();
@@ -38,6 +40,7 @@ class _ManageNotificationState extends State<ManageNotification> {
   User? localuser;
   Parameters? parameters;
   bool flagSendData = false;
+  bool closeAlertDialog = false;
   late BuildContext dialogContext;
 
 
@@ -88,9 +91,19 @@ class _ManageNotificationState extends State<ManageNotification> {
   // Display INTERFACE for SENDING DATA :
   void displayLoadingInterface(BuildContext dContext) {
 
+    if(dateDebutController.text.isEmpty){
+      displayFloat('Veuillez définir la date de début', 1);
+      return;
+    }
+
+    if(dateFinController.text.isEmpty){
+      displayFloat('Veuillez définir la date de fin', 1);
+      return;
+    }
+
     if(_notification == ChoixNotification.momentane){
       if(millisecondsFin <= millisecondsDebut){
-        displayFloat('La date de fin doit être supérieure celle du début', 1);
+        displayFloat('La date de fin doit être supérieure à celle du début', 1);
         return;
       }
     }
@@ -127,6 +140,7 @@ class _ManageNotificationState extends State<ManageNotification> {
     );
 
     flagSendData = true;
+    closeAlertDialog = true;
     sendNotificationRequest();
 
     // Run TIMER :
@@ -149,14 +163,14 @@ class _ManageNotificationState extends State<ManageNotification> {
   // Send Account DATA :
   Future<void> sendNotificationRequest() async {
     final url = Uri.parse('${dotenv.env['URL']}managenotification');
-    var response = await post(url,
+    var response = await widget.client.post(url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "iduser": localuser!.id,
           "choix": _notification == ChoixNotification.perpetuelle ? 0 : 1, // CHANGE THAT :
           "startdatetime": millisecondsDebut,
           "enddatetime": millisecondsFin
-        }));
+        })).timeout(const Duration(seconds: timeOutValue));
 
     // Checks :
     if(response.statusCode.toString().startsWith('2')){
@@ -172,11 +186,12 @@ class _ManageNotificationState extends State<ManageNotification> {
       );
       await _repository.update(updateParam);
       // Set FLAG :
-      flagSendData = false;
+      closeAlertDialog = false;
     }
     else {
       displayFloat("Erreur de traitement : ${response.statusCode}", 0);
     }
+    flagSendData = false;
   }
 
   void displayFloat(String message, int choix){

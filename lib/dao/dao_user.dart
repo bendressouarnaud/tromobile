@@ -49,6 +49,16 @@ class UserDao {
     return liste;
   }
 
+  //
+  Future<List<User>> findAllUsers() async {
+    final db = await dbProvider.database;
+    final List<Map<String, Object?>> results = await db.query('user');
+    List<User> liste = results.isNotEmpty
+        ? results.map((c) => User.fromDatabaseJson(c)).toList()
+        : [];
+    return liste;
+  }
+
   Future<User?> findConnectedUser(List<String> columns) async {
     try {
       final db = await dbProvider.database;
@@ -122,7 +132,7 @@ class UserDao {
   }
 
   //We are not going to use this in the demo
-  Future deleteAllUsers() async {
+  Future<int> deleteAllUsers() async {
     final db = await dbProvider.database;
     var result = await db.delete(
       "user",

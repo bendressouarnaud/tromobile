@@ -28,6 +28,15 @@ class PublicationDao {
     return liste.first;
   }
 
+  Future<Publication?> findOptionalPublicationById(int id) async {
+    final db = await dbProvider.database;
+    var publications = await db.query('publication', where: 'id = ?', whereArgs: [id]);
+    List<Publication> liste = publications.isNotEmpty
+        ? publications.map((c) => Publication.fromDatabaseJson(c)).toList()
+        : [];
+    return liste.isNotEmpty ? liste.first : null;
+  }
+
   Future<List<Publication>> findAll() async {
     final db = await dbProvider.database;
     final List<Map<String, Object?>> publications = await db.query('publication');
@@ -73,7 +82,7 @@ class PublicationDao {
   }
 
   //We are not going to use this in the demo
-  Future deleteAllUsers() async {
+  Future<int> deleteAllPublications() async {
     final db = await dbProvider.database;
     var result = await db.delete(
       "publication",

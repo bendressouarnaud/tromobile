@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
@@ -23,8 +24,9 @@ class Messagerie extends StatefulWidget {
   final int idpub;
   final int idSuscriber;
   final String owner;
+  final Client client;
 
-  Messagerie({Key? key, required this.idpub, required this.owner, required this.idSuscriber}) : super(key: key);
+  Messagerie({Key? key, required this.idpub, required this.owner, required this.idSuscriber, required this.client}) : super(key: key);
 
   @override
   State<Messagerie> createState() => _HMessagerie();
@@ -45,6 +47,10 @@ class _HMessagerie extends State<Messagerie> {
   //
   late User localUser;
   final ScrollController _controller = ScrollController();
+  //late final AppLifecycleListener _listener;
+  List<Chat> listeChat = [];
+  bool canFlagStraight = false;
+
 
 
   // M E T H O D S
@@ -67,10 +73,14 @@ class _HMessagerie extends State<Messagerie> {
     });
   }
 
+
   @override
-  void dispose() {
+  void dispose() async{
     _subscription.cancel();
     _controller.dispose();
+    //_listener.dispose();
+
+    // Update
     super.dispose();
   }
 
@@ -79,8 +89,30 @@ class _HMessagerie extends State<Messagerie> {
     // Get Local User :
     localUser = outil.getLocalUser();
 
-    List<Chat> tamponListe = idSuscriber == 0 ? await outil.getChatByIdpub(idpub) :
-    await outil.getChatByIdpubAndIduser(idpub, idSuscriber, localUser.id);
+    /*List<Chat> tamponListe = idSuscriber == 0 ? await outil.getChatByIdpub(idpub) :
+    await outil.getChatByIdpubAndIduser(idpub, idSuscriber, localUser.id);*/
+
+    List<Chat> tamponListe = await outil.getChatByIdpubAndIduser(idpub, idSuscriber, localUser.id);
+
+    // Mark CHAT as read
+    /*for(Chat cChat in tamponListe){
+      if(cChat.read == 0){
+        Chat nChat = Chat(
+            id: cChat.id,
+            idpub: cChat.idpub,
+            milliseconds: cChat.milliseconds,
+            sens: cChat.sens,
+            contenu: cChat.contenu,
+            statut: cChat.statut,
+            identifiant: cChat.identifiant,
+            iduser: cChat.iduser,
+            idlocaluser: cChat.idlocaluser,
+            read: 1
+        );
+        await outil.updateData(nChat);
+      }
+    }*/
+
     if(tamponListe.isNotEmpty){
       Future.delayed(const Duration(milliseconds: 300),
               () {
@@ -97,7 +129,8 @@ class _HMessagerie extends State<Messagerie> {
     var dateTime = DateTime.now();
     String messageId = '${outil.getLocalUser().id}${dateTime.millisecondsSinceEpoch}';
     Chat newChat = Chat(id: 0, idpub: idpub, milliseconds: time, sens: 0, contenu: messageController.text, statut: 0,
-        identifiant: messageId, iduser: idSuscriber, idlocaluser: localUser.id);
+        identifiant: messageId, iduser: idSuscriber, idlocaluser: localUser.id,
+    read: 1);
     await outil.insertChat(newChat);
 
     // Try to clear :
@@ -115,7 +148,7 @@ class _HMessagerie extends State<Messagerie> {
     if(checkNetworkConnected) {
       final url = Uri.parse('${dotenv.env['URL']}sendmessage');
       try {
-        var response = await post(
+        var response = await widget.client.post(
             url,
             headers: {"Content-Type": "application/json"},
             body: jsonEncode({
@@ -138,26 +171,15 @@ class _HMessagerie extends State<Messagerie> {
             statut: 1,
             identifiant: updateChat.identifiant,
             iduser: idSuscriber,
-            idlocaluser: localUser.id
+            idlocaluser: localUser.id,
+              read: 1
           );
           await outil.updateData(nChat);
         }
       } on TimeoutException catch (e) {
         // handle timeout
-        //print('Erreur ${e.message}');
       }
     }
-    // Now send it :
-    /*print('startService ------- --------------------------------');
-    final service = FlutterBackgroundService();
-    bool serviceRun = await service.isRunning();
-    if(!serviceRun){
-      await service.startService();
-      print('On démarre');
-    }
-    else{
-      print('Service déjà en cours');
-    }*/
   }
 
   // Process TIME
@@ -202,233 +224,276 @@ class _HMessagerie extends State<Messagerie> {
     }
   }
 
+  void trackChat(Chat cChat) {
+    if(cChat.read == 0) {
+      listeChat.add(cChat);
+    }
+  }
+
+  //
+  void flagChat(Chat cChat) async{
+    if(cChat.read == 0){
+      //
+      canFlagStraight = true;
+      // Flag it :
+      Chat nChat = Chat(
+          id: cChat.id,
+          idpub: cChat.idpub,
+          milliseconds: cChat.milliseconds,
+          sens: cChat.sens,
+          contenu: cChat.contenu,
+          statut: cChat.statut,
+          identifiant: cChat.identifiant,
+          iduser: cChat.iduser,
+          idlocaluser: cChat.idlocaluser,
+          read: 1
+      );
+      await outil.updateChatWithoutNotifFromMessagerie(nChat); // updateChatWithoutNotifFromMessagerie   updateChatWithoutNotif
+    }
+  }
+
+
+  void _backPressed() {
+    Navigator.pop(context, canFlagStraight ? '1' : '0');
+  }
+
+  Widget displayChat (Chat chat) {
+    // Flag CHAT if needed :
+    flagChat(chat);
+
+    return Column(
+      children: [
+        displayDate(chat.milliseconds),
+        Container(
+            alignment: chat.sens == 0 ? Alignment.topRight : Alignment.topLeft,
+            child: Container(
+              //alignment: listeChat[index].sens == 0 ? Alignment.topRight : Alignment.topLeft,
+              margin: chat.sens == 0 ? const EdgeInsets.only(right: 10, top: 7) :
+              const EdgeInsets.only(left: 10, top: 7),
+              padding: const EdgeInsets.all(10),
+              width: chat.contenu.length > 50 ? 300 : 175,
+              decoration: BoxDecoration(
+                  color: chat.sens == 0 ? Colors.orange[100] : Colors.green[200],
+                  borderRadius: const BorderRadius.all(Radius.circular(25))
+              ),
+              child: Column(
+                children: [
+                  Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                          chat.contenu
+                      )
+                  ),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          processDateTime(chat.milliseconds),
+                          style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        chat.statut == 0 ?
+                        const SizedBox(
+                            height: 10.0,
+                            width: 10.0,
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                              strokeWidth: 0.8, // Width of the circular line
+                            )
+                        ) :
+                        chat.statut == 3 ?
+                        const Row(
+                          children: [
+                            SizedBox(
+                              child: Icon(
+                                  size: 15,
+                                  Icons.check_circle
+                              ),
+                            ),
+                            SizedBox(
+                              child: Icon(
+                                  size: 15,
+                                  Icons.check_circle
+                              ),
+                            )
+                          ],
+                        )
+                            :
+                        const SizedBox(
+                          child: Icon(
+                              size: 15,
+                              Icons.check_circle
+                          ),
+                        )
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            )
+        )
+      ],
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
+    return WillPopScope(
+        onWillPop: () {
+          _backPressed();
+          return Future.value(false);
+        },
+        child: Scaffold(
             backgroundColor: Colors.white,
-            title: Text(
-              owner,
-              textAlign: TextAlign.start,
-            ),
-            shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                )),
-            actions: [
-              /*badges.Badge(
-                  position: badges.BadgePosition.topEnd(top: 0, end: 3),
-                  badgeAnimation: const badges.BadgeAnimation.slide(),
-                  showBadge: true,
-                  badgeStyle: const badges.BadgeStyle(
-                    badgeColor: Colors.red,
-                  ),
-                  badgeContent: GetBuilder<PublicationGetController>(
-                    builder: (_) {
-                      return Text(
-                        '${_achatController.taskData.length}',
-                        style: const TextStyle(color: Colors.white),
-                      );
-                    },
-                  ),
-                  child: IconButton(
-                      icon: const Icon(Icons.shopping_cart),
-                      onPressed: () {
-                        if (_achatController.taskData.isNotEmpty) {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) {
-                                return Paniercran(client: client);
-                              }));
-                        }
-                      })
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              title: Text(
+                owner,
+                textAlign: TextAlign.start,
               ),
-              IconButton(
-                  onPressed: () {
-                    /*Navigator.push(context, MaterialPageRoute(builder: (context) {
-                      return SearchEcran(client: client!);
-                    }));*/
-                  },
-                  icon: const Icon(Icons.search, color: Colors.black)
-              )*/
-            ],
-        ),
-        //bottomNavigationBar: BottomSection(),
-        body: FutureBuilder(
-          future: Future.wait([loadingChat()]),
-          builder: (BuildContext contextMain, AsyncSnapshot<dynamic> snapshot) {
-            if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-              // Get DATA :
-              List<Chat> listeChat =  snapshot.data[0];
+              shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                  )
+              ),
+              /*actions: [
+            ],*/
+            ),
+            //bottomNavigationBar: BottomSection(),
+            body: FutureBuilder(
+                future: Future.wait([loadingChat()]),
+                builder: (BuildContext contextMain, AsyncSnapshot<dynamic> snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                    // Get DATA :
+                    List<Chat> listeChat =  snapshot.data[0];
 
-              return GetBuilder<ChatGetController>(
-                builder: (_){
+                    return GetBuilder<ChatGetController>(
+                        builder: (controller){
 
-                  print('Nouvelle taille : ${listeChat.length}');
+                          var listeCourante = controller.data.where((chat) => (widget.idpub == chat.idpub) &&
+                              (widget.idSuscriber == chat.iduser)).toList();
+                          listeCourante.sort((a,b) => a.id.compareTo(b.id));
 
-                  return Stack(
-                      children: [
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          height: 70,
-                          child: Container(
-                            //color: Colors.blue[100],
-                            margin: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.blue[50],
-                              borderRadius: const BorderRadius.only(
-                                topRight: Radius.circular(40),
-                                topLeft: Radius.circular(40),
-                                bottomLeft: Radius.circular(40),
-                                bottomRight: Radius.circular(40)
-                              )
-                            ),
-                            child: TextField(
-                              onTap: () {
-                                // Do it TWICE because of KEYBORD apparition :
-                                Future.delayed(const Duration(milliseconds: 500),
-                                        () {
-                                      _controller.jumpTo(_controller.position.maxScrollExtent);
-                                    }
-                                );
-                              },
-                              maxLines: 7,
-                              controller: messageController,
-                              decoration: InputDecoration(
-                                border: const UnderlineInputBorder(),
-                                hintText: "Votre message",
-                                //labelText: "Email",
-                                prefixIcon:
-                                IconButton(
-                                    onPressed: () async{
-                                      // Send that message :
-                                      /*print('startService ------- --------------------------------');
+                          return Stack(
+                              children: [
+                                Positioned(
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    height: 70,
+                                    child: Container(
+                                      //color: Colors.blue[100],
+                                      margin: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                                      decoration: BoxDecoration(
+                                          color: Colors.blue[50],
+                                          borderRadius: const BorderRadius.only(
+                                              topRight: Radius.circular(40),
+                                              topLeft: Radius.circular(40),
+                                              bottomLeft: Radius.circular(40),
+                                              bottomRight: Radius.circular(40)
+                                          )
+                                      ),
+                                      child: TextField(
+                                        onTap: () {
+                                          // Do it TWICE because of KEYBORD apparition :
+                                          Future.delayed(const Duration(milliseconds: 500),
+                                                  () {
+                                                _controller.jumpTo(_controller.position.maxScrollExtent);
+                                              }
+                                          );
+                                        },
+                                        maxLines: 7,
+                                        controller: messageController,
+                                        decoration: InputDecoration(
+                                          border: const UnderlineInputBorder(),
+                                          hintText: "Votre message",
+                                          //labelText: "Email",
+                                          prefixIcon:
+                                          IconButton(
+                                              onPressed: () async{
+                                                // Send that message :
+                                                /*print('startService ------- --------------------------------');
                                       final service = FlutterBackgroundService();
                                       await service.startService();*/
-                                    },
-                                    icon: const Icon(Icons.email_rounded)
-                                ),
-                                suffixIcon: IconButton(
-                                  icon: const Icon(Icons.send),
-                                  onPressed: (){
-                                    persistMessage();
-                                  },
-                                ),
-                              ),
-                              keyboardType: TextInputType.multiline,
-                              textInputAction: TextInputAction.newline,
-                            ),
-                          )
-                        ),
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 70,
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 7),
-                            decoration: const BoxDecoration(
-                                borderRadius: BorderRadius.all(
-                                    Radius.circular(40)
-                                )
-                            ),
-                            child: SingleChildScrollView(
-                              controller: _controller,
-                              scrollDirection: Axis.vertical,
-                              physics: const ScrollPhysics(),
-                              child: ListView.builder(
-                                //controller: _controller,
-                                physics: const NeverScrollableScrollPhysics(),
-                                scrollDirection: Axis.vertical,
-                                shrinkWrap: true,
-                                itemCount: listeChat.length,
-                                itemBuilder: (BuildContext context, int index) {
-                                  return Column(
-                                    children: [
-                                      displayDate(listeChat[index].milliseconds),
-                                      Container(
-                                          alignment: listeChat[index].sens == 0 ? Alignment.topRight : Alignment.topLeft,
-                                          child: Container(
-                                            //alignment: listeChat[index].sens == 0 ? Alignment.topRight : Alignment.topLeft,
-                                            margin: listeChat[index].sens == 0 ? const EdgeInsets.only(right: 10, top: 7) :
-                                            const EdgeInsets.only(left: 10, top: 7),
-                                            padding: const EdgeInsets.all(10),
-                                            width: listeChat[index].contenu.length > 50 ? 300 : 175,
-                                            decoration: BoxDecoration(
-                                                color: listeChat[index].sens == 0 ? Colors.orange[100] : Colors.green[200],
-                                                borderRadius: const BorderRadius.all(Radius.circular(25))
-                                            ),
-                                            child: Column(
-                                              children: [
-                                                Align(
-                                                  alignment: Alignment.centerRight,
-                                                  child: Text(
-                                                    listeChat[index].contenu
-                                                  )
-                                                ),
-                                                Align(
-                                                  alignment: Alignment.bottomRight,
-                                                  child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.end,
-                                                    children: [
-                                                      Text(
-                                                        processDateTime(listeChat[index].milliseconds),
-                                                        style: const TextStyle(
-                                                            fontSize: 10,
-                                                            fontWeight: FontWeight.bold
-                                                        ),
-                                                      ),
-                                                      const SizedBox(
-                                                        width: 10,
-                                                      ),
-                                                      listeChat[index].statut == 0 ?
-                                                      const SizedBox(
-                                                        height: 10.0,
-                                                        width: 10.0,
-                                                        child: CircularProgressIndicator(
-                                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
-                                                          strokeWidth: 0.8, // Width of the circular line
-                                                        )
-                                                      ) :
-                                                      const SizedBox(
-                                                        child: Icon(
-                                                          size: 15,
-                                                          Icons.check_circle
-                                                        ),
-                                                      )
-                                                      /*CircularProgressIndicator(
-                                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
-                                                        strokeWidth: 0.8, // Width of the circular line
-                                                      ),*/
-                                                    ],
+                                              },
+                                              icon: const Icon(Icons.email_rounded)
+                                          ),
+                                          suffixIcon: IconButton(
+                                            icon: const Icon(Icons.send),
+                                            onPressed: (){
+                                              if(checkNetworkConnected) {
+                                                persistMessage();
+                                              }
+                                              else{
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                      duration: Duration(seconds: 3),
+                                                      content: Text("Le terminal n'est pas connecté !")
                                                   ),
-                                                )
-                                              ],
-                                            ),
+                                                );
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                        keyboardType: TextInputType.multiline,
+                                        textInputAction: TextInputAction.newline,
+                                      ),
+                                    )
+                                ),
+                                Positioned(
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 70,
+                                    child: Container(
+                                      margin: const EdgeInsets.only(bottom: 7),
+                                      decoration: const BoxDecoration(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(40)
                                           )
-                                      )
-                                    ],
-                                  );
-                                }
-                              )
-                            ),
-                          )
-                        )
-                      ]
-                  );
+                                      ),
+                                      child: SingleChildScrollView(
+                                          controller: _controller,
+                                          scrollDirection: Axis.vertical,
+                                          physics: const ScrollPhysics(),
+                                          child: ListView.builder(
+                                            //controller: _controller,
+                                              physics: const NeverScrollableScrollPhysics(),
+                                              scrollDirection: Axis.vertical,
+                                              shrinkWrap: true,
+                                              itemCount: listeCourante.length, //listeChat.length,
+                                              itemBuilder: (BuildContext context, int index) {
+
+                                                return ((widget.idpub == listeCourante[index].idpub) &&
+                                                    (widget.idSuscriber == listeCourante[index].iduser)) ?
+                                                    displayChat(listeCourante[index]) :
+                                                    Container();
+                                              }
+                                          )
+                                      ),
+                                    )
+                                )
+                              ]
+                          );
+                        }
+                    );
+                  }
+                  else {
+                    return const Center(
+                      child: Text('Chargement ...'),
+                    );
+                  }
                 }
-              );
-            }
-            else {
-              return const Center(
-              child: Text('Chargement ...'),
-            );
-            }
-          }
+            )
         )
     );
   }

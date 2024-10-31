@@ -12,8 +12,11 @@ import 'package:http/http.dart';
 import 'package:group_radio_button/group_radio_button.dart';
 import 'package:http/src/response.dart' as mreponse;
 import 'package:tro/models/cible.dart';
+import 'package:tro/models/filiation.dart';
 import 'package:tro/models/ville.dart';
 import 'package:tro/pageaccueil.dart';
+import 'package:tro/repositories/cible_repsository.dart';
+import 'package:tro/repositories/filiation_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
 
@@ -32,9 +35,11 @@ import 'models/user.dart';
 
 
 class EcranCreationCompte extends StatefulWidget {
-  const EcranCreationCompte({Key? key, required this.listeCountry, required this.listeVille}) : super(key: key);
+  const EcranCreationCompte({Key? key, required this.listeCountry, required this.listeVille, required this.client, required this.gUser}) : super(key: key);
   final List<Pays> listeCountry;
   final List<Ville> listeVille;
+  final Client client;
+  final User? gUser;
   //final https.Client client;
 
   @override
@@ -55,6 +60,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
   TextEditingController pieceController = TextEditingController();
   TextEditingController menuCountryNationaliteController = TextEditingController();
   TextEditingController villeResidenceController = TextEditingController();
+  TextEditingController codeParrainageController = TextEditingController();
   late bool _isLoading;
   // Initial value :
   var dropdownvaluePays = "France";
@@ -64,8 +70,11 @@ class _NewCreationState extends State<EcranCreationCompte> {
   final typePiece = ["CNI", "TITRE SEJOUR", "PASSEPORT"];
   final _userRepository = UserRepository();
   final _villeRepository = VilleRepository();
+  final _cibleRepository = CibleRepository();
+  final _filiationRepository = FiliationRepository();
   late BuildContext dialogContext;
   bool flagSendData = false;
+  bool flagServerResponse = false;
   //
   final UserGetController _userController = Get.put(UserGetController());
   final CibleGetController _cibleController = Get.put(CibleGetController());
@@ -77,6 +86,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
   Pays? paysDepartMenu;
   Ville? villeResidence;
   int init = 0;
+  Filiation? filiation = null;
 
 
 
@@ -92,9 +102,8 @@ class _NewCreationState extends State<EcranCreationCompte> {
     // Order LIST :
     listeVille.sort((a,b) => a.name.compareTo(b.name));
 
-    //client = widget.client!;
-    /*Future.delayed(const Duration(milliseconds: 1000), () {
-    });*/
+    // Set DATA if needed :
+    checkUserPresence();
   }
 
   @override
@@ -122,6 +131,28 @@ class _NewCreationState extends State<EcranCreationCompte> {
       villeResidence = listeVille.first;
     }
     );
+  }
+
+  void checkUserPresence() async{
+    User? usr = widget.gUser;
+    if(usr != null){
+      nomController = TextEditingController(text: usr.nom );
+      prenomController = TextEditingController(text: usr.prenom );
+      emailController = TextEditingController(text: usr.email );
+      numeroController = TextEditingController(text: usr.numero );
+      adresseController = TextEditingController(text: usr.adresse );
+      pieceController = TextEditingController(text: usr.numeropieceidentite );
+      // NATIONALITE :
+      paysDepartMenu = listeCountry.where((pays) => pays.iso2 == usr.nationnalite).first;
+      // Refresh this :
+      listeVille = await _villeRepository.findAllByPaysId(paysDepartMenu!.id);
+      // Ville residence , From CIBLE :
+      villeResidence = listeVille.where((ville) => ville.id == usr.villeresidence).first;
+      // PIECE IDENTITE :
+      dropdownvalueTitre = usr.typepieceidentite;
+      // Pick CODE PARRAINAGE :
+      codeParrainageController = TextEditingController(text: usr.codeinvitation );
+    }
   }
 
 
@@ -176,15 +207,16 @@ class _NewCreationState extends State<EcranCreationCompte> {
   // Send Account DATA :
   Future<void> sendAccountRequest(String abrevPays, String pays) async {
     final url = Uri.parse('${dotenv.env['URL']}manageuser');
-    var response = await post(url,
+    var response = await widget.client.post(url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
+          "iduser": widget.gUser == null ? 0 : widget.gUser!.id,
           "nom": nomController.text,
           "prenom": prenomController.text,
           "email": emailController.text,
           "contact": numeroController.text,
           "adresse": adresseController.text,
-          "codeinvitation": "", // Set default :
+          "codeinvitation": codeParrainageController.text, // Set default :
           "numeropieceidentite": pieceController.text,
           "idpays": paysDepartMenu!.id,
           "pays": pays,
@@ -193,7 +225,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
           "ville": villeResidence!.name,
           "typepieceidentite": dropdownvalueTitre,
           "token": getToken,
-        }));
+        })).timeout(const Duration(seconds: timeOutValue));
 
     // Checks :
     if(response.statusCode == 200){
@@ -213,21 +245,46 @@ class _NewCreationState extends State<EcranCreationCompte> {
             adresse: adresseController.text,
             fcmtoken: getToken!,
             pwd: "",
-            codeinvitation: "");
+            codeinvitation: codeParrainageController.text,
+            villeresidence: villeResidence!.id);
         // Save :
         _userController.addData(user);
         
         // Add default CIBLE :
-        Cible cible = Cible(id: ur.cibleid,
-            villedepartid: villeResidence!.id,
-            paysdepartid: paysDepartMenu!.id, villedestid: villeResidence!.id, paysdestid: paysDepartMenu!.id, topic: '');
-        _cibleController.addData(cible);
+        if(ur.cibleid > 0) {
+          Cible cible = Cible(id: ur.cibleid,
+              villedepartid: villeResidence!.id,
+              paysdepartid: paysDepartMenu!.id,
+              villedestid: villeResidence!.id,
+              paysdestid: paysDepartMenu!.id,
+              topic: '');
+          _cibleController.addData(cible);
+          
+          // From there, Hit NEW FILIATION :
+          Filiation filiation = Filiation(id: 1, code: ur.codeparrainage, bonus: 0);
+          await _filiationRepository.insert(filiation);
+        }
+
+        // Can close WINDOW :
+        flagServerResponse = false;
       }
 
       // Set FLAG :
       flagSendData = false;
     }
+    else if(response.statusCode == 500){
+      // Set FLAG :
+      flagSendData = false;
+      displayToast("Cette adresse est déjà utilisée !");
+    }
+    else if(response.statusCode == 501){
+      // Set FLAG :
+      flagSendData = false;
+      displayToast("Code parrainage inexistant !");
+    }
     else {
+      // Set FLAG :
+      flagSendData = false;
       displayToast("Erreur apparue");
     }
   }
@@ -414,28 +471,49 @@ class _NewCreationState extends State<EcranCreationCompte> {
                   ),
                   textInputAction: TextInputAction.next,
                 ),
+              )              ,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 10, right: 5, top: 10),
+                      child: TextField(
+                        keyboardType: TextInputType.phone,
+                        controller: numeroController,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Contact...',
+                        ),
+                        textInputAction: TextInputAction.next,
+                      )
+                    ),
+                  ),
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 5, right: 10, top: 10),
+                      child: TextField(
+                        keyboardType: TextInputType.streetAddress,
+                        controller: adresseController,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Adresse...',
+                        ),
+                      )
+                    ),
+                  ),
+                ],
               ),
               Container(
                 padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
                 child: TextField(
-                  keyboardType: TextInputType.phone,
-                  controller: numeroController,
+                  keyboardType: TextInputType.text,
+                  controller: codeParrainageController,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    labelText: 'Contact...',
+                    labelText: 'Code Parrainage...',
                   ),
                   textInputAction: TextInputAction.next,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
-                child: TextField(
-                  keyboardType: TextInputType.streetAddress,
-                  controller: adresseController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Adresse...',
-                  ),
                 ),
               ),
               Expanded(
@@ -475,7 +553,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
                           onPressed: () {
                             if(checkField()){
                               Fluttertoast.showToast(
-                                  msg: "Veuillez renseigner les champs (NOM, PRENOM, EMAIL) !",
+                                  msg: "Veuillez renseigner tous les champs !",
                                   toastLength: Toast.LENGTH_LONG,
                                   gravity: ToastGravity.CENTER,
                                   timeInSecForIosWeb: 3,
@@ -496,15 +574,37 @@ class _NewCreationState extends State<EcranCreationCompte> {
                                   context: context,
                                   builder: (BuildContext context) {
                                     dialogContext = context;
-                                    return const AlertDialog(
-                                      title: Text('Information'),
-                                      content: Text("Veuillez patienter ..."),
+                                    return WillPopScope(
+                                      onWillPop: () async => false,
+                                      child: const AlertDialog(
+                                        title: Text('Information'),
+                                        content: SizedBox(
+                                            height: 100,
+                                            child: Column(
+                                              children: [
+                                                Text("Création du compte ..."),
+                                                SizedBox(
+                                                  height: 20,
+                                                ),
+                                                SizedBox(
+                                                    height: 30.0,
+                                                    width: 30.0,
+                                                    child: CircularProgressIndicator(
+                                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                                      strokeWidth: 3.0, // Width of the circular line
+                                                    )
+                                                )
+                                              ],
+                                            )
+                                        )
+                                      )
                                     );
                                   }
                               );
 
                               // Send DATA :
                               flagSendData = true;
+                              flagServerResponse = true;
                               if(defaultTargetPlatform == TargetPlatform.android){
                                 generateTokenSuscription(abrevPays, paysDepartMenu!.name); // FOr TOKEN
                               }
@@ -523,9 +623,11 @@ class _NewCreationState extends State<EcranCreationCompte> {
                                     timer.cancel();
 
                                     // Kill ACTIVITY :
-                                    if(Navigator.canPop(context)){
-                                      Navigator.pop(context);
-                                      //Navigator.of(context).pop({'selection': '1'});
+                                    if(!flagServerResponse) {
+                                      if (Navigator.canPop(context)) {
+                                        Navigator.pop(context);
+                                        //Navigator.of(context).pop({'selection': '1'});
+                                      }
                                     }
                                   }
                                 },

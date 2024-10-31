@@ -6,6 +6,7 @@ import 'package:badges/badges.dart' as badges;
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/simple/get_state.dart';
+import 'package:http/http.dart';
 import 'package:tro/getxcontroller/getciblecontroller.dart';
 import 'package:tro/getxcontroller/getpublicationcontroller.dart';
 import 'package:tro/repositories/pays_repository.dart';
@@ -20,8 +21,8 @@ import 'models/ville.dart';
 
 class GestionCible extends StatefulWidget {
   // Attributes
-
-  GestionCible({Key? key}) : super(key: key);
+  final Client client;
+  GestionCible({Key? key, required this.client}) : super(key: key);
 
   @override
   State<GestionCible> createState() => _GestionCible();
@@ -75,33 +76,7 @@ class _GestionCible extends State<GestionCible> {
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
               )),
-          actions: [
-            /*badges.Badge(
-                  position: badges.BadgePosition.topEnd(top: 0, end: 3),
-                  badgeAnimation: const badges.BadgeAnimation.slide(),
-                  showBadge: true,
-                  badgeStyle: const badges.BadgeStyle(
-                    badgeColor: Colors.red,
-                  ),
-                  badgeContent: GetBuilder<PublicationGetController>(
-                    builder: (_) {
-                      return Text(
-                        '${_achatController.taskData.length}',
-                        style: const TextStyle(color: Colors.white),
-                      );
-                    },
-                  ),
-                  child: IconButton(
-                      icon: const Icon(Icons.shopping_cart),
-                      onPressed: () {
-                        if (_achatController.taskData.isNotEmpty) {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) {
-                                return Paniercran(client: client);
-                              }));
-                        }
-                      })
-              ),*/
+          /*actions: [
             IconButton(
                 onPressed: () {
                   /*Navigator.push(context, MaterialPageRoute(builder: (context) {
@@ -110,7 +85,7 @@ class _GestionCible extends State<GestionCible> {
                 },
                 icon: const Icon(Icons.search, color: Colors.black)
             )
-          ]
+          ]*/
       ),
         floatingActionButton: FloatingActionButton(
           backgroundColor: const Color.fromRGBO(51, 159, 255, 1.0),
@@ -123,7 +98,8 @@ class _GestionCible extends State<GestionCible> {
                       idpaysdest: 1,
                       idvilledep: 1,
                       idvilledest: 1,
-                      idCible: 0
+                      idCible: 0,
+                    client: widget.client,
                   );
                 }));
           },
@@ -155,7 +131,8 @@ class _GestionCible extends State<GestionCible> {
                                         idpaysdest: listeCible[index].paysdestid,
                                         idvilledep: listeCible[index].villedepartid,
                                         idvilledest: listeCible[index].villedestid,
-                                        idCible: listeCible[index].id
+                                        idCible: listeCible[index].id,
+                                        client: widget.client
                                       );
                                     }));
                               },

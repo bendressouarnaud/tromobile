@@ -14,18 +14,20 @@ class PublicationGetController extends GetxController {
 
   @override
   void onInit() {
-    findOngoingAll();
+    findAll();
     super.onInit();
   }
 
   // Get Live ACHAT :
-  Future<void> findOngoingAll() async {
-    List<Publication> lte = await _publicationRepository.findOngoingAll(DateTime.now().millisecondsSinceEpoch);
+  Future<void> findAll() async {
+    //List<Publication> lte = await _publicationRepository.findOngoingAll(DateTime.now().millisecondsSinceEpoch);
+    List<Publication> lte = await _publicationRepository.findAll();
     publicationData.addAll(lte);
   }
 
   Future<List<Publication>> findAllPublication() async {
-    return await _publicationRepository.findOngoingAll(DateTime.now().millisecondsSinceEpoch);
+    List<Publication> lte = await _publicationRepository.findAll();
+    return lte.where((pub) => pub.milliseconds >= DateTime.now().millisecondsSinceEpoch).toList();
   }
 
   Future<List<Publication>> findOldAll() async {
@@ -33,7 +35,8 @@ class PublicationGetController extends GetxController {
   }
 
   Future<List<Publication>> refreshAllPublicationsFromResumed() async {
-    List<Publication> lte = await _publicationRepository.findOngoingAll(DateTime.now().millisecondsSinceEpoch);
+    //List<Publication> lte = await _publicationRepository.findOngoingAll(DateTime.now().millisecondsSinceEpoch);
+    List<Publication> lte = await _publicationRepository.findAll();
     publicationData.clear();
     publicationData.addAll(lte);
     update(); // force
@@ -53,23 +56,37 @@ class PublicationGetController extends GetxController {
   }
 
   Future<int> updateData(Publication publication) async{
-    Publication pub = publicationData.where((p0) => p0.id == publication.id).first;
-    int idx = publicationData.indexOf(pub);
-    // Update
-    publicationData[idx] = publication; // pub;
+    Publication? pub = publicationData.where((p0) => p0.id == publication.id).firstOrNull;
+    int maj = 0;
+    if(pub != null) {
+      int idx = publicationData.indexOf(pub);
+      // Update
+      publicationData[idx] = publication; // pub;
 
-    int maj = await _publicationRepository.update(publication);
-    // Set timer to
-    Future.delayed(const Duration(milliseconds: 800),
-            () {
-          update();
-        }
-    );
+      maj = await _publicationRepository.update(publication);
+      // Set timer to
+      Future.delayed(const Duration(milliseconds: 800),
+              () {
+            update();
+          }
+      );
+    }
     return maj;
   }
 
   // Find Publication :
   Future<Publication> refreshPublication(int idpub) async {
     return await _publicationRepository.findPublicationById(idpub);
+  }
+
+  Future<Publication?> findOptionalPublicationById(int idpub) async {
+    return await _publicationRepository.findOptionalPublicationById(idpub);
+  }
+
+  Future<int> deleteAllPublications() async {
+    publicationData.clear();
+    int ret = await _publicationRepository.deleteAllPublications();
+    update();
+    return ret;
   }
 }

@@ -49,4 +49,12 @@ class CibleDao {
             topic: topic)
     ];
   }
+
+  Future<int> deleteAllCibles() async {
+    final db = await dbProvider.database;
+    var result = await db.delete(
+      "cible",
+    );
+    return result;
+  }
 }

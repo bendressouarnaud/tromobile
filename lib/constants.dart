@@ -12,3 +12,5 @@ const Color bottombararticlecolor = Color(0xFFDD570F);
 const Color promotioncolor = Color(0xFFBF3306);
 
 const double defaultPadding = 16.0;
+
+const int timeOutValue = 7;

@@ -74,4 +74,10 @@ class UserGetController extends GetxController {
     return await _userRepository.findById(id);
   }
 
+  Future<int> deleteAllUsers() async {
+    userData.clear();
+    int ret = await _userRepository.deleteAllUsers();
+    update();
+    return ret;
+  }
 }

@@ -11,6 +11,7 @@ import 'package:get/get.dart';
 import 'package:get/get_connect/http/src/response/response.dart';
 import 'package:http/http.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:tro/getxcontroller/getchatcontroller.dart';
 import 'package:tro/models/pays.dart';
 import 'package:tro/models/publication.dart';
 import 'package:tro/models/ville.dart';
@@ -23,7 +24,9 @@ import 'package:tro/screens/listannonce.dart';
 import 'package:tro/services/servicegeo.dart';
 import 'package:tro/skeleton.dart';
 
+import 'chatmanagement.dart';
 import 'constants.dart';
+import 'getxcontroller/getnavbarchat.dart';
 import 'loadingpayment.dart';
 import 'ecrancompte.dart';
 import 'getxcontroller/getnavbarpublication.dart';
@@ -47,8 +50,8 @@ import 'models/user.dart';
 
 
 class WelcomePage extends StatefulWidget {
-  const WelcomePage({Key? key})
-      : super(key: key);
+  final Client client;
+  const WelcomePage({Key? key, required this.client}) : super(key: key);
 
   @override
   State<WelcomePage> createState() => _WelcomePageState();
@@ -83,6 +86,8 @@ class _WelcomePageState extends State<WelcomePage> {
   late final AppLifecycleListener _listener;
   int taillePublicationNotRead = 0;
   int cptInitTaillePublication = 0;
+  //
+  int tailleChatNotRead = 0;
 
 
   // M e t h o d  :
@@ -99,7 +104,8 @@ class _WelcomePageState extends State<WelcomePage> {
       onStateChange: _onStateChanged,
     );
 
-    // Init FireBase :
+    // Run this to check :
+    //outil.refreshAllChatsFromResumed(0);
     super.initState();
   }
 
@@ -136,8 +142,6 @@ class _WelcomePageState extends State<WelcomePage> {
       case AppLifecycleState.resumed:
         // Try to refresh PUBLICATION from THERE :
         outil.refreshAllPublicationsFromResumed();
-        //print('--------->      resumed');
-        //updateAppState('resumed');
       case AppLifecycleState.inactive:
         //print('--------->      inactive');
         //updateAppState('inactive');
@@ -217,20 +221,7 @@ class _WelcomePageState extends State<WelcomePage> {
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
 
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        //
         //showFlutterNotification(message, "Notification Commande", "");
-
-        Fluttertoast.showToast(
-            msg: "Notification Commande ${message.data['sujet']}",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            timeInSecForIosWeb: 1,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            fontSize: 16.0
-        );
-
-        //
         processIncomingFCMessage(message, false);
       });
     }
@@ -245,7 +236,16 @@ class _WelcomePageState extends State<WelcomePage> {
         if(!fromNotification) {
           Publication? publication = Servicegeo().generatePublication(message);
           if (publication != null) {
-            outil.addPublication(publication);
+            // Check if this ONE exists ALREADY or NOT :
+            Publication? pubCheck = await outil.findOptionalPublicationById(publication.id);
+            if(pubCheck == null){
+              // Create
+              outil.addPublication(publication);
+            }
+            else{
+              // Update :
+              await outil.updatePublicationWithoutFurtherActions(publication);
+            }
           }
         }
         else{
@@ -276,16 +276,55 @@ class _WelcomePageState extends State<WelcomePage> {
       case 3:
         if(!fromNotification) {
           // Create User if not exist :
-          Servicegeo().processIncommingChat(message, outil);
+          Servicegeo().processIncommingChat(message, outil, widget.client);
         }
         else{
           // Open 'CHAT'
-          User usr = (await outil.findAllUserByIdin([0])).single;
+          User usr = (await outil.findAllUserByIdin([int.parse(message.data['sender'])])).single;
           openMessage(int.parse(message.data['idpub']),
               ("${usr.nom} ${usr.prenom}"),
               usr.id
           );
         }
+        break;
+
+      case 4:
+        if(!fromNotification) {
+          // Create User if not exist :
+          Servicegeo().performReservationCheck(message, outil);
+        }
+        else{
+          // Open 'HistoriqueAnnonce'
+          Publication pub = await outil.refreshPublication(int.parse(message.data['publicationid']));
+          Ville vDepart = await outil.getVilleById(pub.villedepart);
+          Ville vDest = await outil.getVilleById(pub.villedestination);
+          openHistoriqueAnnonce(pub, vDepart, vDest, 0, false);
+        }
+        break;
+
+      case 5:
+        //
+        Servicegeo().trackPublicationDelivery(message, outil);
+        break;
+
+      case 6:
+        Servicegeo().markChatReceipt(message);
+        break;
+
+      case 7:
+        Servicegeo().updatePublicationReserve(message);
+        break;
+
+      case 8:
+        Servicegeo().deactivatePublicationFromOwner(message);
+        break;
+
+      case 9:
+        Servicegeo().deactivateSubscription(message);
+        break;
+
+      case 10:
+        Servicegeo().upgradeBonus(message);
         break;
     }
   }
@@ -299,7 +338,8 @@ class _WelcomePageState extends State<WelcomePage> {
                   ville: depart,
                   villeDepart: destination,
                   userOrSuscriber: userType,
-                historique: historique
+                historique: historique,
+                client: widget.client,
               );
             }
         )
@@ -311,7 +351,7 @@ class _WelcomePageState extends State<WelcomePage> {
         MaterialPageRoute(
             builder: (context) {
               return Messagerie(idpub: idpub, owner: username,
-                  idSuscriber: userId);
+                  idSuscriber: userId, client: widget.client);
             }
         )
     );
@@ -479,7 +519,9 @@ class _WelcomePageState extends State<WelcomePage> {
                       sContext,
                       MaterialPageRoute(
                           builder: (context){
-                            return ManageDeparture(id: cUser!.id, listeCountry: [paysDepart, paysDestination], nationalite: cUser!.nationnalite, idpub: 0,);
+                            return ManageDeparture(id: cUser!.id, listeCountry: [paysDepart, paysDestination],
+                              nationalite: cUser!.nationnalite, idpub: 0,
+                              client: widget.client);
                           }
                       )
                   );
@@ -521,6 +563,23 @@ class _WelcomePageState extends State<WelcomePage> {
     }
   }
 
+  //
+  Widget processChatIcon(List<int> liste, IconData iconData) {
+    tailleChatNotRead = liste[0];
+    if(tailleChatNotRead > 0){
+
+      // From There we can clear NOTIFICATIONS :
+      clearNotifications();
+
+      return Badge.count(
+          count: tailleChatNotRead,
+          child: Icon(iconData)
+      );
+    }
+    else {
+      return Icon(iconData);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -551,6 +610,15 @@ class _WelcomePageState extends State<WelcomePage> {
                 );
               }
             ),
+            GetBuilder<NavChatGetController>(
+                builder: (controller) {
+                  return NavigationDestination(
+                    selectedIcon: processChatIcon(controller.tableau, Icons.chat_bubble),
+                    icon: processChatIcon(controller.tableau, Icons.chat_bubble_outline),
+                    label: 'Chat',
+                  );
+                }
+            ),
             const NavigationDestination(
               selectedIcon: Icon(Icons.access_time_filled),
               icon: Icon(Icons.access_time),
@@ -567,7 +635,7 @@ class _WelcomePageState extends State<WelcomePage> {
         appBar: AppBar(
           backgroundColor: Colors.white,
           title: const Text(
-            "Trô",
+            "CoBagage",
             textAlign: TextAlign.start,
           ),
           shape: const RoundedRectangleBorder(
@@ -575,34 +643,11 @@ class _WelcomePageState extends State<WelcomePage> {
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
               )),
-          actions: [
-            /*badges.Badge(
-                position: badges.BadgePosition.topEnd(top: 0, end: 3),
-                badgeAnimation: const badges.BadgeAnimation.slide(),
-                showBadge: true,
-                badgeStyle: const badges.BadgeStyle(
-                  badgeColor: Colors.red,
-                ),
-                badgeContent: GetBuilder<AchatGetController>(
-                  builder: (_) {
-                    return Text(
-                      '${_achatController.taskData.length}',
-                      style: const TextStyle(color: Colors.white),
-                    );
-                  },
-                ),
-                child: IconButton(
-                    icon: const Icon(Icons.shopping_cart),
-                    onPressed: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                            return Paniercran(client: client);
-                          }));
-                    })),*/
+          /*actions: [
             IconButton(
                 onPressed: () {},
                 icon: const Icon(Icons.search, color: Colors.black))
-          ],
+          ],*/
         ),
         floatingActionButton: FloatingActionButton(
           backgroundColor: const Color.fromRGBO(51, 159, 255, 1.0),
@@ -610,16 +655,10 @@ class _WelcomePageState extends State<WelcomePage> {
           onPressed: () async{
             User? usr = await outil.pickLocalUser();
             if(usr != null){
+              // Init if needed
+              cUser ??= usr;
               //
               callForCountry(listePays);
-              /*Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context){
-                        return InappWebViewCustom();
-                      }
-                  )
-              );*/
             }
             else{
               Fluttertoast.showToast(
@@ -644,9 +683,16 @@ class _WelcomePageState extends State<WelcomePage> {
                 listePublication = snapshot.data[0];
                 return GetBuilder<PublicationGetController>(
                     builder: (PublicationGetController controller) {
+                      // Sort :
+                      var milliseconds = DateTime.now().millisecondsSinceEpoch;
+                      List<Publication> reste = controller.publicationData.where((pub) => (pub.milliseconds >= milliseconds && pub.active == 1))
+                          .toList();
+                      reste.sort((a,b) =>
+                          b.id.compareTo(a.id));
                       return SingleChildScrollView(
-                        child: EcranAnnonce().displayAnnonce(controller.publicationData, listePays, listeVille,
-                        _userController.userData ,context, false),
+                        child: EcranAnnonce().displayAnnonce(reste
+                            , listePays, listeVille,
+                        _userController.userData ,context, false, widget.client),
                       );
                     }
                 );
@@ -658,8 +704,9 @@ class _WelcomePageState extends State<WelcomePage> {
               }
             }
           ),
-          Historique(),
-          EcranCompte(),
+          ChatManagement(client: widget.client),
+          Historique(client: widget.client),
+          EcranCompte(client: widget.client),
         ][currentPageIndex]);
   }
 }

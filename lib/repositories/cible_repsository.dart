@@ -9,4 +9,5 @@ class CibleRepository {
   Future<int> update(Cible data) => cibleDao.update(data);
   Future<Cible> findById(int data) => cibleDao.findById(data);
   Future<List<Cible>> findAll() => cibleDao.findAll();
+  Future<int> deleteAllCibles() => cibleDao.deleteAllCibles();
 }

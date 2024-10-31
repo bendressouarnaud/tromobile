@@ -16,13 +16,17 @@ import 'package:tro/getxcontroller/getpublicationcontroller.dart';
 import 'package:tro/getxcontroller/getsouscriptioncontroller.dart';
 import 'package:tro/messagerie.dart';
 import 'package:tro/models/souscription.dart';
+import 'package:tro/repositories/pays_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/reserverscreen.dart';
 import 'package:tro/singletons/outil.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'constants.dart';
 import 'httpbeans/hubwaveresponse.dart';
 import 'main.dart';
+import 'managedeparture.dart';
+import 'models/pays.dart';
 import 'models/publication.dart';
 import 'models/user.dart';
 import 'models/ville.dart';
@@ -35,9 +39,10 @@ class HistoriqueAnnonce extends StatefulWidget {
   final Ville villeDepart;
   final int userOrSuscriber;
   final bool historique;
+  final Client client;
 
   HistoriqueAnnonce({Key? key, required this.publication, required this.ville, required this.villeDepart,
-    required this.userOrSuscriber, required this.historique}) : super(key: key);
+    required this.userOrSuscriber, required this.historique, required this.client}) : super(key: key);
   //ArticleEcran.setId(this.idart, this.fromadapter, this.qte, this.client);
 
   @override
@@ -52,7 +57,9 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   late Ville villeDepart;
   late int userOrSuscriber; // 0 : Suscriber, 1 : Owner
   final _userRepository = UserRepository();
+  final _paysRepository = PaysRepository();
   User? owner;
+  User? cUser;
   late List<User> listeUser;
   late BuildContext dialogContextPaiement;
   int choixpaiement = 0;
@@ -63,11 +70,19 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   // User for PROFILE EMETTEUR
   int resteReserve = 0;
   bool signalerLivraison = false;
+  bool signalerReception = false;
   int indexSouscripteur = -1;
   late BuildContext dialogContext;
   late int iduser;
   late bool flagSendData;
+  late bool flagDeletionData;
+  late bool publicationDeletionDone;
   late bool historique;
+  //
+  Pays? paysDepart;
+  Pays? paysDestination;
+  late List<Souscription> lesSouscriptions;
+  late Souscription suscriberSouscription;
 
 
   // M E T H O D S
@@ -88,6 +103,19 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     return datetime.split("T")[choice];
   }
 
+  void openTravelForUpdate() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context){
+              return ManageDeparture(id: cUser!.id, listeCountry: [paysDepart!, paysDestination!],
+                  nationalite: cUser!.nationnalite, idpub: publication.id,
+                  client: widget.client);
+            }
+        )
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -97,6 +125,13 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     villeDepart = widget.villeDepart;
     userOrSuscriber = widget.userOrSuscriber;
     historique = widget.historique;
+
+    if( userOrSuscriber == 0 ) {
+      // Feed iduser :
+      outil.pickLocalUser().then((value) => {
+        initIduserIfNecessary(value!.id)
+      });
+    }
 
     // Try to UPDATE :
     if(publication.read == 0) {
@@ -108,6 +143,11 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     }
   }
 
+  // Init
+  void initIduserIfNecessary(int id) {
+    iduser = id;
+    //print('Id utilisateur LOCAL : $iduser');
+  }
 
   // Update PUBLICATION if needed :
   void updatePublication() async{
@@ -120,7 +160,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
         datepublication: publication.datepublication,
         reserve: publication.reserve,
         active: publication.active,
-        reservereelle: publication.reserve,
+        reservereelle: publication.reservereelle,
         souscripteur: publication.souscripteur, // Use OWNER Id
         milliseconds: publication.milliseconds,
         identifiant: publication.identifiant,
@@ -158,7 +198,9 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     }
     else{
       // Load 'SUSCRIBERS' :
-      List<Souscription> lesSouscriptions = await outil.getAllSouscriptionByIdpub(publication.id);
+      var tampon = await outil.getAllSouscriptionByIdpub(publication.id);
+      // Eliminate SOUSCRIPTION CANCELLED :
+      lesSouscriptions = tampon.where((souscrip) => souscrip.statut != 2).toList();
       if(lesSouscriptions.isNotEmpty){
         // Get User Ids list :
         List<int> userIds = lesSouscriptions.map((e) => e.iduser).toList();
@@ -171,6 +213,12 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
       }
     }
     return retour;
+  }
+
+  // Update this :
+  int updateReserveBagage(List<Publication> listePub) {
+    return (listePub.where((pub) => pub.id == publication.id).first.reserve -
+        (lesSouscriptions.isNotEmpty ? lesSouscriptions.map((e) => e.reserve).reduce((a, b) => a + b) : 0));
   }
 
 
@@ -248,7 +296,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                           context,
                           MaterialPageRoute(
                               builder: (context){
-                                return ReservePaiement(publication: publication);
+                                return ReservePaiement(publication: publication, client: widget.client);
                               }
                           )
                       );
@@ -289,7 +337,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                   context,
                   MaterialPageRoute(
                       builder: (context){
-                        return ReservePaiement(publication: publication);
+                        return ReservePaiement(publication: publication, client: widget.client,);
                       }
                   )
               );
@@ -313,9 +361,31 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
       )
       :
       Container(
-        margin: const EdgeInsets.only(top: 50, left: 10, right: 10),
+        margin: const EdgeInsets.only(top: 40, left: 10, right: 10),
         child: Column(
           children: [
+            ElevatedButton.icon(
+              style: ButtonStyle(
+                  backgroundColor: MaterialStateColor.resolveWith((states) => const Color(
+                      0xFFCB7228))
+              ),
+              label: const Text("Annuler",
+                  style: TextStyle(
+                      color: Colors.white
+                  )),
+              onPressed: () {
+                // Delete the 'PUBLICATION' :
+                dialogForPublicationDeletion(context);
+              },
+              icon: const Icon(
+                Icons.cancel,
+                size: 20,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
             const Align(
               alignment: Alignment.centerLeft,
               child: Text('Emetteur',
@@ -330,22 +400,43 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
               color: Colors.black,
             ),
             GestureDetector(
-              onTap: () {
+              onLongPress: () async{
+                if(publication.active == 1){
+                  displayFloat('Le colis n\'a pas encore été remis !', choix: 1);
+                }
+                else if(publication.active == 2){
+                  setState(() {
+                    signalerReception = true;
+                  });
+                }
+                else{
+                  displayFloat('Réception déjà établie !', choix: 1);
+                }
+              }
+              ,
+              onTap: () async {
                 // Display DIALOG
-                Navigator.push(context,
+                final result = await Navigator.push(context,
                   MaterialPageRoute(
                     builder: (context) {
                       return Messagerie(idpub: publication.id, owner: ('${outil.getPublicationOwner()!.nom} ${outil.getPublicationOwner()!.prenom}'),
-                        idSuscriber: 0,);
+                        idSuscriber: outil.getPublicationOwner()!.id, client: widget.client);
                     }
                   )
                 );
+
+                if(result == '1'){
+                  await outil.refreshAllChatsFromResumed(0);
+                }
               },
               child: Container(
                   //margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
                   width: MediaQuery.of(context).size.width,
                   //color: Colors.brown[100],
                   child: Card(
+                    color: signalerReception ?
+                    const Color(0xFFD1EAD7) :
+                    const Color(0xFFEFEFEB),
                     child: ListTile(
                       leading: ElevatedButton(
                           onPressed: (){},
@@ -369,11 +460,16 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   }
 
   Future<bool> _onBackPressed() async {
-     bool retour = signalerLivraison ? false : true;
+     bool retour = (signalerLivraison || signalerReception) ? false : true;
      if(!retour){
        setState(() {
-         indexSouscripteur - 1;
-         signalerLivraison = false;
+         if(signalerLivraison) {
+           indexSouscripteur = - 1;
+           signalerLivraison = false;
+         }
+         else{
+           signalerReception = false;
+         }
        });
      }
      return retour;
@@ -382,9 +478,8 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
 
   // Send Account DATA :
   Future<void> sendLivraisonFalag() async {
-
     final url = Uri.parse('${dotenv.env['URL']}markdelivery');
-    var response = await post(url,
+    var response = await widget.client.post(url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "idpub": publication.id,
@@ -413,18 +508,249 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     }
   }
 
+  // Subscription DELETION :
+  void subscriptionDeletion() async {
+    final url = Uri.parse('${dotenv.env['URL']}cancelsuscription');
+    var response = await widget.client.post(url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "idpub": publication.id,
+          "iduser": iduser
+        })).timeout(const Duration(seconds: timeOutValue));
+    if(response.statusCode == 200){
+      // Deactivate PUBLICATION :
+      Publication pub = Publication(
+          id: publication.id,
+          userid: publication.userid,
+          villedepart: publication.id,
+          villedestination: publication.id,
+          datevoyage: publication.datevoyage,
+          datepublication: publication.datepublication,
+          reserve: publication.reserve,
+          active: 0,
+          reservereelle: publication.reservereelle,
+          souscripteur: publication.souscripteur,
+          milliseconds: publication.milliseconds,
+          identifiant: publication.identifiant,
+          devise: publication.devise,
+          prix: publication.prix,
+          read: publication.read
+      );
+      await outil.updatePublicationWithoutFurtherActions(pub);
+      publicationDeletionDone = true;
+    }
+    flagDeletionData = false;
+  }
 
-  void displayFloat(String message){
-    Fluttertoast.showToast(
-        msg: message,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 3,
-        backgroundColor: Colors.black54,
-        textColor: Colors.white,
-        fontSize: 16.0
+
+  // Send DELETION request
+  void publicationDeletion() async {
+    final url = Uri.parse('${dotenv.env['URL']}canceltravel');
+    var response = await widget.client.post(url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "idpub": publication.id,
+          "iduser": 0
+        })).timeout(const Duration(seconds: timeOutValue));
+    if(response.statusCode == 200){
+      // Deactivate PUBLICATION :
+      Publication pub = Publication(
+          id: publication.id,
+          userid: publication.userid,
+          villedepart: publication.id,
+          villedestination: publication.id,
+          datevoyage: publication.datevoyage,
+          datepublication: publication.datepublication,
+          reserve: publication.reserve,
+          active: 0,
+          reservereelle: publication.reservereelle,
+          souscripteur: publication.souscripteur,
+          milliseconds: publication.milliseconds,
+          identifiant: publication.identifiant,
+          devise: publication.devise,
+          prix: publication.prix,
+          read: publication.read
+      );
+      await outil.updatePublicationWithoutFurtherActions(pub);
+      publicationDeletionDone = true;
+    }
+    flagDeletionData = false;
+  }
+
+
+  // Send Account DATA :
+  Future<void> sendReceptionFlag() async {
+    final url = Uri.parse('${dotenv.env['URL']}markreceipt');
+    var response = await widget.client.post(url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "idpub": publication.id,
+          "iduser": iduser
+        }));
+
+    // Checks :
+    if(response.statusCode.toString().startsWith('2')){
+      // Update the 'PUBLICATION' :
+      Publication pub = Publication(
+          id: publication.id,
+          userid: publication.userid,
+          villedepart: publication.villedepart,
+          villedestination: publication.villedestination,
+          datevoyage: publication.datevoyage,
+          datepublication: publication.datepublication,
+          reserve: publication.reserve,
+          active: 3,
+          reservereelle: publication.reserve,
+          souscripteur: publication.souscripteur, // Use OWNER Id
+          milliseconds: publication.milliseconds,
+          identifiant: publication.identifiant,
+          devise: publication.devise,
+          prix: publication.prix,
+          read: 1
+      );
+      await outil.updatePublicationWithoutFurtherActions(pub);
+
+      // Set FLAG :
+      flagSendData = false;
+    }
+    else {
+      flagSendData = false;
+      displayFloat("Impossible de traiter la demande !");
+    }
+  }
+
+
+  void displayFloat(String message, { int choix = 0}){
+    
+    switch(choix){
+      case 0:
+        Fluttertoast.showToast(
+            msg: message,
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 3,
+            backgroundColor: Colors.black54,
+            textColor: Colors.white,
+            fontSize: 16.0
+        );
+        break;
+      
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              duration: const Duration(seconds: 3),
+              content: Text(message)
+          ),
+        );
+        break;
+    }
+  }
+
+
+  void dialogForPublicationDeletion(BuildContext fContext) {
+    showDialog(
+        barrierDismissible: false,
+        context: fContext,
+        builder: (BuildContext context) {
+          dialogContext = context;
+          return WillPopScope(
+              onWillPop: () async => false,
+              child: AlertDialog(
+                  title: const Text('Attention'),
+                  content: const SizedBox(
+                      height: 70,
+                      child: Column(
+                        children: [
+                          Text("Confirmer la suppression de cette publication ?"),
+                          SizedBox(
+                            height: 20,
+                          )
+                        ],
+                      )
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.pop(context, 'Cancel'),
+                      child: const Text('NON'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                        // Dispay new ALERTDIALOG
+                        displayPublicationDeletion(fContext);
+                      },
+                      child: const Text('OUI'),
+                    ),
+                  ]
+              ) );
+        }
     );
   }
+
+
+  void displayPublicationDeletion(BuildContext dContext) {
+    // Display SYNCHRO :
+    showDialog(
+        barrierDismissible: false,
+        context: dContext,
+        builder: (BuildContext context) {
+          dialogContext = context;
+          return WillPopScope(
+            onWillPop: () async => false,
+            child: AlertDialog(
+                title: const Text('Information'),
+                content: Container(
+                    height: 100,
+                    child: const Column(
+                      children: [
+                        Text("Suppression en cours ..."),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        SizedBox(
+                            height: 30.0,
+                            width: 30.0,
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                              strokeWidth: 3.0, // Width of the circular line
+                            )
+                        )
+                      ],
+                    )
+                )
+            )
+          );
+        }
+    );
+
+    flagDeletionData = true;
+    publicationDeletionDone = false;
+    userOrSuscriber == 0 ? subscriptionDeletion() : publicationDeletion();
+
+    // Run TIMER :
+    Timer.periodic(
+      const Duration(milliseconds: 1500),
+          (timer) {
+        // Update user about remaining time
+        if(!flagDeletionData){
+          Navigator.pop(dialogContext);
+          timer.cancel();
+
+          if(publicationDeletionDone) {
+            // Display message :
+            displayFloat('Opération effectuée !');
+            // Leave SCREEN :
+            Navigator.pop(context);
+          }
+          else{
+            displayFloat('Suppression de l\'annonce impossible');
+          }
+        }
+      },
+    );
+  }
+
 
 
   // Display INTERFACE for SENDING DATA :
@@ -439,13 +765,13 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
               title: const Text('Information'),
               content: Container(
                   height: 100,
-                  child: const Column(
+                  child: Column(
                     children: [
-                      Text("Confirmation livraison ..."),
-                      SizedBox(
+                      Text(signalerLivraison ? "Confirmation livraison ..." : "Confirmation réception ..."),
+                      const SizedBox(
                         height: 20,
                       ),
-                      SizedBox(
+                      const SizedBox(
                           height: 30.0,
                           width: 30.0,
                           child: CircularProgressIndicator(
@@ -461,7 +787,12 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     );
 
     flagSendData = true;
-    sendLivraisonFalag();
+    if(signalerLivraison){
+      sendLivraisonFalag();
+    }
+    else{
+      sendReceptionFlag();
+    }
 
     // Run TIMER :
     Timer.periodic(
@@ -473,11 +804,17 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
           timer.cancel();
 
           // Display message :
-          displayFloat('Confirmation effectuée !');
+          displayFloat('Opération effectuée !');
 
-          setState(() {
-            signalerLivraison = false;
-          });
+          // Leave SCREEN :
+          if(signalerReception){
+            Navigator.pop(context);
+          }
+          else{
+            setState(() {
+              signalerLivraison = false;
+            });
+          }
         }
       },
     );
@@ -486,7 +823,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
 
   // Display ACTION BUTTON for 'CONFIRMER LA LIVRAISON'
   Widget displayActionButton (BuildContext context) {
-    return signalerLivraison ?
+    return (signalerLivraison || signalerReception) ?
     IconButton(
         onPressed: () {
           // Send DATA to server :
@@ -500,6 +837,15 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     );
   }
 
+  String displayTitle() {
+    if(userOrSuscriber == 1){
+      return !signalerLivraison ? publication.identifiant : 'Confirmer la livraison';
+    }
+    else{
+      return !signalerReception ? publication.identifiant : 'Confirmer la réception';
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -509,7 +855,8 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
           backgroundColor: Colors.white,
           appBar: AppBar(
               backgroundColor: Colors.white,
-              title: Text( !signalerLivraison ? publication.identifiant : 'Confirmer la livraison',
+              title: Text(
+                displayTitle(),
                 textAlign: TextAlign.start,
               ),
               shape: const RoundedRectangleBorder(
@@ -595,7 +942,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                         Row(
                                           children: [
                                             const Text('Initial : '),
-                                            Text('${publication.reserve} Kg',
+                                            Text('${ controller.publicationData.where((pub) => pub.id == publication.id).first.reserve} Kg',
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.bold
                                               ),
@@ -604,11 +951,10 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                         ),
                                         Row(
                                           children: [
-                                            const Text('Reste : '),
+                                            Text(userOrSuscriber == 0 ? 'Réservé : ' : 'Reste : '),
                                             Text(userOrSuscriber == 0 ?
-                                            outil.getPublicationSuscribed() != null ?
-                                            '${outil.getPublicationSuscribed()!.reservereelle} Kg' :
-                                            '${publication.reservereelle} Kg' : '$resteReserve Kg',
+                                            '${ controller.publicationData.where((pub) => pub.id == publication.id).first.reservereelle} Kg' :
+                                            '${updateReserveBagage(controller.publicationData)} Kg',
                                                 style: const TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     color: Colors.blue
@@ -652,23 +998,118 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                             fontSize: 17
                                         )
                                     ),
-                                    Text(
-                                      formatPrice(publication.prix),
-                                      style: const TextStyle(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 17
-                                      ),
+                                    GetBuilder<PublicationGetController>(
+                                      builder: (PublicationGetController controller) {
+                                        return Text(
+                                          formatPrice(controller.publicationData.where((pub) => pub.id == publication.id).first.prix),
+                                          style: const TextStyle(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 17
+                                          ),
+                                        );
+                                      }
                                     )
                                   ],
                                 ),
                               ),
+                              userOrSuscriber == 0 ?
+                              (publication.active == 2 ?
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 10, top: 20, right: 10),
+                                    child: const Column(
+                                      children: [
+                                        Divider(
+                                          color: Colors.black,
+                                          height: 5,
+                                        ),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.clean_hands,
+                                              size: 25,
+                                              color: Color(0xFF037C0D),
+                                            ),
+                                            SizedBox(
+                                              width: 20,
+                                            ),
+                                            Text('Le colis a été remis',
+                                              style: TextStyle(
+                                                  fontSize: 18
+                                              ),
+                                            )
+                                          ],
+                                        )
+                                      ],
+                                    ),
+                                  )
+                              :
+                                  const SizedBox(
+                                    height: 2,
+                                  )
+                              )
+                              :
+                              const SizedBox(
+                                height: 2,
+                              )
+                              ,
                               userOrSuscriber == 0 ?
                               displayOwnerOrReserverButton() :
                               GetBuilder<SouscriptionGetController>(
                                 builder: (SouscriptionGetController controller) {
                                   return Column(
                                     children: [
+                                      Container(
+                                        alignment: Alignment.topLeft,
+                                        margin: const EdgeInsets.only(left: 10, top: 30, right: 10),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            ElevatedButton.icon(
+                                              style: ButtonStyle(
+                                                  backgroundColor: MaterialStateColor.resolveWith((states) => const Color(
+                                                      0xFFCB7228))
+                                              ),
+                                              label: const Text("Annuler",
+                                                  style: TextStyle(
+                                                      color: Colors.white
+                                                  )),
+                                              onPressed: () {
+                                                // Delete the 'PUBLICATION' :
+                                                dialogForPublicationDeletion(context);
+                                              },
+                                              icon: const Icon(
+                                                Icons.cancel,
+                                                size: 20,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            ElevatedButton.icon(
+                                              style: ButtonStyle(
+                                                  backgroundColor: MaterialStateColor.resolveWith((states) => const Color(
+                                                      0xFF049829))
+                                              ),
+                                              label: const Text("Modifier",
+                                                  style: TextStyle(
+                                                      color: Colors.white
+                                                  )),
+                                              onPressed: () async{
+                                                cUser ??= await outil.pickLocalUser();
+                                                // Get Paydepart from Ville depart :
+                                                paysDepart ??= await _paysRepository.findPaysById(villeDepart.paysid);
+                                                paysDestination ??= await _paysRepository.findPaysById(ville.paysid);
+                                                // Call :
+                                                openTravelForUpdate();
+                                              },
+                                              icon: const Icon(
+                                                Icons.update,
+                                                size: 20,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      ),
                                       Container(
                                         alignment: Alignment.topLeft,
                                         margin: const EdgeInsets.only(left: 10, top: 30, right: 10),
@@ -706,6 +1147,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                             return GestureDetector(
                                               onLongPress: () async{
                                                 Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(publication.id, listeUser[index].id);
+                                                suscriberSouscription = souscription;
                                                 if(souscription.statut == 0){
                                                   setState(() {
                                                     iduser = listeUser[index].id;
@@ -717,16 +1159,22 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                                   displayFloat('Livraison déjà effectuée');
                                                 }
                                               },
-                                              onTap: () {
+                                              onTap: () async {
                                                 // Display DIALOG
-                                                Navigator.push(context,
+                                                final result = await Navigator.push(context,
                                                     MaterialPageRoute(
                                                         builder: (context) {
                                                           return Messagerie(idpub: publication.id, owner: ('${listeUser[index].nom} ${listeUser[index].prenom}'),
-                                                              idSuscriber: listeUser[index].id);
+                                                              idSuscriber: listeUser[index].id,
+                                                            client: widget.client);
                                                         }
                                                     )
                                                 );
+
+                                                //
+                                                if(result == '1'){
+                                                  await outil.refreshAllChatsFromResumed(0);
+                                                }
                                               },
                                               child: Container(
                                                 //margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
@@ -743,7 +1191,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                                               shape: const CircleBorder(),
                                                               backgroundColor: Colors.blue[50]
                                                           ),
-                                                          child: Text(processInitial(listeUser[index].nom, listeUser[index].prenom))
+                                                          child: Text('${lesSouscriptions.where((souscript) => souscript.iduser == listeUser[index].id).first.reserve} k')
                                                       ),
                                                       title: Text('${listeUser[index].nom} ${listeUser[index].prenom}'),
                                                       subtitle: Text(listeUser[index].adresse),

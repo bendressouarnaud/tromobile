@@ -7,5 +7,6 @@ class PaysRepository {
 
   Future<int> insert(Pays data) => paysDao.insert(data);
   Future<Pays> findPaysByIso(String data) => paysDao.findPaysByIso(data);
+  Future<Pays> findPaysById(int data) => paysDao.findPaysById(data);
   Future<List<Pays>> findAll() => paysDao.findAll();
 }

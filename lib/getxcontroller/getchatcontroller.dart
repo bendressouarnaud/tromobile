@@ -34,7 +34,8 @@ class ChatGetController extends GetxController {
 
   Future<void> addData(Chat chat) async {
     await _repository.insert(chat);
-    data.add(chat);
+    // retrieve this :
+    data.add(await _repository.findByIdentifiant(chat.identifiant));
 
     // Set timer to
     Future.delayed(const Duration(milliseconds: 600),
@@ -46,7 +47,7 @@ class ChatGetController extends GetxController {
 
   Future<void> addDataFromBackgroundHandler(Chat chat) async {
     await _repository.insert(chat);
-    data.add(chat);
+    data.add(await _repository.findByIdentifiant(chat.identifiant));
   }
 
   // Get CHAT to send :
@@ -58,12 +59,19 @@ class ChatGetController extends GetxController {
   }
 
   // Get CHAT to send :
-  /*Future<Chat> findByIdentifiant(String ids) async{
+  Future<List<Chat>> findAllChats({ bool refreshNav = false}) async{
     data.clear();
-    data.addAll(await _repository.findAllByStatut(statut));
+    data.addAll(await _repository.findAllChats());
+    if(refreshNav){
+      update(); // Used to refresh 'CHATMANAGEMENT' interface
+    }
     return data;
-    //return await _repository.findAllByStatut(statut);
-  }*/
+  }
+
+  // Get CHAT to send :
+  Future<Chat> findByIdentifiant(String id) async{
+    return await _repository.findByIdentifiant(id);
+  }
 
   Future<int> updateData(Chat chat) async {
     // Delete :
@@ -75,9 +83,38 @@ class ChatGetController extends GetxController {
     return await _repository.update(chat);
   }
 
+  Future<List<Chat>> findAllByRead(int read) async {
+    return await _repository.findAllByRead(read);
+  }
+
+  // Update this from MESSAGERIE interface to mark this CHAT as read :
+  Future<int> updateChatWithoutNotif(Chat chat) async {
+    return await _repository.update(chat);
+  }
+
+  Future<int> updateChatWithoutNotifFromMessagerie(Chat chat) async {
+    Chat ce = data.where((p0) => p0.identifiant == chat.identifiant).first;
+    int idx = data.indexOf(ce);
+    // Update
+    data[idx] = chat;
+    //update();
+    return await _repository.update(chat);
+  }
+
+  void callUpdate () {
+    update();
+  }
+
   // Look for CHAT with status = 0
   List<Chat> lookForChatToSend(int statut){
     return data.where((chat) => (chat.statut == statut && chat.id == 0)).toList();
+  }
+
+  Future<int> deleteAllChats() async {
+    data.clear();
+    int ret = await _repository.deleteAllChats();
+    update();
+    return ret;
   }
 
 }

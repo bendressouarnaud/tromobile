@@ -15,6 +15,7 @@ import 'package:get/get_state_manager/src/simple/get_state.dart';
 import 'package:http/http.dart';
 import 'package:tro/getxcontroller/getciblecontroller.dart';
 import 'package:tro/getxcontroller/getpublicationcontroller.dart';
+import 'package:tro/main.dart';
 import 'package:tro/repositories/pays_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
@@ -34,8 +35,10 @@ class CreerCible extends StatefulWidget {
   final int idvilledep;
   final int idvilledest;
   final int idCible;
+  final Client client;
 
-  CreerCible({Key? key, required this.idpaysdep, required this.idpaysdest, required this.idvilledep, required this.idvilledest, required this.idCible}) : super(key: key);
+  CreerCible({Key? key, required this.idpaysdep, required this.idpaysdest, required this.idvilledep,
+    required this.idvilledest, required this.idCible, required this.client}) : super(key: key);
 
   @override
   State<CreerCible> createState() => _creerCible();
@@ -70,6 +73,7 @@ class _creerCible extends State<CreerCible> {
   int init = 0;
   late BuildContext dialogContext;
   bool flagSendData = false;
+  bool closeAlertDialog = false;
   String topic = "";
 
 
@@ -102,16 +106,6 @@ class _creerCible extends State<CreerCible> {
       listeVilleDestination.sort((a,b) => a.name.compareTo(b.name));
       villeDepart = idvilledep != 0 ? listeVille.where((ville) => ville.id == idvilledep).first : listeVille.first;
       villeDestination = idvilledest != 0 ? listeVilleDestination.where((ville) => ville.id == idvilledest).first : listeVilleDestination.first;
-
-      /*Fluttertoast.showToast(
-          msg: 'Essai $init',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.CENTER,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0
-      );*/
     }
 
     return 0;
@@ -155,7 +149,7 @@ class _creerCible extends State<CreerCible> {
   // Send Account DATA :
   Future<void> sendCibleRequest() async {
     final url = Uri.parse('${dotenv.env['URL']}managecible');
-    var response = await post(url,
+    var response = await widget.client.post(url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "id": idCible,
@@ -171,7 +165,7 @@ class _creerCible extends State<CreerCible> {
           "idvilledest": villeDestination!.id,
           "villedestlib": villeDestination!.name,
           "topic": topic,
-        }));
+        })).timeout(const Duration(seconds: timeOutValue));
 
     // Checks :
     if(response.statusCode == 200){
@@ -191,12 +185,38 @@ class _creerCible extends State<CreerCible> {
         _cibleController.updateData(cible);
       }
 
+      // Persist PUBLICATION
+      for(Publication publication in ce.publications){
+        // First SPLIT :
+        List<String> tamponDateTime = publication.datevoyage.split("T");
+        var dateVoyageFinal = DateTime.parse('${tamponDateTime[0]} ${tamponDateTime[1]}Z');
+        Publication pub = Publication(
+            id: publication.id,
+            userid: publication.userid,
+            villedepart: publication.villedepart,
+            villedestination: publication.villedestination,
+            datevoyage: publication.datevoyage,
+            datepublication: publication.datepublication,
+            reserve: publication.reserve,
+            active: 1,
+            reservereelle: publication.reserve,
+            souscripteur: publication.souscripteur, // Use OWNER Id
+            milliseconds: dateVoyageFinal.millisecondsSinceEpoch, // publication.milliseconds,
+            identifiant: publication.identifiant,
+            devise: publication.devise,
+            prix: publication.prix,
+            read: 1
+        );
+        outil.addPublication(pub);
+      }
+
       // Set FLAG :
-      flagSendData = false;
+      closeAlertDialog = false;
     }
     else {
       displayToast("Erreur apparue");
     }
+    flagSendData = false;
   }
 
   // Our TOAST :
@@ -410,6 +430,7 @@ class _creerCible extends State<CreerCible> {
 
                           // Send DATA :
                           flagSendData = true;
+                          closeAlertDialog = true;
                           generateTopic();
 
                           // Run TIMER :
@@ -421,9 +442,11 @@ class _creerCible extends State<CreerCible> {
                                 Navigator.pop(dialogContext);
                                 timer.cancel();
 
-                                // Kill ACTIVITY :
-                                if(Navigator.canPop(context)){
-                                  Navigator.pop(context);
+                                if(!closeAlertDialog) {
+                                  // Kill ACTIVITY :
+                                  if (Navigator.canPop(context)) {
+                                    Navigator.pop(context);
+                                  }
                                 }
                               }
                             },

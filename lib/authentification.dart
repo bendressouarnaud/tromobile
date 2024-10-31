@@ -12,6 +12,7 @@ import 'package:http/http.dart';
 import 'package:group_radio_button/group_radio_button.dart';
 import 'package:http/src/response.dart' as mreponse;
 import 'package:tro/getxcontroller/getsouscriptioncontroller.dart';
+import 'package:tro/repositories/filiation_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 
 import 'constants.dart';
@@ -22,6 +23,7 @@ import 'httpbeans/authenticateresponse.dart';
 import 'httpbeans/souscriptionbean.dart';
 import 'httpbeans/userbean.dart';
 import 'models/cible.dart';
+import 'models/filiation.dart';
 import 'models/publication.dart';
 import 'models/souscription.dart';
 import 'models/user.dart';
@@ -31,7 +33,8 @@ import 'package:flutter/foundation.dart'
 
 
 class AuthentificationEcran extends StatefulWidget {
-  const AuthentificationEcran({Key? key}) : super(key: key);
+  final Client client;
+  const AuthentificationEcran({Key? key, required this.client}) : super(key: key);
   //final https.Client client;
 
   @override
@@ -54,11 +57,13 @@ class _NewAuth extends State<AuthentificationEcran> {
   final _userRepository = UserRepository();
   late BuildContext dialogContext;
   bool flagSendData = false;
+  bool closeAlertDialog = false;
   //
   final UserGetController _userController = Get.put(UserGetController());
   final CibleGetController _cibleController = Get.put(CibleGetController());
   final PublicationGetController _publicationController = Get.put(PublicationGetController());
   final SouscriptionGetController _souscriptionController = Get.put(SouscriptionGetController());
+  final _filiationRepository = FiliationRepository();
   //late https.Client client;
   //
   String? getToken = "";
@@ -95,18 +100,20 @@ class _NewAuth extends State<AuthentificationEcran> {
   // Send Account DATA :
   Future<void> authenicatemobilecustomer() async {
     final url = Uri.parse('${dotenv.env['URL']}authenticate');
-    var response = await post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "mail": emailController.text,
-          "pwd": pwdController.text,
-          "fcmtoken": getToken
-        }));
+    var response = await widget.client.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "mail": emailController.text,
+        "pwd": pwdController.text,
+        "fcmtoken": getToken
+      })
+    ).timeout(const Duration(seconds: timeOutValue));
 
     // Checks :
     if(response.statusCode == 200){
       //List<dynamic> body = jsonDecode(response.body);
-      AuthenticateResponse bn = AuthenticateResponse.fromJson(json.decode(response.body));
+      AuthenticateResponse bn = AuthenticateResponse.fromJson(jsonDecode(const Utf8Decoder().convert(response.bodyBytes)));
       // Persist user :
       User user = User(
           nationnalite: bn.nationnalite,
@@ -120,9 +127,15 @@ class _NewAuth extends State<AuthentificationEcran> {
           adresse: bn.adresse,
           fcmtoken: getToken!,
           pwd: "",
-          codeinvitation: "");
+          codeinvitation: "",
+          villeresidence: bn.villeresidence);
       // Save :
       _userController.addData(user);
+
+      // From there, Hit NEW FILIATION :
+      Filiation filiation = Filiation(id: 1, code: bn.codeparrainage, bonus: bn.bonus);
+      await _filiationRepository.insert(filiation);
+
       // Persist CIBLE :
       for(Cible ce in bn.cibles){
         Cible cible = Cible(id: ce.id,
@@ -132,6 +145,9 @@ class _NewAuth extends State<AuthentificationEcran> {
       }
       // Persist PUBLICATION
       for(Publication publication in bn.publications){
+        // First SPLIT :
+        List<String> tamponDateTime = publication.datevoyage.split("T");
+        var dateVoyageFinal = DateTime.parse('${tamponDateTime[0]} ${tamponDateTime[1]}Z');
         Publication pub = Publication(
             id: publication.id,
             userid: publication.userid,
@@ -143,7 +159,7 @@ class _NewAuth extends State<AuthentificationEcran> {
             active: 1,
             reservereelle: publication.reserve,
             souscripteur: publication.souscripteur, // Use OWNER Id
-            milliseconds: publication.milliseconds,
+            milliseconds: dateVoyageFinal.millisecondsSinceEpoch, // publication.milliseconds,
             identifiant: publication.identifiant,
           devise: publication.devise,
           prix: publication.prix,
@@ -169,7 +185,8 @@ class _NewAuth extends State<AuthentificationEcran> {
               adresse: userbean.adresse,
               fcmtoken: '',
               pwd: "123",
-              codeinvitation: "123");
+              codeinvitation: "123",
+              villeresidence: 0);
           // Save :
           _userController.addData(user);
         }
@@ -188,8 +205,21 @@ class _NewAuth extends State<AuthentificationEcran> {
       }
 
       // Set FLAG :
-      flagSendData = false;
+      closeAlertDialog = false;
     }
+    else{
+      Fluttertoast.showToast(
+          msg: "Identifiants incorrects",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0
+      );
+    }
+    // Notify :
+    flagSendData = false;
   }
 
   @override
@@ -246,125 +276,129 @@ class _NewAuth extends State<AuthentificationEcran> {
                     ),
                   ),
                 ),
-                Expanded(
-                  child: Align(
-                    alignment: FractionalOffset.bottomLeft,
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          ElevatedButton.icon(
-                            style: ButtonStyle(
-                                backgroundColor: MaterialStateColor.resolveWith((states) => Colors.blueGrey)
-                            ),
-                            label: const Text("Retour",
-                                style: TextStyle(
-                                    color: Colors.white
-                                )),
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            icon: const Icon(
-                              Icons.arrow_back_ios_new,
-                              size: 20,
-                              color: Colors.white,
-                            ),
-                          ),
-                          ElevatedButton.icon(
-                            style: ButtonStyle(
-                                backgroundColor: MaterialStateColor.resolveWith((states) => Colors.brown)
-                            ),
-                            label: const Text("Enregistrer",
-                                style: TextStyle(
-                                    color: Colors.white
-                                )
-                            ),
-                            onPressed: () {
-                              if(checkField()){
-                                Fluttertoast.showToast(
-                                    msg: "Veuillez renseigner les champs !",
-                                    toastLength: Toast.LENGTH_SHORT,
-                                    gravity: ToastGravity.CENTER,
-                                    timeInSecForIosWeb: 1,
-                                    backgroundColor: Colors.red,
-                                    textColor: Colors.white,
-                                    fontSize: 16.0
-                                );
-                              }
-                              else{
-                                showDialog(
-                                    barrierDismissible: false,
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      dialogContext = context;
-                                      return const AlertDialog(
-                                        title: Text('Information'),
-                                        content: Text("Veuillez patienter ..."),
-                                        /*actions: <Widget>[
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(context, 'Cancel'),
-                                            child: const Text('Cancel'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(context, 'OK'),
-                                            child: const Text('OK'),
-                                          ),
-                                        ]*/
-                                      );
-                                    }
-                                );
-
-                                // Send DATA :
-                                flagSendData = true;
-                                if(defaultTargetPlatform == TargetPlatform.android){
-                                  generateTokenSuscription();//
-                                }
-                                else{
-                                  // Currently not running FCM for iphone
-                                  authenicatemobilecustomer();
-                                }
-
-                                // Run TIMER :
-                                Timer.periodic(
-                                  const Duration(seconds: 1),
-                                      (timer) {
-                                    // Update user about remaining time
-                                    if(!flagSendData){
-                                      Navigator.pop(dialogContext);
-                                      timer.cancel();
-
-                                      if(user_Company){
-                                        // Kill APPLICATION :
-                                        SystemNavigator.pop();
-                                      }
-                                      else if(_userController.userData.isNotEmpty){
-                                        // Kill ACTIVITY :
-                                        if(Navigator.canPop(context)){
-                                          Navigator.pop(context);
-                                        }
-                                      }
-                                    }
-                                  },
-                                );
-                              }
-                            },
-                            icon: const Icon(
-                              Icons.save,
-                              size: 20,
-                              color: Colors.white,
-                            ),
-                          )
-                        ],
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ElevatedButton.icon(
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateColor.resolveWith((states) => Colors.blueGrey)
+                        ),
+                        label: const Text("Retour",
+                            style: TextStyle(
+                                color: Colors.white
+                            )),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new,
+                          size: 20,
+                          color: Colors.white,
+                        ),
                       ),
-                    )
+                      ElevatedButton.icon(
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateColor.resolveWith((states) => Colors.brown)
+                        ),
+                        label: const Text("Soumettre",
+                            style: TextStyle(
+                                color: Colors.white
+                            )
+                        ),
+                        onPressed: () {
+                          if(checkField()){
+                            Fluttertoast.showToast(
+                                msg: "Veuillez renseigner les champs !",
+                                toastLength: Toast.LENGTH_SHORT,
+                                gravity: ToastGravity.CENTER,
+                                timeInSecForIosWeb: 1,
+                                backgroundColor: Colors.black,
+                                textColor: Colors.white,
+                                fontSize: 16.0
+                            );
+                          }
+                          else{
+                            showDialog(
+                                barrierDismissible: false,
+                                context: context,
+                                builder: (BuildContext context) {
+                                  dialogContext = context;
+                                  return WillPopScope(
+                                      onWillPop: () async => false,
+                                      child: const AlertDialog(
+                                          title: Text('Information'),
+                                          content: SizedBox(
+                                              height: 100,
+                                              child: Column(
+                                                children: [
+                                                  Text("Veuillez patienter ..."),
+                                                  SizedBox(
+                                                    height: 20,
+                                                  ),
+                                                  SizedBox(
+                                                      height: 30.0,
+                                                      width: 30.0,
+                                                      child: CircularProgressIndicator(
+                                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                                        strokeWidth: 3.0, // Width of the circular line
+                                                      )
+                                                  )
+                                                ],
+                                              )
+                                          )
+                                      )
+                                  );
+                                }
+                            );
 
-                    /*MaterialButton(
-                        onPressed: () => {},
-                        child: Text('REGISTER'),
-                      )*/,
+                            // Send DATA :
+                            flagSendData = true;
+                            closeAlertDialog = true;
+                            if(defaultTargetPlatform == TargetPlatform.android){
+                              generateTokenSuscription();//
+                            }
+                            else{
+                              // Currently not running FCM for iphone
+                              authenicatemobilecustomer();
+                            }
+
+                            // Run TIMER :
+                            Timer.periodic(
+                              const Duration(seconds: 1),
+                                  (timer) {
+                                // Update user about remaining time
+                                if(!flagSendData){
+                                  Navigator.pop(dialogContext);
+                                  timer.cancel();
+
+                                  if(!closeAlertDialog) {
+                                    if (user_Company) {
+                                      // Kill APPLICATION :
+                                      SystemNavigator.pop();
+                                    }
+                                    else if (_userController.userData.isNotEmpty) {
+                                      // Kill ACTIVITY :
+                                      if (Navigator.canPop(context)) {
+                                        Navigator.pop(context);
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                            );
+                          }
+                        },
+                        icon: const Icon(
+                          Icons.save,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                      )
+                    ],
                   ),
-                ),
+                )
               ],
             ),
           ),

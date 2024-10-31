@@ -7,6 +7,7 @@ import 'package:tro/models/souscription.dart';
 import 'package:tro/repositories/ville_repository.dart';
 
 import '../getxcontroller/getchatcontroller.dart';
+import '../getxcontroller/getnavbarchat.dart';
 import '../getxcontroller/getnavbarpublication.dart';
 import '../getxcontroller/getparamscontroller.dart';
 import '../getxcontroller/getsouscriptioncontroller.dart';
@@ -26,6 +27,7 @@ class Outil {
   late PublicationGetController _publicationController;
   late ParametersGetController _parametersController;
   late NavGetController _navController;
+  late NavChatGetController _navChatController;
   final _villeRepository = VilleRepository();
   String urlPrefix = '';
   User? publicationOwner;
@@ -53,6 +55,7 @@ class Outil {
     _publicationController = Get.put(PublicationGetController());
     _parametersController = Get.put(ParametersGetController());
     _navController = Get.put(NavGetController());
+    _navChatController = Get.put(NavChatGetController());
   }
 
   void setFcmFlag(bool value){
@@ -77,6 +80,21 @@ class Outil {
     return urlPrefix;
   }
 
+
+  // C H A T
+  Future<Chat> findChatByIdentifiant(String id) async{
+    return await _chatController.findByIdentifiant(id);
+  }
+
+  Future<List<Chat>> findAllChats({ bool refreshNav = false}) async{
+    List<Chat> lte = await _chatController.findAllChats( refreshNav: false );
+    if(refreshNav){
+      int taille = lte.where((chat) => chat.read ==0).toList().length;
+      _navChatController.feed(taille);
+    }
+    return lte;
+  }
+
   Future<List<Chat>> getChatByIdpub(int idpub) async{
     // First Clean :
     return await _chatController.getData(idpub);
@@ -89,6 +107,10 @@ class Outil {
 
   Future<void> insertChat(Chat chat) async {
     await _chatController.addData(chat);
+    if(chat.read == 0) {
+      int newTaille = _navChatController.tableau[0];
+      _navChatController.feed(newTaille + 1);
+    }
   }
 
   Future<void> insertChatFromBackground(Chat chat) async {
@@ -105,9 +127,46 @@ class Outil {
     return await _chatController.updateData(chat);
   }
 
+  //
+  Future<int> updateChatWithoutNotif(Chat chat) async {
+    int ret = await _chatController.updateChatWithoutNotif(chat);
+    // Test
+    //await refreshAllChatsFromResumed(0);
+    return ret;
+  }
+
+  //
+  Future<int> updateChatWithoutNotifFromMessagerie(Chat chat) async {
+    //int ret = await _chatController.updateChatWithoutNotifFromMessagerie(chat);
+    int ret = await _chatController.updateChatWithoutNotif(chat);
+    int newTaille = _navChatController.tableau[0];
+    _navChatController.feed(newTaille > 0 ? newTaille - 1 : 0);
+    return ret;
+  }
+
+  void callChatUpdate () {
+    _chatController.callUpdate();
+  }
+
+  Future<void> refreshAllChatsFromResumed(int read) async {
+    List<Chat> mList = await _chatController.findAllByRead(read);
+    int taille = mList.length;
+    _navChatController.feed(taille);
+  }
+
+  /*Future<void> updateChatNavNotif(List<int> liste) async{
+    int newTaille = _navChatController.tableau[0];
+    _navChatController.feed(newTaille - liste.length);
+  }*/
+
+
   // For U S E R
   User getLocalUser(){
     return _userController.getLocalUser();
+  }
+
+  Future<int> deleteAllUsers() async{
+    return await _userController.deleteAllUsers();
   }
 
   Future<User?> pickLocalUser() async{
@@ -141,6 +200,11 @@ class Outil {
     return await _souscriptionController.getData(idpub); // Ajout du AWAIT le 29/08/2024
   }
 
+  //
+  Future<List<Souscription>> findAllSuscriptionByIdpub(int idpub) async{
+    return await _souscriptionController.findAllSuscriptionByIdpub(idpub);
+  }
+
   Future<Souscription> getSouscriptionByIdpubAndIduser(int idpub, int iduser) async{
     return await _souscriptionController.getByIdpubAndIduser(idpub, iduser); // Ajout du AWAIT le 29/08/2024
   }
@@ -150,13 +214,24 @@ class Outil {
   }
 
   // for  P U B L I C A T I O N
+  Future<int> deleteAllPublications() async{
+    // Delete OTHERS
+    await _chatController.deleteAllChats();
+    await _souscriptionController.deleteAllSouscriptions();
+    return await _publicationController.deleteAllPublications();
+  }
+
   void addPublication(Publication publication){
     _publicationController.addData(publication);
     // Update this :
-    if(publication == 0) {
+    if(publication.read == 0) {
       int newTaille = _navController.tableau[0];
       _navController.feed(newTaille + 1);
     }
+  }
+
+  Future<void> updatePublicationWithoutFurtherActions(Publication publication) async{
+    _publicationController.updateData(publication);
   }
 
   Future<void> updatePublication(Publication publication) async{
@@ -173,6 +248,10 @@ class Outil {
     return await _publicationController.refreshPublication(idpub);
   }
 
+  Future<Publication?> findOptionalPublicationById(int idpub) async {
+    return await _publicationController.findOptionalPublicationById(idpub);
+  }
+
   Future<List<Publication>> findAllPublication() async {
     List<Publication> mList = await _publicationController.findAllPublication();
     int taille = mList.where((element) => element.read == 0).toList().length;
@@ -185,11 +264,17 @@ class Outil {
     return await _publicationController.findOldAll();
   }
 
+  List<Publication> readCurrentPublication() {
+    return _publicationController.publicationData();
+  }
+
   Future<void> refreshAllPublicationsFromResumed() async {
     List<Publication> mList = await _publicationController.refreshAllPublicationsFromResumed();
-    int taille = mList.where((element) => element.read == 0).toList().length;
+    int taille = mList.where((element) => (element.read == 0 && element.milliseconds >= DateTime.now().millisecondsSinceEpoch))
+        .toList().length;
     _navController.feed(taille);
   }
+
 
   Publication? getPublicationSuscribed() {
     return publicationSuscribed;

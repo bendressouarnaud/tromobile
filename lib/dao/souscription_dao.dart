@@ -40,4 +40,11 @@ class SouscriptionDao {
     return liste.single;
   }
 
+  Future<int> deleteAllSouscriptions() async {
+    final db = await dbProvider.database;
+    var result = await db.delete(
+      "souscription",
+    );
+    return result;
+  }
 }

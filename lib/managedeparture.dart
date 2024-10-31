@@ -14,6 +14,7 @@ as picker;
 import 'package:tro/getxcontroller/getpublicationcontroller.dart';
 import 'package:tro/main.dart';
 import 'package:tro/models/publication.dart';
+import 'package:tro/models/souscription.dart';
 import 'package:tro/models/ville.dart';
 import 'package:tro/pageaccueil.dart';
 import 'package:tro/repositories/pays_repository.dart';
@@ -25,16 +26,19 @@ import 'getxcontroller/getdeparturecontroller.dart';
 import 'httpbeans/countrydata.dart';
 import 'httpbeans/countrydataunicodelist.dart';
 import 'httpbeans/departureresponse.dart';
+import 'httpbeans/refreshbean.dart';
 import 'mesbeans/devises.dart';
 import 'models/pays.dart';
 
 
 class ManageDeparture extends StatefulWidget {
-  const ManageDeparture({Key? key, required this.id, required this.listeCountry, required this.nationalite, required this.idpub}) : super(key: key);
+  const ManageDeparture({Key? key, required this.id, required this.listeCountry, required this.nationalite,
+    required this.idpub, required this.client}) : super(key: key);
   final int id;
   final List<Pays> listeCountry;
   final String nationalite;
   final int idpub;
+  final Client client;
 
   @override
   State<ManageDeparture> createState() => _ManageDepartureState();
@@ -154,6 +158,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
   //final _userRepository = UserRepository();
   late BuildContext dialogContext;
   bool flagSendData = false;
+  bool closeAlertDialog = false;
   int retour = 0;
   //
   //final PublicationGetController _publicationController = Get.put(PublicationGetController());
@@ -172,6 +177,10 @@ class _ManageDepartureState extends State<ManageDeparture> {
   late String ordernumber;
   String ipaddress = "";
   int milliseconds = 0;
+  late Publication publication;
+  bool updatePubDate = false;
+  bool updatePubHour = false;
+  late BuildContext customContext;
 
 
 
@@ -186,21 +195,34 @@ class _ManageDepartureState extends State<ManageDeparture> {
     keep_idpub = widget.idpub;
     nationalite = widget.nationalite;
     listeCountry = widget.listeCountry;
-    paysDepartMenu = listeCountry.where((element) => element.iso2 == nationalite).first;
+    //paysDepartMenu = listeCountry.where((element) => element.iso2 == nationalite).first;
     devises = lesDevises.first;
     // Init : things
     _departureController.clear();
 
-    // Get TOWNS :
-    //getTowns();
+    if(idpub > 0){
+      getPublicationIfNeeded();
+    }
+  }
+
+  void getPublicationIfNeeded() async {
+    publication = await _publicationRepository.findPublicationById(idpub);
   }
 
   TextEditingController processData(DepartureGetController controller, int choix){
     if(choix == 0){
+      if(idpub > 0 && !updatePubDate) {
+        updatePubDate = true;
+        return dateDepartController;
+      }
       dateDepartController = TextEditingController(text: controller.data.isNotEmpty ? controller.data[0] : '');
       return dateDepartController;
     }
     else{
+      if(idpub > 0 && !updatePubHour) {
+        updatePubHour = true;
+        return heureDepartController;
+      }
       heureDepartController = TextEditingController(text: controller.data.isNotEmpty ? controller.data[1] : '');
       return heureDepartController;
     }
@@ -213,9 +235,29 @@ class _ManageDepartureState extends State<ManageDeparture> {
     Pays paysDest = await _paysRepository.findPaysByIso(listeCountry.last.iso2);
     // Get the towns
     listeVilleDepart = await _villeRepository.findAllByPaysId(paysDep.id);
+    listeVilleDepart.sort((a,b) =>
+        a.name.compareTo(b.name));
     listeVilleDestination = await _villeRepository.findAllByPaysId(paysDest.id);
-    villeDepartMenu = listeVilleDepart.first;
-    villeDestinationMenu = listeVilleDestination.first;
+    listeVilleDestination.sort((a,b) =>
+        a.name.compareTo(b.name));
+    if(idpub == 0) {
+      villeDepartMenu = listeVilleDepart.first;
+      villeDestinationMenu = listeVilleDestination.first;
+      devises = lesDevises.first;
+    }
+    else{
+      villeDepartMenu = listeVilleDepart.where((ville) => ville.id == publication.villedepart).first;
+      villeDestinationMenu = listeVilleDestination.where((ville) => ville.id == publication.villedestination).first;
+      // Date
+      dateDepartController = TextEditingController(text: publication.datevoyage.split("T")[0] );
+      heureDepartController = TextEditingController(text: publication.datevoyage.split("T")[1] );
+      reserveController = TextEditingController(text: publication.reserve.toString());
+      prixController = TextEditingController(text: publication.prix.toString());
+      // DEVISES
+      devises = lesDevises.where((devise) => devise.id == publication.devise).first;
+      milliseconds = DateTime.parse('${publication.datevoyage.split("T")[0]} ${publication.datevoyage.split("T")[1]}Z')
+          .millisecondsSinceEpoch;
+    }
     return 0;
   }
 
@@ -237,8 +279,113 @@ class _ManageDepartureState extends State<ManageDeparture> {
     super.dispose();
   }
 
+  bool destinationSameDeparture() {
+    return villeDepartMenu!.id == villeDestinationMenu!.id ;
+  }
+
+  void processDataForSending() {
+    showDialog(
+        barrierDismissible: false,
+        context: customContext,
+        builder: (BuildContext context) {
+          dialogContext = context;
+          return WillPopScope(
+              onWillPop: () async => false,
+              child: const AlertDialog(
+                  title: Text('Information'),
+                  content: SizedBox(
+                      height: 100,
+                      child: Column(
+                        children: [
+                          Text("Création de l'annonce ..."),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          SizedBox(
+                              height: 30.0,
+                              width: 30.0,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                strokeWidth: 3.0, // Width of the circular line
+                              )
+                          )
+                        ],
+                      )
+                  )
+              )
+          );
+        }
+    );
+
+    // Send DATA :
+    flagSendData = true;
+    closeAlertDialog = true;
+    // Currently not running FCM for iphone
+    sendOrderRequest();
+
+    // Run TIMER :
+    Timer.periodic(
+      const Duration(seconds: 1),
+          (timer) {
+        // Update user about remaining time
+        if(!flagSendData){
+          Navigator.pop(dialogContext);
+          timer.cancel();
+
+          // Kill ACTIVITY :
+          if(!closeAlertDialog) {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+              //Navigator.of(context).pop({'selection': '1'});
+            }
+          }
+        }
+        else if(retour > 0){
+          Navigator.pop(dialogContext);
+          retour = 0;
+        }
+      },
+    );
+  }
+
+  // In case PUBLICATION has already been suscribed, make
+  Future<bool> checkSuscription() async{
+    if(idpub > 0){
+      List<Souscription> listeSouscription = await outil.findAllSuscriptionByIdpub(idpub);
+      if(listeSouscription.isNotEmpty){
+        // If previous MONTANT was FREE and new one is not, AVOID it :
+        if(publication.prix < int.parse(prixController.text)){
+          displayToast("Impossible de modifier le prix, \n car des souscriptions ont été faites.");
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  bool verifyPrix() {
+    try{
+      int res = int.parse(prixController.text);
+    }
+    catch (e){
+      return false;
+    }
+    return true;
+  }
+
+  bool verifyReserve() {
+    try{
+      int res = int.parse(reserveController.text);
+    }
+    catch (e){
+      return false;
+    }
+    return true;
+  }
+
   // Process :
-  bool checkField(){
+  bool checkField(BuildContext context){
+    customContext = context;
     if(dateDepartController.text.isEmpty || heureDepartController.text.isEmpty){
       displayToast("Veuillez renseigner la DATE et l'HEURE");
       return true;
@@ -247,8 +394,20 @@ class _ManageDepartureState extends State<ManageDeparture> {
       displayToast("Veuillez définir la réserve");
       return true;
     }
+    else if(!verifyReserve()){
+      displayToast("La valeur de la réserve est incorrecte");
+      return true;
+    }
     else if(prixController.text.isEmpty){
       displayToast("Veuillez fixer le prix");
+      return true;
+    }
+    else if(!verifyPrix()){
+      displayToast("Le prix renseigné est incorrect");
+      return true;
+    }
+    else if(destinationSameDeparture()){
+      displayToast("Les 2 villes doivent être différentes");
       return true;
     }
     return false;
@@ -268,80 +427,110 @@ class _ManageDepartureState extends State<ManageDeparture> {
   }
 
   // Send Account DATA :
-  Future<void> sendOrderRequest(String abrevPays) async {
-    final hNow = DateTime.now();
-    final url = Uri.parse('${dotenv.env['URL']}managetravel');
-    var response = await post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "id": idpub,
-          "idpaysdepart": listeCountry.first.id,
-          "paysdepart": listeCountry.first.name,
-          "abrevpaysdepart": listeCountry.first.iso2,
-          "idvilledepart": villeDepartMenu!.id,
-          "villedepart": villeDepartMenu!.name,
+  Future<void> sendOrderRequest() async {
+    try{
+      final hNow = DateTime.now();
+      final url = Uri.parse('${dotenv.env['URL']}managetravel');
+      var response = await widget.client.post(url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "id": idpub,
+            "idpaysdepart": listeCountry.first.id,
+            "paysdepart": listeCountry.first.name,
+            "abrevpaysdepart": listeCountry.first.iso2,
+            "idvilledepart": villeDepartMenu!.id,
+            "villedepart": villeDepartMenu!.name,
 
-          "idpaysdestination": listeCountry.last.id,
-          "paysdestination": listeCountry.last.name,
-          "abrevpaysdestination": listeCountry.last.iso2,
-          "idvilledestination": villeDestinationMenu!.id,
-          "villedestination": villeDestinationMenu!.name,
+            "idpaysdestination": listeCountry.last.id,
+            "paysdestination": listeCountry.last.name,
+            "abrevpaysdestination": listeCountry.last.iso2,
+            "idvilledestination": villeDestinationMenu!.id,
+            "villedestination": villeDestinationMenu!.name,
 
-          "date": dateDepartController.text,
-          "heure": heureDepartController.text,
-          "heuregeneration": "${hNow.hour}:${hNow.minute}:${hNow.second}",
-          "reserve": reserveController.text, //gpsController.t
-          "user": id,
-          "milliseconds": milliseconds,
+            "date": dateDepartController.text,
+            "heure": heureDepartController.text,
+            "heuregeneration": "${hNow.hour}:${hNow.minute}:${hNow.second}",
+            "reserve": reserveController.text, //gpsController.t
+            "user": id,
+            "milliseconds": milliseconds,
 
-          "deviseid": devises.id,
-          "deviselib": devises.libelle,
-          "prix": prixController.text,
-        }));
+            "deviseid": devises.id,
+            "deviselib": devises.libelle,
+            "prix": prixController.text,
+          })).timeout(const Duration(seconds: timeOutValue));
 
-    // Checks :
-    if(response.statusCode == 200){
-
-      DepartureResponse reponse =  DepartureResponse.fromJson(json.decode(response.body));
-      displayToast("Annonce créée !");
-      // create 'PUBLICATION' :
-      Publication pub = Publication(
-        id: reponse.id,
-        userid: id,
-        villedepart: villeDepartMenu!.id,
-        villedestination: villeDestinationMenu!.id,
-        datevoyage: (dateDepartController.text+"T"+heureDepartController.text),
-        datepublication: reponse.date,
-        reserve: int.parse(reserveController.text),
-        active: 1,
-        reservereelle: int.parse(reserveController.text),
-        souscripteur: 0,
-        milliseconds: milliseconds,
-        identifiant: reponse.identifiant,
-        devise: devises.id,
-        prix: int.parse(prixController.text),
-        read: 1
-      );
-      // Save :
-      outil.addPublication(pub);
-      //_publicationController.addData(pub);
-      //_publicationRepository.insert(pub);
-
-      // Set FLAG :
-      flagSendData = false;
+      // Checks :
+      if (response.statusCode == 200) {
+        DepartureResponse reponse = DepartureResponse.fromJson(
+            json.decode(response.body));
+        Publication pub = Publication(
+            id: idpub == 0 ? reponse.id : idpub,
+            userid: id,
+            villedepart: villeDepartMenu!.id,
+            villedestination: villeDestinationMenu!.id,
+            datevoyage: (dateDepartController.text + "T" +
+                heureDepartController.text),
+            datepublication: reponse.date,
+            reserve: int.parse(reserveController.text),
+            active: idpub == 0 ? 1 : publication.active,
+            reservereelle: int.parse(reserveController.text),
+            souscripteur: idpub == 0 ? 0 : publication.souscripteur,
+            milliseconds: milliseconds,
+            identifiant: idpub == 0 ? reponse.identifiant : publication
+                .identifiant,
+            devise: devises.id,
+            prix: int.parse(prixController.text),
+            read: 1
+        );
+        if (idpub > 0) {
+          // From THERE, REFRESH SOUSCRIPTION :
+          for(RefreshReserveBean rn in reponse.reserveBean){
+            if(rn.idpub > 0) {
+              Souscription souscription = await outil
+                  .getSouscriptionByIdpubAndIduser(rn.idpub, rn.iduser);
+              // Update it :
+              Souscription souscriptionUpdate = Souscription(
+                  id: souscription.id,
+                  idpub: rn.idpub,
+                  iduser: rn.iduser,
+                  millisecondes: souscription.millisecondes,
+                  reserve: rn.reserve,
+                  statut: souscription.statut
+              );
+              await outil.updateSouscription(souscriptionUpdate);
+            }
+          }
+          // Annonce modifiée :
+          await outil.updatePublicationWithoutFurtherActions(pub);
+          displayToast("Annonce modifiée !");
+        }
+        else {
+          // Save :
+          outil.addPublication(pub);
+          displayToast("Annonce créée !");
+        }
+        // Set FLAG :
+        closeAlertDialog = false;
+      }
+      else {
+        retour = 1;
+        Fluttertoast.showToast(
+            msg: "Impossible de traiter la commande !",
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+            timeInSecForIosWeb: 3,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 16.0
+        );
+      }
     }
-    else {
-      retour = 1;
-      Fluttertoast.showToast(
-          msg: "Impossible de traiter la commande !",
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.CENTER,
-          timeInSecForIosWeb: 3,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0
-      );
+    catch (e){
+      displayToast("Traitement impossible !");
     }
+
+    //
+    flagSendData = false;
   }
 
   @override
@@ -372,7 +561,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: Text(idpub == 0 ? 'Nouvelle annonce' : 'Modification annonce',
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.black,
                               fontWeight: FontWeight.bold,
                               fontSize: 20,
@@ -415,7 +604,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
                             DropdownMenu<Ville>(
                                 width: 180,
                                 menuHeight: 250,
-                                initialSelection: listeVilleDepart.first,
+                                initialSelection: villeDepartMenu,
                                 controller: menuDepartController,
                                 hintText: "Ville de départ",
                                 requestFocusOnTap: false,
@@ -436,7 +625,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
                             DropdownMenu<Ville>(
                                 width: 180,
                                 menuHeight: 250,
-                                initialSelection: listeVilleDestination.first,
+                                initialSelection: villeDestinationMenu,
                                 controller: menuDestinationController,
                                 hintText: "Ville de destination",
                                 requestFocusOnTap: false,
@@ -457,34 +646,42 @@ class _ManageDepartureState extends State<ManageDeparture> {
                           ],
                         )
                     ),
-                    Align(
+                    Container(
+                      margin: const EdgeInsets.only(left: 10, right: 10, top: 10, bottom: 10),
                       alignment: Alignment.centerLeft,
-                      child: TextButton(
-                          onPressed: () {
+                      child: ElevatedButton.icon(
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateColor.resolveWith((states) => Colors.blue)
+                        ),
+                        label: const Text("Date de départ",
+                            style: TextStyle(
+                                color: Colors.white
+                            )
+                        ),
+                        onPressed: () {
+                          // get current datetime :
+                          final now = DateTime.now();
 
-                            // get current datetime :
-                            final now = DateTime.now();
-
-                            picker.DatePicker.showDateTimePicker(context,
-                                showTitleActions: true,
-                                minTime: DateTime(now.year, now.month, now.day, now.hour, now.minute),
-                                maxTime: DateTime(2026, 6, 7, 05, 09),
-                                onChanged: (date) {
-                                  /*//dateLecture = date.timeZoneOffset.inHours.toString();
+                          picker.DatePicker.showDateTimePicker(context,
+                              showTitleActions: true,
+                              minTime: DateTime(now.year, now.month, now.day, now.hour, now.minute),
+                              maxTime: DateTime(2026, 6, 7, 05, 09),
+                              onChanged: (date) {
+                                /*//dateLecture = date.timeZoneOffset.inHours.toString();
                                 print('change $date in time zone ' +
                                     date.timeZoneOffset.inHours.toString());*/
-                                },
-                                onConfirm: (date) {
-                                  milliseconds = date.millisecondsSinceEpoch;
-                                  _departureController.addData(date);
-                                },
-                                locale: picker.LocaleType.fr);
-                          },
-                          child: const Text(
-                            'Date de départ',
-                            style: TextStyle(
-                                color: Colors.blue),
-                          )
+                              },
+                              onConfirm: (date) {
+                                milliseconds = date.millisecondsSinceEpoch;
+                                _departureController.addData(date);
+                              },
+                              locale: picker.LocaleType.fr);
+                        },
+                        icon: const Icon(
+                          Icons.access_time_outlined,
+                          size: 20,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                     GetBuilder<DepartureGetController>(
@@ -582,7 +779,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
                             child: DropdownMenu<Devises>(
                                 width: 170,
                                 menuHeight: 250,
-                                initialSelection: lesDevises.first,
+                                initialSelection: devises,
                                 //controller: menuDepartController,
                                 hintText: "Devises",
                                 requestFocusOnTap: false,
@@ -665,64 +862,13 @@ class _ManageDepartureState extends State<ManageDeparture> {
                                     color: Colors.white
                                 )
                             ),
-                            onPressed: () {
-                              if(checkField()){
-                                Fluttertoast.showToast(
-                                    msg: "Veuillez renseigner tous les champs !",
-                                    toastLength: Toast.LENGTH_LONG,
-                                    gravity: ToastGravity.CENTER,
-                                    timeInSecForIosWeb: 3,
-                                    backgroundColor: Colors.red,
-                                    textColor: Colors.white,
-                                    fontSize: 16.0
-                                );
-                              }
-                              else{
-                                showDialog(
-                                    barrierDismissible: false,
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      dialogContext = context;
-                                      return const AlertDialog(
-                                        title: Text('Information'),
-                                        content: Text("Veuillez patienter ..."),
-                                      );
-                                    }
-                                );
-
-                                // Get Country ABREVIATION :
-                                var abrevPays = listeCountry.where((element) => element == paysDepartMenu!)
-                                    .first.iso2;
-
-                                // Send DATA :
-                                flagSendData = true;
-                                // Currently not running FCM for iphone
-                                sendOrderRequest(abrevPays);
-
-                                // Run TIMER :
-                                Timer.periodic(
-                                  const Duration(seconds: 1),
-                                      (timer) {
-                                    // Update user about remaining time
-                                    if(!flagSendData){
-                                      Navigator.pop(dialogContext);
-                                      timer.cancel();
-
-                                      // Kill ACTIVITY :
-                                      if(Navigator.canPop(context)){
-                                        Navigator.pop(context);
-                                        //Navigator.of(context).pop({'selection': '1'});
-                                      }
-                                      /*else{
-                                          SystemNavigator.pop();
-                                        }*/
-                                    }
-                                    else if(retour > 0){
-                                      Navigator.pop(dialogContext);
-                                      retour = 0;
-                                    }
-                                  },
-                                );
+                            onPressed: () async {
+                              //if(!checkField() && verifyReserve() && verifyPrix()){
+                              if(!checkField(context)){
+                                var checkAmountValidation = await checkSuscription();
+                                if(checkAmountValidation){
+                                  processDataForSending();
+                                }
                               }
                             },
                             icon: const Icon(

@@ -8,8 +8,12 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:tro/ecranfiliation.dart';
+import 'package:tro/main.dart';
 import 'package:tro/models/ville.dart';
+import 'package:tro/repositories/cible_repsository.dart';
 import 'package:tro/repositories/pays_repository.dart';
+import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
 import 'authentification.dart';
 import 'constants.dart';
@@ -22,11 +26,13 @@ import 'getxcontroller/getusercontroller.dart';
 import 'httpbeans/countrydata.dart';
 import 'managenotifications.dart';
 import 'models/pays.dart';
+import 'models/user.dart';
 
 
 
 class EcranCompte extends StatefulWidget {
-  const EcranCompte({Key? key}) : super(key: key);
+  final Client client;
+  EcranCompte({Key? key, required this.client}) : super(key: key);
 
   @override
   State<EcranCompte> createState() => _NewEcranState();
@@ -34,8 +40,6 @@ class EcranCompte extends StatefulWidget {
 
 class _NewEcranState extends State<EcranCompte> {
   // A t t r i b u t e s  :
-  //late Future<List<Produit>> futureProduit;
-  //late Future<List<Beanarticledetail>> futureBeanarticle;
   late bool _isLoading;
   int callNumber = 0;
   int currentPageIndex = 0;
@@ -49,9 +53,12 @@ class _NewEcranState extends State<EcranCompte> {
   bool accountDeletion = false;
   final _paysRepository = PaysRepository();
   final _villeRepository = VilleRepository();
+  final _userRepository = UserRepository();
+  final _cibleRepository = CibleRepository();
   int cptInit = 0;
   late List<Pays> listePays;
   late List<Ville> listeVille;
+  User? usr;
 
 
 
@@ -65,8 +72,17 @@ class _NewEcranState extends State<EcranCompte> {
 
   //
   void loadingPays() async {
+    //
+    usr = await _userRepository.getConnectedUser();
     listePays = await _paysRepository.findAll();
     listeVille = await _villeRepository.findAll();
+  }
+
+  void callFiliationInterface() {
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) {
+          return GestionFiliation(client: widget.client, userId: usr!.id);
+        }));
   }
 
   // Display Notification when ACCOUNT Created and NOTIFICATION PERMISSION not given yet :
@@ -150,44 +166,26 @@ class _NewEcranState extends State<EcranCompte> {
     );
   }
 
+  void displayCreationAccount() {
+    if(listePays.isNotEmpty){
+      Navigator.push(
+          context,
+          MaterialPageRoute(builder:
+              (context) =>
+              EcranCreationCompte(listeCountry: listePays, listeVille: listeVille, client: widget.client, gUser: usr)
+          )
+      );
+    }
+  }
+
 
   // Delete ACHAT
   void deleteAccount() async {
-    final url = Uri.parse(
-        '${dotenv.env['URL']}backendcommerce/deleteaccountfromphone');
-    // client.
-    var response = await post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "id": _userController.userData.isNotEmpty ? _userController.userData[0].id : 0,
-          "lib": 'deletion',
-        }));
-
-    // Checks :
-    if (response.statusCode == 200) {
-      //List<dynamic> body = jsonDecode(response.body);
-      /*RequestBean rn = RequestBean.fromJson(jsonDecode(const Utf8Decoder().convert(response.bodyBytes)));
-      if (rn != null) {
-        if (rn.id == 1) {
-          // Clear the USER's ACCOUNT :
-          await _userController.deleteUser(_userController.userData[0].idcli);
-        }
-        else {
-          Fluttertoast.showToast(
-              msg: "Suppression du compte imposible !",
-              toastLength: Toast.LENGTH_SHORT,
-              gravity: ToastGravity.CENTER,
-              timeInSecForIosWeb: 1,
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
-              fontSize: 16.0
-          );
-        }
-      }
-
-      // Set FLAG :
-      accountDeletion = false;*/
-    }
+    // Delete account from USER :
+    await _cibleRepository.deleteAllCibles();
+    await outil.deleteAllUsers();
+    await outil.deleteAllPublications();
+    accountDeletion = false;
   }
 
   @override
@@ -234,19 +232,9 @@ class _NewEcranState extends State<EcranCompte> {
                       child: Align(
                         alignment: Alignment.topRight,
                         child: ElevatedButton(
-                            onPressed: () {
-                              //
-
-                              if(listePays.isNotEmpty){
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder:
-                                        (context) =>
-                                        EcranCreationCompte(listeCountry: listePays, listeVille: listeVille,)
-                                    )
-                                );
-
-                              }
+                            onPressed: () async {
+                              usr = await _userRepository.getConnectedUser();
+                              displayCreationAccount();
                             },
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue[400]
@@ -302,10 +290,10 @@ class _NewEcranState extends State<EcranCompte> {
                                 // Display DIALOG
                                 Navigator.push(context,
                                     MaterialPageRoute(builder: (context) {
-                                      return GestionCible();
+                                      return GestionCible(client: widget.client,);
                                     }));
                               },
-                              child: const Text('Gestion des cibles',
+                              child: const Text('Cibles',
                                 style: TextStyle(
                                     fontSize: 18
                                 ),
@@ -337,10 +325,10 @@ class _NewEcranState extends State<EcranCompte> {
                                 // Display DIALOG
                                 Navigator.push(context,
                                     MaterialPageRoute(builder: (context) {
-                                      return const ManageNotification();
+                                      return ManageNotification(client: widget.client);
                                     }));
                               },
-                              child: const Text('Gestion des périodes de notification',
+                              child: const Text('Périodes de notification',
                                 style: TextStyle(
                                     fontSize: 18
                                 ),
@@ -349,6 +337,40 @@ class _NewEcranState extends State<EcranCompte> {
                           ],
                         ),
                       ),
+                      Container(
+                          margin: const EdgeInsets.only(top: 10, left: 15, right: 15),
+                          child: const Divider(
+                            height: 2,
+                            color: Colors.black,
+                          )
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(top: 10, left: 7),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.arrow_right_sharp,
+                              color: Colors.black,
+                              size: 30,
+                            ),
+                            GestureDetector(
+                              onTap: () async{
+                                // Display DIALOG
+                                usr ??= await _userRepository.getConnectedUser();
+                                callFiliationInterface();
+                              },
+                              child: const Text('Filiations',
+                                style: TextStyle(
+                                    fontSize: 18
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+
+
                     ],
                   );
                 }
@@ -366,7 +388,7 @@ class _NewEcranState extends State<EcranCompte> {
                         Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) {
-                              return const AuthentificationEcran();
+                              return AuthentificationEcran(client: widget.client);
                             }
                             )
                         );
@@ -394,51 +416,62 @@ class _NewEcranState extends State<EcranCompte> {
                               context: context,
                               builder: (BuildContext context) {
                                 dialogContext = context;
-                                return AlertDialog(
-                                    title: const Text('Information'),
-                                    content: const Text(
-                                        "Confirmer la suppression de votre compte ?"),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(context, 'Cancel'),
-                                        child: const Text('NON'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          // Send DATA :
-                                          accountDeletion = true;
-                                          deleteAccount();
+                                return WillPopScope(
+                                    onWillPop: () async => false,
+                                    child: AlertDialog(
+                                        title: const Text('Information'),
+                                        content: const SizedBox(
+                                          height: 80,
+                                          child: Column(
+                                            children: [
+                                              Text("Confirmer la suppression de votre compte ?"),
+                                              SizedBox(
+                                                height: 20,
+                                              )
+                                            ],
+                                          )
+                                        ),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, 'Cancel'),
+                                            child: const Text('NON'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              accountDeletion = true;
 
-                                          // Run TIMER :
-                                          Timer.periodic(
-                                            const Duration(seconds: 1),
-                                                (timer) {
-                                              // Update user about remaining time
-                                              if (!accountDeletion) {
-                                                Navigator.pop(dialogContext);
-                                                timer.cancel();
+                                              deleteAccount();
 
-                                                // if PANIER is empty, then CLOSE the INTERFACE :
-                                                if (_userController.userData
-                                                    .isEmpty) {
-                                                  // Kill ACTIVITY :
-                                                  if (Navigator.canPop(
-                                                      context)) {
-                                                    Navigator.pop(context);
+                                              // Run TIMER :
+                                              Timer.periodic(
+                                                const Duration(milliseconds: 500),
+                                                    (timer) {
+                                                  // Update user about remaining time
+                                                  if (!accountDeletion) {
+                                                    timer.cancel();
+                                                    Navigator.pop(dialogContext);
+
+                                                    //
+                                                    if (_userController.userData
+                                                        .isEmpty) {
+                                                      // Kill ACTIVITY :
+                                                      if (Navigator.canPop(
+                                                          context)) {
+                                                        Navigator.pop(context);
+                                                      }
+                                                    }
+                                                    else {
+                                                      setState(() {});
+                                                    }
                                                   }
-                                                }
-                                                else {
-                                                  setState(() {});
-                                                }
-                                              }
+                                                },
+                                              );
                                             },
-                                          );
-                                        },
-                                        child: const Text('OUI'),
-                                      ),
-                                    ]
-                                );
+                                            child: const Text('OUI'),
+                                          ),
+                                        ]
+                                    ) );
                               }
                           );
                         }
