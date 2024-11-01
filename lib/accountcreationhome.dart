@@ -1,9 +1,8 @@
-import 'dart:html';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:tro/pageaccueil.dart';
+import 'package:restart_app/restart_app.dart';
 import 'package:tro/repositories/pays_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
@@ -36,6 +35,7 @@ class NewAccountCreationHome extends StatelessWidget {
   late List<Pays> listePays;
   late List<Ville> listeVille;
   late BuildContext contextG;
+  late BuildContext dialogContext;
   User? usr;
 
   //
@@ -62,21 +62,50 @@ class NewAccountCreationHome extends StatelessWidget {
         provisional: false,
         sound: true,
       );
+
+      /*if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      } else {
+      }*/
+
+      //
+      displayDisplay();
     }
   }
 
-  void openHomeScreen() {
-    Navigator.push(
-        contextG,
-        MaterialPageRoute(builder:
-            (context) =>
-            WelcomePage(client: client)
-        )
+  void displayDisplay() {
+    showDialog(
+        barrierDismissible: false,
+        context: contextG,
+        builder: (BuildContext context) {
+          dialogContext = context;
+          return WillPopScope(
+              onWillPop: () async => false,
+              child: AlertDialog(
+                  title: const Text('Information'),
+                  content: const SizedBox(
+                      height: 50,
+                      child: Column(
+                        children: [
+                          Text("L'application va redémarrer ou relancer la !"),
+                          SizedBox(
+                            height: 20,
+                          )
+                        ],
+                      )
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        /*Navigator.pop(context);
+                        Navigator.pop(context);*/
+                        Restart.restartApp();
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ]
+              ) );
+        }
     );
-  }
-
-  void closeWindow() {
-    Navigator.pop(contextG);
   }
 
   @override
@@ -85,110 +114,104 @@ class NewAccountCreationHome extends StatelessWidget {
     // Track this :
     contextG = context;
 
-    return FutureBuilder(
-        future: Future.wait([ loadingPays() ]),
-        builder: (BuildContext contextB, AsyncSnapshot<dynamic> snapshot){
-          if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-            List<Ville> data = snapshot.data[0];
-            return Container(
-                width: MediaQuery.of(context).size.width,
-                color: Colors.white,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(
-                        Icons.account_circle_rounded,
-                        size: 70
-                    ),
-                    ElevatedButton(
-                        onPressed: () async {
-                          if(listePays.isNotEmpty){
+    return Scaffold(
+      backgroundColor: Colors.white,
+      /*appBar: AppBar(
+        backgroundColor: Colors.white,
+      ),*/
+      body: FutureBuilder(
+          future: Future.wait([ loadingPays() ]),
+          builder: (BuildContext contextB, AsyncSnapshot<dynamic> snapshot){
+            if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+              List<Ville> data = snapshot.data[0];
+              return Container(
+                  width: MediaQuery.of(context).size.width,
+                  color: Colors.white,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Icon(
+                          Icons.account_circle_rounded,
+                          size: 70
+                      ),
+                      ElevatedButton(
+                          onPressed: () async {
+                            if(listePays.isNotEmpty){
+                              final result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder:
+                                      (context) =>
+                                      EcranCreationCompte(listeCountry: listePays, listeVille: listeVille, client: client, gUser: usr,
+                                          returnValue: false)
+                                  )
+                              );
+
+                              if(result != null) {
+                                // Request for Permission :
+                                requestForNotificationPermission();
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue[400]
+                          ),
+                          child: const Text ('Créer un compte',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              )
+                          )
+                      ),
+                      Container(
+                          width: 160,
+                          child: const Divider(
+                            height: 3,
+                            color: Colors.black,
+                            thickness: 1.0,
+                          )
+                      ),
+                      ElevatedButton(
+                          onPressed: () async {
                             final result = await Navigator.push(
                                 context,
-                                MaterialPageRoute(builder:
-                                    (context) =>
-                                        EcranCreationCompte(listeCountry: listePays, listeVille: listeVille, client: client, gUser: usr,
-                                            returnValue: false)
+                                MaterialPageRoute(
+                                    builder: (context) {
+                                      return AuthentificationEcran(client: client, returnValue: true
+                                      );
+                                    }
                                 )
                             );
 
                             if(result != null) {
                               // Request for Permission :
                               requestForNotificationPermission();
-
-                              // Display new INTERFACE :
-                              openHomeScreen();
-
-                              // Close current INTERFACE :
-                              closeWindow();
                             }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue[400]
-                        ),
-                        child: Text ('Créer un compte',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            )
-                        )
-                    ),
-                    Container(
-                        width: 160,
-                        child: Divider(
-                          height: 3,
-                          color: Colors.black,
-                          thickness: 1.0,
-                        )
-                    ),
-                    ElevatedButton(
-                        onPressed: () async {
-                          final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) {
-                                    return AuthentificationEcran(client: client, returnValue: true
-                                      );
-                                  }
+                          },
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green[400]
+                          ),
+                          child: const Text ('Identifiez-vous',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
                               )
-                          );
-
-                          if(result != null) {
-                            // Request for Permission :
-                            requestForNotificationPermission();
-
-                            // Display new INTERFACE :
-                            openHomeScreen();
-
-                            // Close current INTERFACE :
-                            closeWindow();
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green[400]
-                        ),
-                        child: Text ('Identifiez-vous',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            )
-                        )
-                    )
-                  ],
-                )
-            );
+                          )
+                      )
+                    ],
+                  )
+              );
+            }
+            else {
+              return const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                    strokeWidth: 3.0, // Width of the circular line
+                  )
+              );
+            }
           }
-          else {
-            return const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                  strokeWidth: 3.0, // Width of the circular line
-                )
-            );
-          }
-        }
+      )
     );
   }
 
