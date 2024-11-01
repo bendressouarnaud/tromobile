@@ -35,11 +35,12 @@ import 'models/user.dart';
 
 
 class EcranCreationCompte extends StatefulWidget {
-  const EcranCreationCompte({Key? key, required this.listeCountry, required this.listeVille, required this.client, required this.gUser}) : super(key: key);
+  const EcranCreationCompte({Key? key, required this.listeCountry, required this.listeVille, required this.client, required this.gUser, required this.returnValue}) : super(key: key);
   final List<Pays> listeCountry;
   final List<Ville> listeVille;
   final Client client;
   final User? gUser;
+  final bool returnValue;
   //final https.Client client;
 
   @override
@@ -625,7 +626,12 @@ class _NewCreationState extends State<EcranCreationCompte> {
                                     // Kill ACTIVITY :
                                     if(!flagServerResponse) {
                                       if (Navigator.canPop(context)) {
-                                        Navigator.pop(context);
+                                        if(widget.returnValue){
+                                          Navigator.pop(context, 1);
+                                        }
+                                        else {
+                                          Navigator.pop(context);
+                                        }
                                         //Navigator.of(context).pop({'selection': '1'});
                                       }
                                     }

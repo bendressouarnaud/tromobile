@@ -34,7 +34,8 @@ import 'package:flutter/foundation.dart'
 
 class AuthentificationEcran extends StatefulWidget {
   final Client client;
-  const AuthentificationEcran({Key? key, required this.client}) : super(key: key);
+  final bool returnValue;
+  const AuthentificationEcran({Key? key, required this.client, required this.returnValue}) : super(key: key);
   //final https.Client client;
 
   @override
@@ -381,7 +382,12 @@ class _NewAuth extends State<AuthentificationEcran> {
                                     else if (_userController.userData.isNotEmpty) {
                                       // Kill ACTIVITY :
                                       if (Navigator.canPop(context)) {
-                                        Navigator.pop(context);
+                                        if(widget.returnValue){
+                                          Navigator.pop(context, 1);
+                                        }
+                                        else {
+                                          Navigator.pop(context);
+                                        }
                                       }
                                     }
                                   }

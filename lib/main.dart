@@ -21,6 +21,7 @@ import 'package:tro/repositories/filiation_repository.dart';
 import 'package:tro/services/servicegeo.dart';
 import 'package:tro/singletons/outil.dart';
 
+import 'accountcreationhome.dart';
 import 'constants.dart';
 import 'firebase_options.dart';
 import 'getxcontroller/getchatcontroller.dart';
@@ -522,7 +523,12 @@ Future<void> main() async {
 
   client = await getSSLPinningClient();
 
-  runApp(MyApp(client: client));
+  User? localUser = await outil.pickLocalUser();
+  if(localUser == null) {
+    runApp(AccountCreationHome());
+  } else {
+    runApp(MyApp(client: client));
+  }
 }
 
 class MyApp extends StatelessWidget {
