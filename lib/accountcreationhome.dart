@@ -83,10 +83,10 @@ class NewAccountCreationHome extends StatelessWidget {
               child: AlertDialog(
                   title: const Text('Information'),
                   content: const SizedBox(
-                      height: 50,
+                      height: 70,
                       child: Column(
                         children: [
-                          Text("L'application va redémarrer ou relancer la !"),
+                          Text("L'application va redémarrer ou relancez la sinon !"),
                           SizedBox(
                             height: 20,
                           )
@@ -114,105 +114,114 @@ class NewAccountCreationHome extends StatelessWidget {
     // Track this :
     contextG = context;
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      /*appBar: AppBar(
+    return MaterialApp(
+        theme: ThemeData(
+          // This is the theme of your application.
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+        ),
+        home: Scaffold(
+            backgroundColor: Colors.white,
+            appBar: AppBar(
         backgroundColor: Colors.white,
-      ),*/
-      body: FutureBuilder(
-          future: Future.wait([ loadingPays() ]),
-          builder: (BuildContext contextB, AsyncSnapshot<dynamic> snapshot){
-            if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-              List<Ville> data = snapshot.data[0];
-              return Container(
-                  width: MediaQuery.of(context).size.width,
-                  color: Colors.white,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Icon(
-                          Icons.account_circle_rounded,
-                          size: 70
-                      ),
-                      ElevatedButton(
-                          onPressed: () async {
-                            if(listePays.isNotEmpty){
-                              final result = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder:
-                                      (context) =>
-                                      EcranCreationCompte(listeCountry: listePays, listeVille: listeVille, client: client, gUser: usr,
-                                          returnValue: false)
-                                  )
-                              );
+      ),
+            body: FutureBuilder(
+                future: Future.wait([ loadingPays() ]),
+                builder: (BuildContext contextB, AsyncSnapshot<dynamic> snapshot){
+                  if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                    List<Ville> data = snapshot.data[0];
+                    return Container(
+                        width: MediaQuery.of(context).size.width,
+                        color: Colors.white,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Icon(
+                                Icons.account_circle_rounded,
+                                size: 70
+                            ),
+                            ElevatedButton(
+                                onPressed: () async {
+                                  if(listePays.isNotEmpty){
+                                    final result = await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder:
+                                            (context) =>
+                                            EcranCreationCompte(listeCountry: listePays, listeVille: listeVille, client: client, gUser: usr,
+                                                returnValue: false)
+                                        )
+                                    );
 
-                              if(result != null) {
-                                // Request for Permission :
-                                requestForNotificationPermission();
-                              }
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue[400]
-                          ),
-                          child: const Text ('Créer un compte',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              )
-                          )
-                      ),
-                      Container(
-                          width: 160,
-                          child: const Divider(
-                            height: 3,
-                            color: Colors.black,
-                            thickness: 1.0,
-                          )
-                      ),
-                      ElevatedButton(
-                          onPressed: () async {
-                            final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) {
-                                      return AuthentificationEcran(client: client, returnValue: true
-                                      );
+                                    if(result != null) {
+                                      // Request for Permission :
+                                      requestForNotificationPermission();
                                     }
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue[400]
+                                ),
+                                child: const Text ('Créer un compte',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    )
                                 )
-                            );
+                            ),
+                            Container(
+                                width: 160,
+                                child: const Divider(
+                                  height: 3,
+                                  color: Colors.black,
+                                  thickness: 1.0,
+                                )
+                            ),
+                            ElevatedButton(
+                                onPressed: () async {
+                                  final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) {
+                                            return AuthentificationEcran(client: client, returnValue: true
+                                            );
+                                          }
+                                      )
+                                  );
 
-                            if(result != null) {
-                              // Request for Permission :
-                              requestForNotificationPermission();
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green[400]
-                          ),
-                          child: const Text ('Identifiez-vous',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              )
-                          )
-                      )
-                    ],
-                  )
-              );
-            }
-            else {
-              return const Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                    strokeWidth: 3.0, // Width of the circular line
-                  )
-              );
-            }
-          }
-      )
+                                  if(result != null) {
+                                    // Request for Permission :
+                                    requestForNotificationPermission();
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green[400]
+                                ),
+                                child: const Text ('Identifiez-vous',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    )
+                                )
+                            )
+                          ],
+                        )
+                    );
+                  }
+                  else {
+                    return const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                          strokeWidth: 3.0, // Width of the circular line
+                        )
+                    );
+                  }
+                }
+            )
+        )
     );
+
+    /*return ;*/
   }
 
 }

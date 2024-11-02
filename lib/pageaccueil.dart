@@ -60,6 +60,7 @@ class WelcomePage extends StatefulWidget {
 class _WelcomePageState extends State<WelcomePage> {
   // A t t r i b u t e s  :
   int currentPageIndex = 0;
+  bool displayFloatBut = true;
   late BuildContext dialogContext;
   late BuildContext dialogTownContext;
   bool _isLoading = false;
@@ -595,6 +596,7 @@ class _WelcomePageState extends State<WelcomePage> {
               )),
           onDestinationSelected: (int index) {
             setState(() {
+              displayFloatBut = index == 0 ? true : false;
               currentPageIndex = index;
             });
           },
@@ -649,33 +651,35 @@ class _WelcomePageState extends State<WelcomePage> {
                 icon: const Icon(Icons.search, color: Colors.black))
           ],*/
         ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: const Color.fromRGBO(51, 159, 255, 1.0),
-          tooltip: 'Nouvelle commande',
-          onPressed: () async{
-            User? usr = await outil.pickLocalUser();
-            if(usr != null){
-              // Init if needed
-              cUser ??= usr;
-              //
-              callForCountry(listePays);
-            }
-            else{
-              Fluttertoast.showToast(
-                  msg: "Veuillez créer votre compte !",
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.CENTER,
-                  timeInSecForIosWeb: 1,
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
-                  fontSize: 16.0
-              );
-            }
-          },
-          child: const Icon(Icons.add, color: Colors.white, size: 28),
+        floatingActionButton: Visibility(
+          visible: displayFloatBut,
+          child: FloatingActionButton(
+            backgroundColor: const Color.fromRGBO(51, 159, 255, 1.0),
+            tooltip: 'Nouvelle commande',
+            onPressed: () async{
+              User? usr = await outil.pickLocalUser();
+              if(usr != null){
+                // Init if needed
+                cUser ??= usr;
+                //
+                callForCountry(listePays);
+              }
+              else{
+                Fluttertoast.showToast(
+                    msg: "Veuillez créer votre compte !",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.CENTER,
+                    timeInSecForIosWeb: 1,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    fontSize: 16.0
+                );
+              }
+            },
+            child: const Icon(Icons.add, color: Colors.white, size: 28),
+          ),
         ),
         body: <Widget>[
-
           FutureBuilder(
             future: Future.wait([initObjects()]),
             builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot){

@@ -364,7 +364,9 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
         margin: const EdgeInsets.only(top: 40, left: 10, right: 10),
         child: Column(
           children: [
-            ElevatedButton.icon(
+            Visibility(
+              visible: !historique,
+              child: ElevatedButton.icon(
               style: ButtonStyle(
                   backgroundColor: MaterialStateColor.resolveWith((states) => const Color(
                       0xFFCB7228))
@@ -382,6 +384,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                 size: 20,
                 color: Colors.white,
               ),
+            )
             ),
             const SizedBox(
               height: 20,
