@@ -122,11 +122,15 @@ class _ChatManagementState extends State<ChatManagement> {
     return tampon;
   }
 
+  String processTimeDigit (int value) {
+    return value < 10 ? '0$value' : value.toString();
+  }
+
   String processDate(int millisecondes){
     var temps = DateTime.fromMillisecondsSinceEpoch(millisecondes);
     var now = DateTime.now();
     if((temps.year == now.year) && (temps.month  == now.month) && (temps.day  == now.day)){
-      return '${temps.hour.toString()}:${temps.minute.toString()}';
+      return '${processTimeDigit(temps.hour)}:${processTimeDigit(temps.minute)}';
     }
     String tpDay = temps.day < 10 ? '0${temps.day}' : temps.day.toString();
     String tpMois = temps.month < 10 ? '0${temps.month}' : temps.month.toString();
@@ -197,7 +201,7 @@ class _ChatManagementState extends State<ChatManagement> {
                                             color: markChatAsNotRead(liste[index]),
                                             borderRadius: BorderRadius.circular(8.0)
                                         ),
-                                        margin: const EdgeInsets.only(left: 7,right: 7, bottom: 15),
+                                        margin: const EdgeInsets.only(left: 7,right: 7, bottom: 5, top: 10),
                                         width: MediaQuery.of(context).size.width,
                                         height: 80,
                                         child: Row(
