@@ -367,24 +367,24 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
             Visibility(
               visible: !historique,
               child: ElevatedButton.icon(
-              style: ButtonStyle(
-                  backgroundColor: MaterialStateColor.resolveWith((states) => const Color(
-                      0xFFCB7228))
-              ),
-              label: const Text("Annuler",
-                  style: TextStyle(
-                      color: Colors.white
-                  )),
-              onPressed: () {
-                // Delete the 'PUBLICATION' :
-                dialogForPublicationDeletion(context);
-              },
-              icon: const Icon(
-                Icons.cancel,
-                size: 20,
-                color: Colors.white,
-              ),
-            )
+                style: ButtonStyle(
+                    backgroundColor: MaterialStateColor.resolveWith((states) => const Color(
+                        0xFFCB7228))
+                ),
+                label: const Text("Annuler",
+                    style: TextStyle(
+                        color: Colors.white
+                    )),
+                onPressed: () {
+                  // Delete the 'PUBLICATION' :
+                  dialogForPublicationDeletion(context);
+                },
+                icon: const Icon(
+                  Icons.cancel,
+                  size: 20,
+                  color: Colors.white,
+                ),
+              )
             ),
             const SizedBox(
               height: 20,
@@ -1062,56 +1062,59 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                 builder: (SouscriptionGetController controller) {
                                   return Column(
                                     children: [
-                                      Container(
-                                        alignment: Alignment.topLeft,
-                                        margin: const EdgeInsets.only(left: 10, top: 30, right: 10),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            ElevatedButton.icon(
-                                              style: ButtonStyle(
-                                                  backgroundColor: MaterialStateColor.resolveWith((states) => const Color(
-                                                      0xFFCB7228))
+                                      Visibility(
+                                        visible: !historique,
+                                        child: Container(
+                                          alignment: Alignment.topLeft,
+                                          margin: const EdgeInsets.only(left: 10, top: 30, right: 10),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              ElevatedButton.icon(
+                                                style: ButtonStyle(
+                                                    backgroundColor: MaterialStateColor.resolveWith((states) => const Color(
+                                                        0xFFCB7228))
+                                                ),
+                                                label: const Text("Annuler",
+                                                    style: TextStyle(
+                                                        color: Colors.white
+                                                    )),
+                                                onPressed: () {
+                                                  // Delete the 'PUBLICATION' :
+                                                  dialogForPublicationDeletion(context);
+                                                },
+                                                icon: const Icon(
+                                                  Icons.cancel,
+                                                  size: 20,
+                                                  color: Colors.white,
+                                                ),
                                               ),
-                                              label: const Text("Annuler",
-                                                  style: TextStyle(
-                                                      color: Colors.white
-                                                  )),
-                                              onPressed: () {
-                                                // Delete the 'PUBLICATION' :
-                                                dialogForPublicationDeletion(context);
-                                              },
-                                              icon: const Icon(
-                                                Icons.cancel,
-                                                size: 20,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                            ElevatedButton.icon(
-                                              style: ButtonStyle(
-                                                  backgroundColor: MaterialStateColor.resolveWith((states) => const Color(
-                                                      0xFF049829))
-                                              ),
-                                              label: const Text("Modifier",
-                                                  style: TextStyle(
-                                                      color: Colors.white
-                                                  )),
-                                              onPressed: () async{
-                                                cUser ??= await outil.pickLocalUser();
-                                                // Get Paydepart from Ville depart :
-                                                paysDepart ??= await _paysRepository.findPaysById(villeDepart.paysid);
-                                                paysDestination ??= await _paysRepository.findPaysById(ville.paysid);
-                                                // Call :
-                                                openTravelForUpdate();
-                                              },
-                                              icon: const Icon(
-                                                Icons.update,
-                                                size: 20,
-                                                color: Colors.white,
-                                              ),
-                                            )
-                                          ],
-                                        ),
+                                              ElevatedButton.icon(
+                                                style: ButtonStyle(
+                                                    backgroundColor: MaterialStateColor.resolveWith((states) => const Color(
+                                                        0xFF049829))
+                                                ),
+                                                label: const Text("Modifier",
+                                                    style: TextStyle(
+                                                        color: Colors.white
+                                                    )),
+                                                onPressed: () async{
+                                                  cUser ??= await outil.pickLocalUser();
+                                                  // Get Paydepart from Ville depart :
+                                                  paysDepart ??= await _paysRepository.findPaysById(villeDepart.paysid);
+                                                  paysDestination ??= await _paysRepository.findPaysById(ville.paysid);
+                                                  // Call :
+                                                  openTravelForUpdate();
+                                                },
+                                                icon: const Icon(
+                                                  Icons.update,
+                                                  size: 20,
+                                                  color: Colors.white,
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                        )
                                       ),
                                       Container(
                                         alignment: Alignment.topLeft,
