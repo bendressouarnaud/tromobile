@@ -320,6 +320,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
     // Send DATA :
     flagSendData = true;
     closeAlertDialog = true;
+    retour = 0;
     // Currently not running FCM for iphone
     sendOrderRequest();
 
