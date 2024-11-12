@@ -136,7 +136,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       // Send back 'ACCUsé DE RéCEPTION'
       try {
         final url = Uri.parse('https://vps-b2e0c1f2.vps.ovh.net/trobackend/sendaccusereception');
-        //final url = Uri.parse('${dotenv.env['URL']}sendaccusereception');
+        // Force INITIALIZATION :
+        client = await getSSLPinningClient();
         await client.post(url,
             headers: {"Content-Type": "application/json"},
             body: jsonEncode({

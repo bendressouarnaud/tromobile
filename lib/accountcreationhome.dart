@@ -203,6 +203,14 @@ class NewAccountCreationHome extends StatelessWidget {
                                       fontWeight: FontWeight.bold,
                                     )
                                 )
+                            ),
+                            Container(
+                              margin: const EdgeInsets.only(top: 70),
+                              child: const Text('Powered by ANKK & Co',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold
+                              ),),
                             )
                           ],
                         )
