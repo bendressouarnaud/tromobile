@@ -6,15 +6,19 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:badges/badges.dart' as badges;
+import 'package:stream_chat/src/core/models/user.dart' as streamuser;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:get/get_connect/http/src/response/response.dart';
 import 'package:http/http.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:tro/getxcontroller/getchatcontroller.dart';
 import 'package:tro/models/pays.dart';
 import 'package:tro/models/publication.dart';
 import 'package:tro/models/ville.dart';
+import 'package:tro/models/user.dart' as databaseuser;
+
 import 'package:tro/repositories/parameters_repository.dart';
 import 'package:tro/repositories/pays_repository.dart';
 import 'package:tro/repositories/publication_repository.dart';
@@ -23,6 +27,7 @@ import 'package:tro/repositories/ville_repository.dart';
 import 'package:tro/screens/listannonce.dart';
 import 'package:tro/services/servicegeo.dart';
 import 'package:tro/skeleton.dart';
+import 'package:tro/streamchat.dart';
 
 import 'chatmanagement.dart';
 import 'constants.dart';
@@ -79,7 +84,7 @@ class _WelcomePageState extends State<WelcomePage> {
   List<Pays> listePays = [];
   List<Ville> listeVille = [];
   late List<Publication> listePublication;
-  User? cUser;
+  databaseuser.User? cUser;
   final PublicationGetController _publicationController = Get.put(PublicationGetController());
   final UserGetController _userController = Get.put(UserGetController());
   final ParametersGetController _parametersController = Get.put(ParametersGetController());
@@ -157,7 +162,7 @@ class _WelcomePageState extends State<WelcomePage> {
 
   // Check if user has logged in and check if NOTIFICATIONs PERMISSIONs has been given :
   void chechNotificationPermission() async{
-    User? usr = await outil.pickLocalUser();
+    databaseuser.User? usr = await outil.pickLocalUser();
     //FirebaseMessaging messaging = FirebaseMessaging.instance;
     //NotificationSettings settings = await messaging.getNotificationSettings();
     if(usr != null){
@@ -190,6 +195,17 @@ class _WelcomePageState extends State<WelcomePage> {
     _userController.dispose();
     //_publicationController.dispose();
     super.dispose();
+  }
+
+  void openStramChat(StreamChatClient clt, Channel cnl) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context){
+              return StreamChatApp(client: clt, channel: cnl);
+            }
+        )
+    );
   }
 
   // Init Objects :
@@ -254,7 +270,7 @@ class _WelcomePageState extends State<WelcomePage> {
           Publication pub = await outil.refreshPublication(int.parse(message.data['id']));
           Ville vDepart = await outil.getVilleById(int.parse(message.data['villedepart']));
           Ville vDest = await outil.getVilleById(int.parse(message.data['villedestination']));
-          User? lUser = await outil.pickLocalUser();
+          databaseuser.User? lUser = await outil.pickLocalUser();
           int userType = !(lUser!.id == int.parse(message.data['userid'])) ? 0 : 1;
           openHistoriqueAnnonce(pub, vDepart, vDest, userType, false);
         }
@@ -281,7 +297,7 @@ class _WelcomePageState extends State<WelcomePage> {
         }
         else{
           // Open 'CHAT'
-          User usr = (await outil.findAllUserByIdin([int.parse(message.data['sender'])])).single;
+          databaseuser.User usr = (await outil.findAllUserByIdin([int.parse(message.data['sender'])])).single;
           openMessage(int.parse(message.data['idpub']),
               ("${usr.nom} ${usr.prenom}"),
               usr.id
@@ -508,15 +524,24 @@ class _WelcomePageState extends State<WelcomePage> {
                   ),),
               ),
               TextButton(
-                onPressed: () {
+                onPressed: () async {
 
                   List<CountryData> data = convertPaysCountry([paysDepart, paysDestination]);
 
                   // Close dialog
                   Navigator.pop(sContext);
 
+                  final sClient = StreamChatClient('tbyj8qz6ucx7');
+                  await sClient.connectUser(streamuser.User(id: '1'),
+                      'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiam9obiIsImlhdCI6MTczMTUwNTIzNywiaXNzIjoiU3RyZWFtIENo'
+                          'YXQgSmF2YSBTREsiLCJzdWIiOiJTdHJlYW0gQ2hhdCBKYXZhIFNESyJ9.T1877-v-yHHC_7vJk2-THmxW_uGy4l1YvKSQcF0SrnU');
+                  final channel = sClient.channel('messaging', id: 'flutterdev');
+                  channel.watch();
+
+                  //
+                  openStramChat(sClient, channel);
                   // Launch ACTIVITY if needed :
-                  Navigator.push(
+                  /*Navigator.push(
                       sContext,
                       MaterialPageRoute(
                           builder: (context){
@@ -525,7 +550,7 @@ class _WelcomePageState extends State<WelcomePage> {
                               client: widget.client);
                           }
                       )
-                  );
+                  );*/
                 },
                 child: const Text('Valider',
                   style: TextStyle(
@@ -657,7 +682,7 @@ class _WelcomePageState extends State<WelcomePage> {
             backgroundColor: const Color.fromRGBO(51, 159, 255, 1.0),
             tooltip: 'Nouvelle commande',
             onPressed: () async{
-              User? usr = await outil.pickLocalUser();
+              databaseuser.User? usr = await outil.pickLocalUser();
               if(usr != null){
                 // Init if needed
                 cUser ??= usr;
