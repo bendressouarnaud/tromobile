@@ -14,6 +14,7 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:http/http.dart';
 import 'package:http/io_client.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:tro/models/souscription.dart';
 import 'package:tro/pageaccueil.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -22,6 +23,7 @@ import 'package:tro/services/servicegeo.dart';
 import 'package:tro/singletons/outil.dart';
 
 import 'accountcreationhome.dart';
+import 'confirmermail.dart';
 import 'constants.dart';
 import 'firebase_options.dart';
 import 'getxcontroller/getchatcontroller.dart';
@@ -30,7 +32,7 @@ import 'models/chat.dart';
 import 'models/filiation.dart';
 import 'models/parameters.dart';
 import 'models/publication.dart';
-import 'models/user.dart';
+import 'models/user.dart' as databaseuser;
 
 
 final PublicationGetController _publicationController = Get.put(PublicationGetController());
@@ -38,6 +40,7 @@ final ChatGetController _chatController = Get.put(ChatGetController());
 Outil outil = Outil();
 bool processOnGoing = false;
 late Client client;
+late StreamChatClient streamClient;
 
 
 
@@ -56,6 +59,12 @@ Future<Client> getSSLPinningClient() async {
   return ioClient;
 }
 
+// String
+String getFirstPrenomIfNeeded(String prenom){
+  List<String> tp = prenom.split(" ");
+  return tp[0];
+}
+
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -64,273 +73,344 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   //showFlutterNotification(message, 'Num. : ${message.data['identifiant']}', 'Réserve initiale : ${message.data['reserve']} Kg');
   // If you're going to use other Firebase services in the background, such as Firestore,
   // make sure you call `initializeApp` before using other Firebase services.
-  User? localUser = await outil.pickLocalUser();
-  int sujet = int.parse(message.data['sujet']);
-  switch(sujet){
-    case 1:
-      Publication? publication = Servicegeo().generatePublication(message);
-      if (publication != null) {
-        // Check if this ONE exists ALREADY or NOT :
-        Publication? pubCheck = await _publicationController.findOptionalPublicationById(publication.id);
-        if(pubCheck == null){
-          // Create
-          _publicationController.addData(publication);
-        }
-        else{
-          // Update :
-          await _publicationController.updateData(publication);
-        }
-      }
-      break;
 
-    case 2:
-      // Create User if not exist :
-      User? user = await outil.findUserById(int.parse(message.data['id']));
-      if(user == null){
-        // Persist DATA :
-        // Create new :
-        user = User(nationnalite: message.data['nationalite'],
-            id: int.parse(message.data['id']),
-            typepieceidentite: '',
-            numeropieceidentite: '',
-            nom: message.data['nom'],
-            prenom: message.data['prenom'],
-            email: '',
-            numero: '',
-            adresse: message.data['adresse'],
-            fcmtoken: '',
-            pwd: "123",
-            codeinvitation: "123",
-            villeresidence: 0);
-        // Save :
-        outil.addUser(user);
-      }
-      
-      // Now feed 'souscription table' :
-      Souscription souscription = Souscription(
+  databaseuser.User? localUser = await outil.pickLocalUser();
+  //
+  /*streamClient.connectUser(
+    User(
+      id: localUser!.id.toString(),
+      name: '${localUser.nom} ${getFirstPrenomIfNeeded(localUser.prenom)}'
+    ),
+    localUser.streamtoken,
+    connectWebSocket: false,
+  );*/
+  String tampon = message.data['type'];
+  if(tampon == "message.new"){
+    // From STREAM CHAT, Display 'MESSAGE' :
+    // https://getstream.io/chat/docs/sdk/flutter/guides/push-notifications/adding_push_notifications_v2/
+    // https://getstream.io/chat/docs/flutter-dart/push_introduction/
+    //outil.raiseFlagForNewChat();
+
+    // Virtual CHAT :
+    Chat newChat = Chat(
         id: 0,
-        idpub: int.parse(message.data['idpub']),
-        iduser: int.parse(message.data['id']),
-        millisecondes: DateTime.now().millisecondsSinceEpoch,
-        reserve: int.parse(message.data['reserve']),
-        statut: 0);
-      outil.addSouscription(souscription);
-      break;
+        idpub: 0,
+        milliseconds: 0,
+        sens: 0,
+        contenu: '',
+        statut: 0,
+        identifiant: '',
+        iduser: 0,
+        idlocaluser: 0,
+        read: 0
+    );
+    await outil.insertChatFromBackground(newChat);
+  }
+  else {
+    int sujet = int.parse(message.data['sujet']);
+    switch(sujet){
+      case 1:
+        Publication? publication = Servicegeo().generatePublication(message);
+        if (publication != null) {
+          // Check if this ONE exists ALREADY or NOT :
+          Publication? pubCheck = await _publicationController.findOptionalPublicationById(publication.id);
+          if(pubCheck == null){
+            // Create
+            _publicationController.addData(publication);
+          }
+          else{
+            // Update :
+            await _publicationController.updateData(publication);
+          }
+        }
+        break;
 
-    case 3:
+      case 2:
+      // Create User if not exist :
+        databaseuser.User? user = await outil.findUserById(int.parse(message.data['id']));
+        if(user == null){
+          // Persist DATA :
+          // Create new :
+          user = databaseuser.User(nationnalite: message.data['nationalite'],
+              id: int.parse(message.data['id']),
+              typepieceidentite: '',
+              numeropieceidentite: '',
+              nom: message.data['nom'],
+              prenom: message.data['prenom'],
+              email: '',
+              numero: '',
+              adresse: message.data['adresse'],
+              fcmtoken: '',
+              pwd: "123",
+              codeinvitation: "123",
+              villeresidence: 0, streamtoken: '');
+          // Save :
+          outil.addUser(user);
+        }
+
+        // Now feed 'souscription table' :
+        Souscription souscription = Souscription(
+            id: 0,
+            idpub: int.parse(message.data['idpub']),
+            iduser: int.parse(message.data['id']),
+            millisecondes: DateTime.now().millisecondsSinceEpoch,
+            reserve: int.parse(message.data['reserve']),
+            statut: 0,
+            streamchannelid: message.data['channelid']);
+        outil.addSouscription(souscription);
+        break;
+
+      case 3:
       //outil = Outil();
-      Chat newChat = Chat(
-          id: 0,
-          idpub: int.parse(message.data['idpub']),
-          milliseconds: int.parse(message.data['time']),
-          sens: 1,
-          contenu: message.data['message'],
-          statut: 2,
-          identifiant: message.data['identifiant'],
-          iduser: int.parse(message.data['sender']),
-          idlocaluser: localUser!.id,
-          read: 0
-      );
-      await outil.insertChatFromBackground(newChat);
+        Chat newChat = Chat(
+            id: 0,
+            idpub: int.parse(message.data['idpub']),
+            milliseconds: int.parse(message.data['time']),
+            sens: 1,
+            contenu: message.data['message'],
+            statut: 2,
+            identifiant: message.data['identifiant'],
+            iduser: int.parse(message.data['sender']),
+            idlocaluser: localUser!.id,
+            read: 0
+        );
+        await outil.insertChatFromBackground(newChat);
 
-      // Send back 'ACCUsé DE RéCEPTION'
-      try {
-        final url = Uri.parse('https://vps-b2e0c1f2.vps.ovh.net/trobackend/sendaccusereception');
-        // Force INITIALIZATION :
-        client = await getSSLPinningClient();
-        await client.post(url,
-            headers: {"Content-Type": "application/json"},
-            body: jsonEncode({
-              "identifiant": message.data['identifiant'],
-              "idpub": int.parse(message.data['idpub'])
-            })
-        ).timeout(const Duration(seconds: timeOutValue));
-      }
-      catch (e) {
-        //print('Exception durant CASE 3 : ${e.toString()}');
-      }
+        // Send back 'ACCUsé DE RéCEPTION'
+        try {
+          final url = Uri.parse('https://vps-b2e0c1f2.vps.ovh.net/trobackend/sendaccusereception');
+          // Force INITIALIZATION :
+          client = await getSSLPinningClient();
+          await client.post(url,
+              headers: {"Content-Type": "application/json"},
+              body: jsonEncode({
+                "identifiant": message.data['identifiant'],
+                "idpub": int.parse(message.data['idpub'])
+              })
+          ).timeout(const Duration(seconds: timeOutValue));
+        }
+        catch (e) {
+          //print('Exception durant CASE 3 : ${e.toString()}');
+        }
 
-      // Display NOTIFICATIONS :
-      // Check lastest APP state, if DETACHED or PAUSED, then display NOTIFICATION and persist DATA :
-      /*Parameters? prms = await outil.getParameter();
+        // Display NOTIFICATIONS :
+        // Check lastest APP state, if DETACHED or PAUSED, then display NOTIFICATION and persist DATA :
+        /*Parameters? prms = await outil.getParameter();
       if(prms != null && prms.state != 'resumed'){
 
       }*/
-      break;
+        break;
 
 
-    case 4:
-      User? user = await outil.findUserById(int.parse(message.data['id']));
-      if(user == null){
-        // Persist DATA :
-        user = User(nationnalite: message.data['nationalite'],
-            id: int.parse(message.data['id']),
-            typepieceidentite: '',
-            numeropieceidentite: '',
-            nom: message.data['nom'],
-            prenom: message.data['prenom'],
-            email: '',
-            numero: '',
-            adresse: message.data['adresse'],
-            fcmtoken: '',
-            pwd: "123",
-            codeinvitation: "123",
-            villeresidence: 0);
-        // Save :
-        outil.addUser(user);
-      }
-
-      // On PUBLICATION :
-      Publication pub = await outil.refreshPublication(int.parse(message.data['publicationid']));
-      Publication newPub = Publication(
-          id: pub.id,
-          userid: pub.userid,
-          villedepart: pub.villedepart,
-          villedestination: pub.villedestination,
-          datevoyage: pub.datevoyage,
-          datepublication: pub.datepublication,
-          reserve: pub.reserve,
-          active: 1,
-          reservereelle: int.parse(message.data['reservevalide']),
-          souscripteur: pub.souscripteur, // Use OWNER Id
-          milliseconds: pub.milliseconds,
-          identifiant: pub.identifiant,
-          devise: pub.devise,
-          prix: pub.prix,
-          read: 1
-      );
-      // Update  :
-      //await outil.updatePublication(newPub);
-      await outil.updatePublicationWithoutFurtherActions(newPub);
-      break;
-
-    case 5:
-      // On PUBLICATION :
-      Publication pub = await outil.refreshPublication(int.parse(message.data['idpub']));
-      Publication newPub = Publication(
-          id: pub.id,
-          userid: pub.userid,
-          villedepart: pub.villedepart,
-          villedestination: pub.villedestination,
-          datevoyage: pub.datevoyage,
-          datepublication: pub.datepublication,
-          reserve: pub.reserve,
-          active: 2,
-          reservereelle: pub.reservereelle,
-          souscripteur: pub.souscripteur, // Use OWNER Id
-          milliseconds: pub.milliseconds,
-          identifiant: pub.identifiant,
-          devise: pub.devise,
-          prix: pub.prix,
-          read: 1
-      );
-      // Update  :
-      //await outil.updatePublication(newPub);
-      await outil.updatePublicationWithoutFurtherActions(newPub);
-      break;
-      
-    case 6:
-      // Réception ACCUSé DE RéCEPTION :
-      Chat ct = await outil.findChatByIdentifiant(message.data['identifiant']);
-      Chat newChat = Chat(
-        id: ct.id,
-        idpub: ct.idpub,
-        milliseconds: ct.milliseconds,
-        sens: ct.sens,
-        contenu: ct.contenu,
-        statut: 3, // Accusé de réception
-        identifiant: ct.identifiant,
-        iduser: ct.iduser,
-        idlocaluser: ct.idlocaluser,
-        read: ct.read
-      );
-      await outil.updateChatWithoutNotif(newChat);
-      break;
-
-    case 7:
-      Publication? pub = await outil.findOptionalPublicationById(int.parse(message.data['idpub']));
-      if(pub != null) {
-        Publication newPub = Publication(
-            id: pub.id,
-            userid: pub.userid,
-            villedepart: pub.villedepart,
-            villedestination: pub.villedestination,
-            datevoyage: pub.datevoyage,
-            datepublication: pub.datepublication,
-            reserve: pub.reserve,
-            active: pub.active,
-            reservereelle: int.parse(message.data['poids']),
-            souscripteur: pub.souscripteur,
-            // Use OWNER Id
-            milliseconds: pub.milliseconds,
-            identifiant: pub.identifiant,
-            devise: pub.devise,
-            prix: pub.prix,
-            read: pub.read
-        );
-        // Update  :
-        await outil.updatePublicationWithoutFurtherActions(newPub);
-      }
-      break;
-
-    case 8:
-      Publication? pub = await outil.findOptionalPublicationById(int.parse(message.data['idpub']));
-      if(pub != null) {
-        Publication newPub = Publication(
-            id: pub.id,
-            userid: pub.userid,
-            villedepart: pub.villedepart,
-            villedestination: pub.villedestination,
-            datevoyage: pub.datevoyage,
-            datepublication: pub.datepublication,
-            reserve: pub.reserve,
-            active: 0,
-            reservereelle: pub.reservereelle,
-            souscripteur: pub.souscripteur,
-            // Use OWNER Id
-            milliseconds: pub.milliseconds,
-            identifiant: pub.identifiant,
-            devise: pub.devise,
-            prix: pub.prix,
-            read: pub.read
-        );
-        // Update  :
-        await outil.updatePublicationWithoutFurtherActions(newPub);
-      }
-      break;
-
-    case 9:
-      try {
-        Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(
-            int.parse(message.data['idpub']),
-            int.parse(message.data['iduser']));
-        Souscription souscriptionUpdate = Souscription(
-            id: souscription.id,
-            idpub: souscription.idpub,
-            iduser: souscription.iduser,
-            millisecondes: souscription.millisecondes,
-            reserve: souscription.reserve,
-            statut: 2 // To cancel
-        );
-        await outil.updateSouscription(souscriptionUpdate);
-      }
-      catch (e){
-      }
-      break;
-
-    case 10:
-      try {
-        final filiationRepository = FiliationRepository();
-        Filiation? filiation = await filiationRepository.findById(1);
-        if(filiation != null){
-          Filiation upDateFiliation = Filiation(id: 1, code: filiation.code,
-              bonus: double.parse(message.data['montant']));
-          filiationRepository.update(upDateFiliation);
+      case 4:
+        databaseuser.User? user = await outil.findUserById(int.parse(message.data['id']));
+        if(user == null){
+          // Persist DATA :
+          user = databaseuser.User(nationnalite: message.data['nationalite'],
+              id: int.parse(message.data['id']),
+              typepieceidentite: '',
+              numeropieceidentite: '',
+              nom: message.data['nom'],
+              prenom: message.data['prenom'],
+              email: '',
+              numero: '',
+              adresse: message.data['adresse'],
+              fcmtoken: '',
+              pwd: "123",
+              codeinvitation: "123",
+              villeresidence: 0, streamtoken: '');
+          // Save :
+          outil.addUser(user);
         }
-      }
-      catch (e){
-      }
-      break;
+
+        // On PUBLICATION :
+        Publication pub = await outil.refreshPublication(int.parse(message.data['publicationid']));
+        Publication newPub = Publication(
+            id: pub.id,
+            userid: pub.userid,
+            villedepart: pub.villedepart,
+            villedestination: pub.villedestination,
+            datevoyage: pub.datevoyage,
+            datepublication: pub.datepublication,
+            reserve: pub.reserve,
+            active: 1,
+            reservereelle: int.parse(message.data['reservevalide']),
+            souscripteur: pub.souscripteur, // Use OWNER Id
+            milliseconds: pub.milliseconds,
+            identifiant: pub.identifiant,
+            devise: pub.devise,
+            prix: pub.prix,
+            read: 1,
+            streamchannelid: pub.streamchannelid
+        );
+        // Update  :
+        //await outil.updatePublication(newPub);
+        await outil.updatePublicationWithoutFurtherActions(newPub);
+        break;
+
+      case 5:
+      // On PUBLICATION :
+        Publication pub = await outil.refreshPublication(int.parse(message.data['idpub']));
+        Publication newPub = Publication(
+            id: pub.id,
+            userid: pub.userid,
+            villedepart: pub.villedepart,
+            villedestination: pub.villedestination,
+            datevoyage: pub.datevoyage,
+            datepublication: pub.datepublication,
+            reserve: pub.reserve,
+            active: 2,
+            reservereelle: pub.reservereelle,
+            souscripteur: pub.souscripteur, // Use OWNER Id
+            milliseconds: pub.milliseconds,
+            identifiant: pub.identifiant,
+            devise: pub.devise,
+            prix: pub.prix,
+            read: 1,
+            streamchannelid: pub.streamchannelid
+        );
+        // Update  :
+        //await outil.updatePublication(newPub);
+        await outil.updatePublicationWithoutFurtherActions(newPub);
+        break;
+
+      case 6:
+      // Réception ACCUSé DE RéCEPTION :
+        Chat ct = await outil.findChatByIdentifiant(message.data['identifiant']);
+        Chat newChat = Chat(
+            id: ct.id,
+            idpub: ct.idpub,
+            milliseconds: ct.milliseconds,
+            sens: ct.sens,
+            contenu: ct.contenu,
+            statut: 3, // Accusé de réception
+            identifiant: ct.identifiant,
+            iduser: ct.iduser,
+            idlocaluser: ct.idlocaluser,
+            read: ct.read
+        );
+        await outil.updateChatWithoutNotif(newChat);
+        break;
+
+      case 7:
+        Publication? pub = await outil.findOptionalPublicationById(int.parse(message.data['idpub']));
+        if(pub != null) {
+          Publication newPub = Publication(
+              id: pub.id,
+              userid: pub.userid,
+              villedepart: pub.villedepart,
+              villedestination: pub.villedestination,
+              datevoyage: pub.datevoyage,
+              datepublication: pub.datepublication,
+              reserve: pub.reserve,
+              active: pub.active,
+              reservereelle: int.parse(message.data['poids']),
+              souscripteur: pub.souscripteur,
+              // Use OWNER Id
+              milliseconds: pub.milliseconds,
+              identifiant: pub.identifiant,
+              devise: pub.devise,
+              prix: pub.prix,
+              read: pub.read,
+              streamchannelid: pub.streamchannelid
+          );
+          // Update  :
+          await outil.updatePublicationWithoutFurtherActions(newPub);
+        }
+        break;
+
+      case 8:
+        Publication? pub = await outil.findOptionalPublicationById(int.parse(message.data['idpub']));
+        if(pub != null) {
+          Publication newPub = Publication(
+              id: pub.id,
+              userid: pub.userid,
+              villedepart: pub.villedepart,
+              villedestination: pub.villedestination,
+              datevoyage: pub.datevoyage,
+              datepublication: pub.datepublication,
+              reserve: pub.reserve,
+              active: 0,
+              reservereelle: pub.reservereelle,
+              souscripteur: pub.souscripteur,
+              // Use OWNER Id
+              milliseconds: pub.milliseconds,
+              identifiant: pub.identifiant,
+              devise: pub.devise,
+              prix: pub.prix,
+              read: pub.read,
+              streamchannelid: pub.streamchannelid
+          );
+          // Update  :
+          await outil.updatePublicationWithoutFurtherActions(newPub);
+        }
+        break;
+
+      case 9:
+        try {
+          Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(
+              int.parse(message.data['idpub']),
+              int.parse(message.data['iduser']));
+          Souscription souscriptionUpdate = Souscription(
+              id: souscription.id,
+              idpub: souscription.idpub,
+              iduser: souscription.iduser,
+              millisecondes: souscription.millisecondes,
+              reserve: souscription.reserve,
+              statut: 2 ,
+              streamchannelid:
+              souscription.streamchannelid// To cancel
+          );
+          await outil.updateSouscription(souscriptionUpdate);
+        }
+        catch (e){
+        }
+        break;
+
+      case 10:
+        try {
+          final filiationRepository = FiliationRepository();
+          Filiation? filiation = await filiationRepository.findById(1);
+          if(filiation != null){
+            Filiation upDateFiliation = Filiation(id: 1, code: filiation.code,
+                bonus: double.parse(message.data['montant']));
+            filiationRepository.update(upDateFiliation);
+          }
+        }
+        catch (e){
+        }
+        break;
+
+      case 11:
+        try {
+          Publication? pub = await outil.findOptionalPublicationById(int.parse(message.data['idpub']));
+          if(pub != null) {
+            Publication newPub = Publication(
+                id: pub.id,
+                userid: pub.userid,
+                villedepart: pub.villedepart,
+                villedestination: pub.villedestination,
+                datevoyage: pub.datevoyage,
+                datepublication: pub.datepublication,
+                reserve: pub.reserve,
+                active: pub.active,
+                reservereelle: pub.reservereelle,
+                souscripteur: pub.souscripteur,
+                // Use OWNER Id
+                milliseconds: pub.milliseconds,
+                identifiant: pub.identifiant,
+                devise: pub.devise,
+                prix: pub.prix,
+                read: pub.read,
+                streamchannelid: message.data['channelid']
+            );
+            // Update  :
+            await outil.updatePublicationWithoutFurtherActions(newPub);
+          }
+        }
+        catch (e){}
+        break;
+    }
   }
 }
 
@@ -454,7 +534,7 @@ Future<bool> onIosBackground(ServiceInstance service) async {
 
 // Our callBack
 void callback(ServiceInstance service) async {
-  print('Start running');
+  /*print('Start running');
   try {
     outil = Outil();
     List<Chat> liste = outil.lookForChatToSend(0);// _chatController.getChatToSend(0);
@@ -468,16 +548,6 @@ void callback(ServiceInstance service) async {
               "date": DateTime.now()
             })
         );
-
-        // Update it :
-        /*Chat newChat = Chat(id: chat.id,
-            idpub: chat.idpub,
-            milliseconds: chat.milliseconds,
-            sens: chat.sens,
-            contenu:
-            chat.contenu,
-            statut: 1);
-        await outil.updateData(newChat);*/
       }
       catch (e) {
         print('Exception durant : ${e.toString()}');
@@ -487,17 +557,9 @@ void callback(ServiceInstance service) async {
     service.stopSelf();
     processOnGoing = false;
     print('Le service prend fin : ');
-
-    /*final url = Uri.parse('${dotenv.env['URL']}sendmessage');
-    var response = await post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "message": 'Pommier',
-          "date": DateTime.now()
-        }));*/
   } catch (e) {
     print('Error retrieving data: $e');
-  }
+  }*/
 }
 
 
@@ -509,132 +571,69 @@ Future<void> main() async {
   // Wait for :
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Init SERVICE :
-  await initializeService();
-
   if(defaultTargetPlatform == TargetPlatform.android) {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
     // Set the background messaging handler early on, as a named top-level function
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    /*if (!kIsWeb) {
-      await setupFlutterNotifications();
-    }*/
   }
 
+  // Init SERVICE :
+  await initializeService();
   client = await getSSLPinningClient();
+  streamClient = StreamChatClient(dotenv.env['API_STREAM']!);
 
-  User? localUser = await outil.pickLocalUser();
+  databaseuser.User? localUser = await outil.pickLocalUser();
+  Parameters? params = await outil.getParameter();
   if(localUser == null) {
     runApp(AccountCreationHome());
-  } else {
-    runApp(MyApp(client: client));
+  }
+  else if(params!.comptevalide == 0){
+    runApp(MyAppMail(client: client));
+  }
+  else {
+    runApp(MyApp(client: client, streamclient: streamClient));
   }
 }
 
 class MyApp extends StatelessWidget {
   final Client? client;
-  MyApp({super.key, required this.client});
+  final StreamChatClient streamclient;
+  const MyApp({super.key, required this.client, required this.streamclient});
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      builder: (context, child) {
+        return StreamChatCore(client: streamclient, child: child!);
+      },
       title: 'Flutter Demo',
       theme: ThemeData(
         // This is the theme of your application.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: WelcomePage(client: client!),
+      home: WelcomePage(client: client!, streamclient: streamclient),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
+class MyAppMail extends StatelessWidget {
+  final Client? client;
+  const MyAppMail({super.key, required this.client});
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
+  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+    return MaterialApp(
+      theme: ThemeData(
+        // This is the theme of your application.
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      home: ConfirmerMail(client: client!, tache: 1,)
     );
   }
 }

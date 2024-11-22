@@ -10,4 +10,7 @@ class SouscriptionRepository {
   Future<List<Souscription>> findAllByIdpub(int idpub) => dao.findAllByIdpub(idpub);
   Future<int> deleteAllSouscriptions() => dao.deleteAllSouscriptions();
   Future<Souscription> findByIdpubAndIduser(int idpub, int iduser) => dao.findByIdpubAndIduser(idpub, iduser);
+
+  Future<Souscription?> findOptionalByStreamChannel(String id) => dao.findOptionalByStreamChannel(id);
+  Future<List<Souscription>> findAllWithStreamId() => dao.findAllWithStreamId();
 }

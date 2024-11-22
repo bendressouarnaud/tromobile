@@ -129,7 +129,7 @@ class _NewAuth extends State<AuthentificationEcran> {
           fcmtoken: getToken!,
           pwd: "",
           codeinvitation: "",
-          villeresidence: bn.villeresidence);
+          villeresidence: bn.villeresidence, streamtoken: bn.streamtoken);
       // Save :
       _userController.addData(user);
 
@@ -164,7 +164,8 @@ class _NewAuth extends State<AuthentificationEcran> {
             identifiant: publication.identifiant,
           devise: publication.devise,
           prix: publication.prix,
-            read: 1
+            read: 1,
+            streamchannelid: ''
         );
         _publicationController.addData(pub);
       }
@@ -187,7 +188,7 @@ class _NewAuth extends State<AuthentificationEcran> {
               fcmtoken: '',
               pwd: "123",
               codeinvitation: "123",
-              villeresidence: 0);
+              villeresidence: 0, streamtoken: '');
           // Save :
           _userController.addData(user);
         }
@@ -201,7 +202,8 @@ class _NewAuth extends State<AuthentificationEcran> {
             iduser: souscriptionBean.iduser,
             millisecondes: souscriptionBean.millisecondes,
             reserve: souscriptionBean.reserve,
-            statut: souscriptionBean.statut);
+            statut: souscriptionBean.statut,
+            streamchannelid: '');
         _souscriptionController.addData(souscription);
       }
 

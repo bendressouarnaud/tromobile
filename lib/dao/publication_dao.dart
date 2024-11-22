@@ -28,6 +28,24 @@ class PublicationDao {
     return liste.first;
   }
 
+  Future<Publication?> findOptionalPublicationByStreamChannel(String iD) async {
+    final db = await dbProvider.database;
+    var publications = await db.query('publication', where: 'streamchannelid = ?', whereArgs: [iD]);
+    List<Publication> liste = publications.isNotEmpty
+        ? publications.map((c) => Publication.fromDatabaseJson(c)).toList()
+        : [];
+    return liste.isNotEmpty ? liste.first : null;
+  }
+
+  Future<List<Publication>> findAllWithStreamId() async {
+    final db = await dbProvider.database;
+    var publications = await db.query('publication', where: "streamchannelid <> ''");
+    List<Publication> liste = publications.isNotEmpty
+        ? publications.map((c) => Publication.fromDatabaseJson(c)).toList()
+        : [];
+    return liste;
+  }
+
   Future<Publication?> findOptionalPublicationById(int id) async {
     final db = await dbProvider.database;
     var publications = await db.query('publication', where: 'id = ?', whereArgs: [id]);

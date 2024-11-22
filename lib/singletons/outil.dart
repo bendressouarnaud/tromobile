@@ -38,6 +38,7 @@ class Outil {
     Devises(libelle: 'USD', id: 3)
   ];
   bool fcmFlag = false;
+  bool checkNetworkConnected = false;
 
   // M E T H O D S
   // using a factory is important because it promises to return _an_ object of this type but it doesn't promise to make a new one.
@@ -84,6 +85,10 @@ class Outil {
   // C H A T
   Future<Chat> findChatByIdentifiant(String id) async{
     return await _chatController.findByIdentifiant(id);
+  }
+
+  void resetChat() {
+    _navChatController.feed(0);
   }
 
   Future<List<Chat>> findAllChats({ bool refreshNav = false}) async{
@@ -154,6 +159,10 @@ class Outil {
     _navChatController.feed(taille);
   }
 
+  Future<void> raiseFlagForNewChat() async {
+    int taille = _navChatController.getLength();
+    _navChatController.feed(taille + 1);
+  }
   /*Future<void> updateChatNavNotif(List<int> liste) async{
     int newTaille = _navChatController.tableau[0];
     _navChatController.feed(newTaille - liste.length);
@@ -295,4 +304,11 @@ class Outil {
     return await _villeRepository.findById(id);
   }
 
+  void setCheckNetworkConnected(bool value) {
+    checkNetworkConnected = value;
+  }
+
+  bool getCheckNetworkConnected() {
+    return checkNetworkConnected;
+  }
 }

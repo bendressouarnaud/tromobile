@@ -19,12 +19,13 @@ class Publication {
   final int devise;
   final int prix;
   final int read; // 0 : not read,NEW   ;    1 : read
+  final String streamchannelid;
 
 
   // M e t h o d s  :
   Publication({required this.id, required this.userid, required this.villedepart, required this.villedestination, required this.datevoyage, required this.datepublication,
     required this.reserve, required this.active, required this.reservereelle, required this.souscripteur, required this.milliseconds
-  , required this.identifiant, required this.devise, required this.prix, required this.read});
+  , required this.identifiant, required this.devise, required this.prix, required this.read, required this.streamchannelid});
   factory Publication.fromDatabaseJson(Map<String, dynamic> data) => Publication(
     //This will be used to convert JSON objects that
     //are coming from querying the database and converting
@@ -43,7 +44,8 @@ class Publication {
     identifiant: data['identifiant'],
     devise: data['devise'],
     prix: data['prix'],
-    read: data['read']
+    read: data['read'],
+    streamchannelid: data['streamchannelid']
   );
 
   Map<String, dynamic> toDatabaseJson() => {
@@ -61,6 +63,7 @@ class Publication {
     "identifiant": identifiant,
     "devise": devise,
     "prix": prix,
-    "read": read
+    "read": read,
+    "streamchannelid": streamchannelid
   };
 }

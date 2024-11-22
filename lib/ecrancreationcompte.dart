@@ -30,6 +30,7 @@ import 'package:flutter/foundation.dart'
 import 'httpbeans/countrydata.dart';
 import 'httpbeans/countrydataunicodelist.dart';
 import 'httpbeans/usercreationresponse.dart';
+import 'main.dart';
 import 'models/pays.dart';
 import 'models/user.dart';
 
@@ -199,94 +200,104 @@ class _NewCreationState extends State<EcranCreationCompte> {
 
   //
   void generateTokenSuscription(String abrevPays, String pays) async {
-    await FirebaseMessaging.instance.subscribeToTopic("trocross");
-    getToken = await FirebaseMessaging.instance.getToken();
+    try {
+      await FirebaseMessaging.instance.subscribeToTopic("trocross");
+      getToken = await FirebaseMessaging.instance.getToken();
 
-    sendAccountRequest(abrevPays, pays);
+      sendAccountRequest(abrevPays, pays);
+    }
+    catch(e){
+      flagServerResponse = false;
+    }
   }
 
   // Send Account DATA :
   Future<void> sendAccountRequest(String abrevPays, String pays) async {
     final url = Uri.parse('${dotenv.env['URL']}manageuser');
-    var response = await widget.client.post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "iduser": widget.gUser == null ? 0 : widget.gUser!.id,
-          "nom": nomController.text,
-          "prenom": prenomController.text,
-          "email": emailController.text,
-          "contact": numeroController.text,
-          "adresse": adresseController.text,
-          "codeinvitation": codeParrainageController.text, // Set default :
-          "numeropieceidentite": pieceController.text,
-          "idpays": paysDepartMenu!.id,
-          "pays": pays,
-          "abreviationpays": abrevPays,
-          "idville": villeResidence!.id,
-          "ville": villeResidence!.name,
-          "typepieceidentite": dropdownvalueTitre,
-          "token": getToken,
-        })).timeout(const Duration(seconds: timeOutValue));
+    try {
+      var response = await widget.client.post(url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "iduser": widget.gUser == null ? 0 : widget.gUser!.id,
+            "nom": nomController.text,
+            "prenom": prenomController.text,
+            "email": emailController.text,
+            "contact": numeroController.text,
+            "adresse": adresseController.text,
+            "codeinvitation": codeParrainageController.text, // Set default :
+            "numeropieceidentite": pieceController.text,
+            "idpays": paysDepartMenu!.id,
+            "pays": pays,
+            "abreviationpays": abrevPays,
+            "idville": villeResidence!.id,
+            "ville": villeResidence!.name,
+            "typepieceidentite": dropdownvalueTitre,
+            "token": getToken,
+          })).timeout(const Duration(seconds: timeOutValue));
 
-    // Checks :
-    if(response.statusCode == 200){
-      UserCreationResponse ur =  UserCreationResponse.fromJson(json.decode(response.body));
-      displayToast("Votre compte a été créé !");
-      // Update or create user :
-      if(_userController.userData.isEmpty){
-        // Create new :
-        User user = User(nationnalite: abrevPays,
-            id: ur.userid,
-            typepieceidentite: dropdownvalueTitre,
-            numeropieceidentite: pieceController.text,
-            nom: nomController.text,
-            prenom: prenomController.text,
-            email: emailController.text,
-            numero: numeroController.text,
-            adresse: adresseController.text,
-            fcmtoken: getToken!,
-            pwd: "",
-            codeinvitation: codeParrainageController.text,
-            villeresidence: villeResidence!.id);
-        // Save :
-        _userController.addData(user);
-        
-        // Add default CIBLE :
-        if(ur.cibleid > 0) {
-          Cible cible = Cible(id: ur.cibleid,
-              villedepartid: villeResidence!.id,
-              paysdepartid: paysDepartMenu!.id,
-              villedestid: villeResidence!.id,
-              paysdestid: paysDepartMenu!.id,
-              topic: '');
-          _cibleController.addData(cible);
-          
-          // From there, Hit NEW FILIATION :
-          Filiation filiation = Filiation(id: 1, code: ur.codeparrainage, bonus: 0);
-          await _filiationRepository.insert(filiation);
+      // Checks :
+      if(response.statusCode == 200){
+        UserCreationResponse ur =  UserCreationResponse.fromJson(json.decode(response.body));
+        displayToast("Votre compte a été créé !");
+        // Update or create user :
+        if(_userController.userData.isEmpty){
+          // Create new :
+          User user = User(nationnalite: abrevPays,
+              id: ur.userid,
+              typepieceidentite: dropdownvalueTitre,
+              numeropieceidentite: pieceController.text,
+              nom: nomController.text,
+              prenom: prenomController.text,
+              email: emailController.text,
+              numero: numeroController.text,
+              adresse: adresseController.text,
+              fcmtoken: getToken!,
+              pwd: "",
+              codeinvitation: codeParrainageController.text,
+              villeresidence: villeResidence!.id,
+              streamtoken: ur.streamchatoken);
+          // Save :
+          _userController.addData(user);
+
+          // Add default CIBLE :
+          if(ur.cibleid > 0) {
+            Cible cible = Cible(id: ur.cibleid,
+                villedepartid: villeResidence!.id,
+                paysdepartid: paysDepartMenu!.id,
+                villedestid: villeResidence!.id,
+                paysdestid: paysDepartMenu!.id,
+                topic: '');
+            _cibleController.addData(cible);
+
+            // From there, Hit NEW FILIATION :
+            Filiation filiation = Filiation(id: 1, code: ur.codeparrainage, bonus: 0);
+            await _filiationRepository.insert(filiation);
+          }
         }
 
-        // Can close WINDOW :
-        flagServerResponse = false;
+        // Set FLAG :
+        flagSendData = false;
       }
-
-      // Set FLAG :
-      flagSendData = false;
-    }
-    else if(response.statusCode == 500){
-      // Set FLAG :
-      flagSendData = false;
-      displayToast("Cette adresse est déjà utilisée !");
-    }
-    else if(response.statusCode == 501){
-      // Set FLAG :
-      flagSendData = false;
-      displayToast("Code parrainage inexistant !");
-    }
-    else {
-      // Set FLAG :
-      flagSendData = false;
-      displayToast("Erreur apparue");
+      else if(response.statusCode == 500){
+        // Set FLAG :
+        flagSendData = false;
+        displayToast("Cette adresse est déjà utilisée !");
+      }
+      else if(response.statusCode == 501){
+        // Set FLAG :
+        flagSendData = false;
+        displayToast("Code parrainage inexistant !");
+      }
+      else {
+        // Set FLAG :
+        flagSendData = false;
+        displayToast("Erreur apparue");
+      }
+      // Can close WINDOW :
+      flagServerResponse = false;
+    } on TimeoutException {
+      // Can close WINDOW :
+      flagServerResponse = false;
     }
   }
 
@@ -300,6 +311,15 @@ class _NewCreationState extends State<EcranCreationCompte> {
         backgroundColor: Colors.black,
         textColor: Colors.white,
         fontSize: 16.0
+    );
+  }
+
+  void displaySnack(String message){
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          duration: const Duration(milliseconds: 1500),
+          content: Text(message)
+      ),
     );
   }
 
@@ -552,92 +572,110 @@ class _NewCreationState extends State<EcranCreationCompte> {
                               )
                           ),
                           onPressed: () {
-                            if(checkField()){
-                              Fluttertoast.showToast(
-                                  msg: "Veuillez renseigner tous les champs !",
-                                  toastLength: Toast.LENGTH_LONG,
-                                  gravity: ToastGravity.CENTER,
-                                  timeInSecForIosWeb: 3,
-                                  backgroundColor: Colors.red,
-                                  textColor: Colors.white,
-                                  fontSize: 16.0
-                              );
-                            }
-                            else{
-                              // Get 'COMMUNE' id
-                              var abrevPays = listeCountry.where((element) => element == paysDepartMenu!)
-                                  .first.iso2;
-                              // Get 'Genre' id :
-                              //var idGenr = defaultGenre == "M" ? 1 : 0;
-                              var idGenr = 1;
-                              showDialog(
-                                  barrierDismissible: false,
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    dialogContext = context;
-                                    return WillPopScope(
-                                      onWillPop: () async => false,
-                                      child: const AlertDialog(
-                                        title: Text('Information'),
-                                        content: SizedBox(
-                                            height: 100,
-                                            child: Column(
-                                              children: [
-                                                Text("Création du compte ..."),
-                                                SizedBox(
-                                                  height: 20,
-                                                ),
-                                                SizedBox(
-                                                    height: 30.0,
-                                                    width: 30.0,
-                                                    child: CircularProgressIndicator(
-                                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                                                      strokeWidth: 3.0, // Width of the circular line
-                                                    )
-                                                )
-                                              ],
-                                            )
-                                        )
-                                      )
-                                    );
-                                  }
-                              );
-
-                              // Send DATA :
-                              flagSendData = true;
-                              flagServerResponse = true;
-                              if(defaultTargetPlatform == TargetPlatform.android){
-                                generateTokenSuscription(abrevPays, paysDepartMenu!.name); // FOr TOKEN
+                            outil.setCheckNetworkConnected(true); // We force this :
+                            if(outil.getCheckNetworkConnected()) {
+                              if(checkField()){
+                                Fluttertoast.showToast(
+                                    msg: "Veuillez renseigner tous les champs !",
+                                    toastLength: Toast.LENGTH_LONG,
+                                    gravity: ToastGravity.CENTER,
+                                    timeInSecForIosWeb: 3,
+                                    backgroundColor: Colors.red,
+                                    textColor: Colors.white,
+                                    fontSize: 16.0
+                                );
                               }
                               else{
-                                // Currently not running FCM for iphone
-                                sendAccountRequest(abrevPays, paysDepartMenu!.name);
-                              }
+                                // Further CHECK on EMAIL :
+                                if(!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+                                    .hasMatch(emailController.text.trim())){
+                                  displayToast("Renseignez une adresse email vailde !");
+                                  return;
+                                }
 
-                              // Run TIMER :
-                              Timer.periodic(
-                                const Duration(seconds: 1),
-                                    (timer) {
-                                  // Update user about remaining time
-                                  if(!flagSendData){
-                                    Navigator.pop(dialogContext);
-                                    timer.cancel();
+                                // Get 'COMMUNE' id
+                                var abrevPays = listeCountry.where((element) => element == paysDepartMenu!)
+                                    .first.iso2;
+                                // Get 'Genre' id :
+                                //var idGenr = defaultGenre == "M" ? 1 : 0;
+                                var idGenr = 1;
+                                showDialog(
+                                    barrierDismissible: false,
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      dialogContext = context;
+                                      return WillPopScope(
+                                          onWillPop: () async => false,
+                                          child: const AlertDialog(
+                                              title: Text('Information'),
+                                              content: SizedBox(
+                                                  height: 100,
+                                                  child: Column(
+                                                    children: [
+                                                      Text("Création du compte ..."),
+                                                      SizedBox(
+                                                        height: 20,
+                                                      ),
+                                                      SizedBox(
+                                                          height: 30.0,
+                                                          width: 30.0,
+                                                          child: CircularProgressIndicator(
+                                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                                            strokeWidth: 3.0, // Width of the circular line
+                                                          )
+                                                      )
+                                                    ],
+                                                  )
+                                              )
+                                          )
+                                      );
+                                    }
+                                );
 
-                                    // Kill ACTIVITY :
-                                    if(!flagServerResponse) {
-                                      if (Navigator.canPop(context)) {
-                                        if(widget.returnValue){
-                                          Navigator.pop(context, 1);
+                                // Send DATA :
+                                flagSendData = true;
+                                flagServerResponse = true;
+                                if(defaultTargetPlatform == TargetPlatform.android){
+                                  generateTokenSuscription(abrevPays, paysDepartMenu!.name); // FOr TOKEN
+                                }
+                                else{
+                                  // Currently not running FCM for iphone
+                                  sendAccountRequest(abrevPays, paysDepartMenu!.name);
+                                }
+
+                                // Run TIMER :
+                                Timer.periodic(
+                                  const Duration(seconds: 1),
+                                      (timer) {
+                                    // Update user about remaining time
+                                    if(!flagSendData){
+                                      Navigator.pop(dialogContext);
+                                      timer.cancel();
+
+                                      // Kill ACTIVITY :
+                                      if(!flagServerResponse) {
+                                        if (Navigator.canPop(context)) {
+                                          if(!flagSendData) {
+                                            if (widget.returnValue) {
+                                              Navigator.pop(context, 1);
+                                            }
+                                            else {
+                                              Navigator.pop(context);
+                                            }
+                                            //Navigator.of(context).pop({'selection': '1'});
+                                          }
+                                          else {
+                                            displaySnack('Création du compte impossible!');
+                                          }
                                         }
-                                        else {
-                                          Navigator.pop(context);
-                                        }
-                                        //Navigator.of(context).pop({'selection': '1'});
                                       }
                                     }
-                                  }
-                                },
-                              );
+                                  },
+                                );
+                              }
+                            }
+                            else{
+                              displaySnack('Assure-vous d\'avoir la connexion INTERNET!');
                             }
                           },
                           icon: const Icon(

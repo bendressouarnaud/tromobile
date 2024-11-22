@@ -8,6 +8,8 @@ class PublicationRepository {
   Future<int> insert(Publication data) => publicationDao.insert(data);
   Future<int> update(Publication data) => publicationDao.update(data);
   Future<Publication> findPublicationById(int id) => publicationDao.findPublicationById(id);
+  Future<Publication?> findOptionalPublicationByStreamChannel(String id) => publicationDao.findOptionalPublicationByStreamChannel(id);
+  Future<List<Publication>> findAllWithStreamId() => publicationDao.findAllWithStreamId();
   Future<Publication?> findOptionalPublicationById(int id) => publicationDao.findOptionalPublicationById(id);
   Future<int> deleteById(int id) => publicationDao.deleteById(id);
   Future<int> deleteAllPublications() => publicationDao.deleteAllPublications();

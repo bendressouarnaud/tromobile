@@ -481,7 +481,8 @@ class _ManageDepartureState extends State<ManageDeparture> {
                 .identifiant,
             devise: devises.id,
             prix: int.parse(prixController.text),
-            read: 1
+            read: 1,
+          streamchannelid: ''
         );
         if (idpub > 0) {
           // From THERE, REFRESH SOUSCRIPTION :
@@ -496,7 +497,8 @@ class _ManageDepartureState extends State<ManageDeparture> {
                   iduser: rn.iduser,
                   millisecondes: souscription.millisecondes,
                   reserve: rn.reserve,
-                  statut: souscription.statut
+                  statut: souscription.statut,
+                  streamchannelid: souscription.streamchannelid
               );
               await outil.updateSouscription(souscriptionUpdate);
             }
@@ -532,6 +534,15 @@ class _ManageDepartureState extends State<ManageDeparture> {
 
     //
     flagSendData = false;
+  }
+
+  void displaySnack(String message){
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          duration: const Duration(milliseconds: 1500),
+          content: Text(message)
+      ),
+    );
   }
 
   @override
@@ -864,12 +875,16 @@ class _ManageDepartureState extends State<ManageDeparture> {
                                 )
                             ),
                             onPressed: () async {
-                              //if(!checkField() && verifyReserve() && verifyPrix()){
-                              if(!checkField(context)){
-                                var checkAmountValidation = await checkSuscription();
-                                if(checkAmountValidation){
-                                  processDataForSending();
+                              if(outil.getCheckNetworkConnected()) {
+                                if (!checkField(context)) {
+                                  var checkAmountValidation = await checkSuscription();
+                                  if (checkAmountValidation) {
+                                    processDataForSending();
+                                  }
                                 }
+                              }
+                              else{
+                                displaySnack('Assure-vous d\'avoir la connexion INTERNET!');
                               }
                             },
                             icon: const Icon(

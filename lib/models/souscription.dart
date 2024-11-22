@@ -7,10 +7,11 @@ class Souscription {
   final int millisecondes;
   final int reserve;
   final int statut; // 0 : encours , 1 : traité, 2 : annulé par le souscripteur
+  final String streamchannelid;
 
   // M e t h o d s  :
   Souscription({required this.id, required this.idpub, required this.iduser, required this.millisecondes, required this.reserve
-    , required this.statut});
+    , required this.statut , required this.streamchannelid});
   factory Souscription.fromDatabaseJson(Map<String, dynamic> data) => Souscription(
     id: data['id'],
     idpub: data['idpub'],
@@ -18,6 +19,7 @@ class Souscription {
     millisecondes: data['millisecondes'],
     reserve: data['reserve'],
     statut: data['statut'],
+    streamchannelid: data['streamchannelid']
   );
 
   Map<String, dynamic> toDatabaseJson() => {
@@ -26,6 +28,7 @@ class Souscription {
     "iduser": iduser,
     "millisecondes": millisecondes,
     "reserve": reserve,
-    "statut": statut
+    "statut": statut,
+    "streamchannelid": streamchannelid
   };
 }

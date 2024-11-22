@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:tro/repositories/pays_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
@@ -9,12 +10,13 @@ import 'package:tro/screens/listannonce.dart';
 import 'main.dart';
 import 'models/pays.dart';
 import 'models/publication.dart';
-import 'models/user.dart';
+import 'models/user.dart' as databaseuser;
 import 'models/ville.dart';
 
 class Historique extends StatelessWidget {
   final Client client;
-  Historique({ super.key, required this.client });
+  final StreamChatClient streamclient;
+  Historique({ super.key, required this.client, required this.streamclient, });
 
   // O B J E C T S :
   final _paysRepository = PaysRepository();
@@ -22,7 +24,7 @@ class Historique extends StatelessWidget {
   final _villeRepository = VilleRepository();
   List<Pays> listePays = [];
   List<Ville> listeVille = [];
-  User? localUser;
+  databaseuser.User? localUser;
 
 
   // M E T H O D S :
@@ -51,7 +53,7 @@ class Historique extends StatelessWidget {
             return liste.isNotEmpty ?
             SingleChildScrollView(
               child: EcranAnnonce().displayAnnonce(liste, listePays, listeVille,
-                  [localUser!] ,context, true, client),
+                  [localUser!] ,context, true, client, streamclient),
             )
             :
             const Center(

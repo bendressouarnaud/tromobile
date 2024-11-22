@@ -4,13 +4,15 @@ class ReservationResponse {
   final String prenom;
   final String adresse;
   final String nationnalite;
+  final String channelid;
 
   const ReservationResponse({
     required this.id,
     required this.nom,
     required this.prenom,
     required this.adresse,
-    required this.nationnalite
+    required this.nationnalite,
+    required this.channelid
   });
 
   factory ReservationResponse.fromJson(Map<String, dynamic> json) {
@@ -19,7 +21,8 @@ class ReservationResponse {
         nom: json['nom'],
         prenom: json['prenom'],
         adresse: json['adresse'],
-        nationnalite: json['nationnalite']
+        nationnalite: json['nationnalite'],
+        channelid: json['channelid']
     );
   }
 }

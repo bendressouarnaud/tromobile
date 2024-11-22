@@ -5,10 +5,10 @@ import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 class StreamChatApp extends StatelessWidget {
 
   // Attributes :
-  final StreamChatClient client;
+  //final StreamChatClient client;
   final Channel channel;
 
-  const StreamChatApp({ Key? key, required this.client, required this.channel });
+  const StreamChatApp({ Key? key, required this.channel });
 
 
   @override
@@ -16,11 +16,11 @@ class StreamChatApp extends StatelessWidget {
     //
     return MaterialApp(
       builder: (context, child) {
-        return StreamChat(client: client, child: child);
+        return StreamChat(client: StreamChatCore.of(context).client, child: child);
       },
       home: StreamChannel(
         channel: channel,
-        child: Container(),
+        child: const ChannelPage(),
       )
     );
   }
@@ -33,7 +33,7 @@ class ChannelPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       appBar: StreamChannelHeader(
 
       ),

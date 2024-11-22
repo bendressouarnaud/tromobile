@@ -75,7 +75,8 @@ class _GestionCible extends State<GestionCible> {
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
-              )),
+              )
+          ),
           /*actions: [
             IconButton(
                 onPressed: () {

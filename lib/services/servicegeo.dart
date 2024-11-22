@@ -58,7 +58,8 @@ class Servicegeo {
           identifiant: message.data['identifiant'],
           devise: int.parse(message.data['devise']),
           prix: int.parse(message.data['prix']),
-          read: 0
+          read: 0,
+        streamchannelid: ''
       );
       return pub;
     }
@@ -83,7 +84,7 @@ class Servicegeo {
           fcmtoken: '',
           pwd: "123",
           codeinvitation: "123",
-          villeresidence: 0);
+          villeresidence: 0, streamtoken: '');
       // Save :
       outil.addUser(user);
     }
@@ -95,7 +96,8 @@ class Servicegeo {
         iduser: int.parse(message.data['id']),
         millisecondes: DateTime.now().millisecondsSinceEpoch,
         reserve: int.parse(message.data['reserve']),
-        statut: 0);
+        statut: 0,
+        streamchannelid: message.data['channelid']);
     outil.addSouscription(souscription);
   }
 
@@ -137,7 +139,7 @@ class Servicegeo {
           fcmtoken: '',
           pwd: "123",
           codeinvitation: "123",
-          villeresidence: 0);
+          villeresidence: 0, streamtoken: '');
       // Save :
       outil.addUser(user);
     }
@@ -159,7 +161,8 @@ class Servicegeo {
         identifiant: pub.identifiant,
         devise: pub.devise,
         prix: pub.prix,
-        read: 1
+        read: 1,
+        streamchannelid: pub.streamchannelid
     );
     // Update  :
     await outil.updatePublicationWithoutFurtherActions(newPub);
@@ -184,7 +187,8 @@ class Servicegeo {
         identifiant: pub.identifiant,
         devise: pub.devise,
         prix: pub.prix,
-        read: 1
+        read: 1,
+        streamchannelid: pub.streamchannelid
     );
     // Update  :
     //await outil.updatePublication(newPub);
@@ -230,7 +234,8 @@ class Servicegeo {
           identifiant: pub.identifiant,
           devise: pub.devise,
           prix: pub.prix,
-          read: pub.read
+          read: pub.read,
+          streamchannelid: pub.streamchannelid
       );
       // Update  :
       await outil.updatePublicationWithoutFurtherActions(newPub);
@@ -256,7 +261,8 @@ class Servicegeo {
           identifiant: pub.identifiant,
           devise: pub.devise,
           prix: pub.prix,
-          read: pub.read
+          read: pub.read,
+          streamchannelid: pub.streamchannelid
       );
       // Update  :
       await outil.updatePublicationWithoutFurtherActions(newPub);
@@ -273,7 +279,8 @@ class Servicegeo {
           iduser: souscription.iduser,
           millisecondes: souscription.millisecondes,
           reserve: souscription.reserve,
-          statut: 2 // To cancel
+          statut: 2, // To cancel
+          streamchannelid: souscription.streamchannelid
       );
       await outil.updateSouscription(souscriptionUpdate);
     }
@@ -292,6 +299,34 @@ class Servicegeo {
       }
     }
     catch (e){
+    }
+  }
+
+  // Update CHANNEL ID :
+  void updatePublicationChannelID(RemoteMessage message) async {
+    Publication? pub = await outil.findOptionalPublicationById(int.parse(message.data['idpub']));
+    if(pub != null) {
+      Publication newPub = Publication(
+          id: pub.id,
+          userid: pub.userid,
+          villedepart: pub.villedepart,
+          villedestination: pub.villedestination,
+          datevoyage: pub.datevoyage,
+          datepublication: pub.datepublication,
+          reserve: pub.reserve,
+          active: pub.active,
+          reservereelle: pub.reservereelle,
+          souscripteur: pub.souscripteur,
+          // Use OWNER Id
+          milliseconds: pub.milliseconds,
+          identifiant: pub.identifiant,
+          devise: pub.devise,
+          prix: pub.prix,
+          read: pub.read,
+          streamchannelid: message.data['channelid']
+      );
+      // Update  :
+      await outil.updatePublicationWithoutFurtherActions(newPub);
     }
   }
 

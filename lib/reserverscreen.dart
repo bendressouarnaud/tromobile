@@ -338,7 +338,7 @@ class _ReservePaiement extends State<ReservePaiement> {
             fcmtoken: '',
             pwd: "123",
             codeinvitation: "123",
-            villeresidence: 0);
+            villeresidence: 0, streamtoken: '');
         // Save :
         outil.addUser(user);
         //await _userRepository.insertUser(user);
@@ -360,7 +360,8 @@ class _ReservePaiement extends State<ReservePaiement> {
         identifiant: publication.identifiant,
         devise: publication.devise,
         prix: publication.prix,
-        read: 1
+        read: 1,
+        streamchannelid: data.channelid
       );
       // Update  :
       await outil.updatePublication(pub);

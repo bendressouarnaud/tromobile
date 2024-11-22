@@ -205,7 +205,8 @@ class _creerCible extends State<CreerCible> {
             identifiant: publication.identifiant,
             devise: publication.devise,
             prix: publication.prix,
-            read: 1
+            read: 1,
+            streamchannelid: publication.streamchannelid
         );
         outil.addPublication(pub);
       }

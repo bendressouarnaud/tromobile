@@ -8,6 +8,7 @@ import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
 
 import 'authentification.dart';
+import 'confirmermail.dart';
 import 'ecrancreationcompte.dart';
 import 'main.dart';
 import 'models/pays.dart';
@@ -108,11 +109,47 @@ class NewAccountCreationHome extends StatelessWidget {
     );
   }
 
+  void displayAccountValidation() async{
+    Navigator.pop(contextG);
+
+    Navigator
+        .push(
+        contextG,
+        MaterialPageRoute(builder:
+            (context) =>
+            ConfirmerMail(client: client, tache: 0,)
+        )
+    );
+
+    /*if (resultValidation != null) {
+      // Request for Permission :
+      requestForNotificationPermission();
+    }
+    else{
+      closeApp();
+    }*/
+  }
+
+  // Close doors :
+  void closeApp() {
+    // Close DOORS
+    //Navigator.pop(contextG);
+    Navigator.of(contextG).maybePop();
+  }
+
   @override
   Widget build(BuildContext context) {
 
     // Track this :
     contextG = context;
+    /*if(usr != null) {
+      // Display SCREEn for ACCOUNT VALIDATION :
+      Future.delayed(const Duration(milliseconds: 1500),
+              () {
+                displayAccountValidation();
+          }
+      );
+    }*/
 
     return MaterialApp(
         theme: ThemeData(
@@ -143,19 +180,39 @@ class NewAccountCreationHome extends StatelessWidget {
                             ),
                             ElevatedButton(
                                 onPressed: () async {
-                                  if(listePays.isNotEmpty){
-                                    final result = await Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder:
-                                            (context) =>
-                                            EcranCreationCompte(listeCountry: listePays, listeVille: listeVille, client: client, gUser: usr,
-                                                returnValue: true)
-                                        )
-                                    );
+                                  if(usr == null) {
+                                    if (listePays.isNotEmpty) {
+                                      final result = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder:
+                                              (context) =>
+                                              EcranCreationCompte(
+                                                  listeCountry: listePays,
+                                                  listeVille: listeVille,
+                                                  client: client,
+                                                  gUser: usr,
+                                                  returnValue: true)
+                                          )
+                                      );
 
-                                    if(result != null) {
-                                      // Request for Permission :
-                                      requestForNotificationPermission();
+                                      if (result != null) {
+                                        displayAccountValidation();
+                                      }
+                                      /*if (result != null) {
+                                        final resultValidation = await Navigator
+                                            .push(
+                                            context,
+                                            MaterialPageRoute(builder:
+                                                (context) =>
+                                                ConfirmerMail(client: client)
+                                            )
+                                        );
+
+                                        if (resultValidation) {
+                                          // Request for Permission :
+                                          requestForNotificationPermission();
+                                        }
+                                      }*/
                                     }
                                   }
                                 },
@@ -179,19 +236,23 @@ class NewAccountCreationHome extends StatelessWidget {
                             ),
                             ElevatedButton(
                                 onPressed: () async {
-                                  final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) {
-                                            return AuthentificationEcran(client: client, returnValue: true
-                                            );
-                                          }
-                                      )
-                                  );
+                                  if(usr == null) {
+                                    final result = await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) {
+                                              return AuthentificationEcran(
+                                                  client: client,
+                                                  returnValue: true
+                                              );
+                                            }
+                                        )
+                                    );
 
-                                  if(result != null) {
-                                    // Request for Permission :
-                                    requestForNotificationPermission();
+                                    if (result != null) {
+                                      // Request for Permission :
+                                      requestForNotificationPermission();
+                                    }
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(

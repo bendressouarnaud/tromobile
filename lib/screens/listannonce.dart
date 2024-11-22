@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/src/simple/get_state.dart';
 import 'package:http/http.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:tro/models/pays.dart';
 import 'package:tro/repositories/ville_repository.dart';
 
@@ -10,7 +11,7 @@ import '../constants.dart';
 import '../getxcontroller/getpublicationcontroller.dart';
 import '../historiqueannonce.dart';
 import '../models/publication.dart';
-import '../models/user.dart';
+import '../models/user.dart' as databaseuser;
 import '../models/ville.dart';
 import '../repositories/pays_repository.dart';
 
@@ -41,8 +42,8 @@ class EcranAnnonce {
     return "$tampnPays ($tampnVille)";
   }
 
-  Widget displayObjectData(Publication pub, List<Pays> pays, List<Ville> villes, List<User> user, BuildContext context,
-      bool historique, Client client) {
+  Widget displayObjectData(Publication pub, List<Pays> pays, List<Ville> villes, List<databaseuser.User> user, BuildContext context,
+      bool historique, Client client, StreamChatClient streamChatClient) {
     return GestureDetector(
       onTap: () {
         // Display DIALOG
@@ -53,7 +54,8 @@ class EcranAnnonce {
                   villeDepart: villes.where((ville) => ville.id == pub.villedepart).single,
                   userOrSuscriber: !(pub.userid == user.first.id) ? 0 : 1,
               historique: historique,
-                client: client);
+                client: client,
+                streamclient: streamChatClient);
             }));
       },
       child: Container(
@@ -306,8 +308,8 @@ class EcranAnnonce {
 
 
   // Methods
-  Widget displayAnnonce(List<Publication> liste, List<Pays> pays, List<Ville> villes, List<User> user,BuildContext context,
-      bool historique, Client client){
+  Widget displayAnnonce(List<Publication> liste, List<Pays> pays, List<Ville> villes, List<databaseuser.User> user,BuildContext context,
+      bool historique, Client client, StreamChatClient streamChatClient){
     return
     liste.length > 0 ?
     ListView.builder(
@@ -335,10 +337,10 @@ class EcranAnnonce {
                         height: 5,
                       )
                     ),
-                    displayObjectData(liste[index], pays, villes, user, context, historique, client)
+                    displayObjectData(liste[index], pays, villes, user, context, historique, client, streamChatClient)
                   ],
                 ) :
-                displayObjectData(liste[index], pays, villes, user, context, historique, client);
+                displayObjectData(liste[index], pays, villes, user, context, historique, client, streamChatClient);
               }
           );
         }

@@ -14,7 +14,7 @@ class DatabaseHelper {
   static final _databaseName = "fluttercommerce.db";
 
   // Increment this version when you need to change the schema.
-  static final _databaseVersion = 2;
+  static final _databaseVersion = 1;
 
 
   // Make this a singleton class.
@@ -61,9 +61,12 @@ class DatabaseHelper {
       case 1:
         await _createDatabase(db);
         break;
-      case 2:
+      /*case 2:
         await _addTownsFirstBatch(db);
         break;
+      case 3:
+        await _addStreamChatObject(db);
+        break;*/
     }
   }
 
@@ -71,14 +74,14 @@ class DatabaseHelper {
     await db.execute(
         'CREATE TABLE user (id INTEGER PRIMARY KEY,typepieceidentite TEXT,numeropieceidentite TEXT,'
             'nom TEXT, prenom TEXT, email TEXT,numero TEXT,adresse TEXT,fcmtoken TEXT,pwd TEXT, codeinvitation TEXT,'
-            'nationnalite TEXT, villeresidence INTEGER)');
+            'nationnalite TEXT, villeresidence INTEGER, streamtoken TEXT)');
     await db.execute(
         'CREATE TABLE pays (id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT,iso2 TEXT,iso3 TEXT,unicodeFlag TEXT)');
 
     await db.execute(
         'CREATE TABLE publication (id INTEGER PRIMARY KEY,userid INTEGER,villedepart INTEGER,'
             'villedestination INTEGER, datevoyage TEXT, datepublication TEXT,reserve INTEGER,active INTEGER,reservereelle INTEGER,souscripteur INTEGER,'
-            'milliseconds INTEGER, identifiant TEXT, devise INTEGER, prix INTEGER, read INTEGER)');
+            'milliseconds INTEGER, identifiant TEXT, devise INTEGER, prix INTEGER, read INTEGER, streamchannelid TEXT)');
 
     await db.execute(
         'CREATE TABLE ville (id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT,paysid INTEGER)');
@@ -91,11 +94,12 @@ class DatabaseHelper {
 
     await db.execute(
         'CREATE TABLE souscription (id INTEGER PRIMARY KEY AUTOINCREMENT,idpub INTEGER,iduser INTEGER,'
-            'millisecondes INTEGER, reserve INTEGER, statut INTEGER)');
+            'millisecondes INTEGER, reserve INTEGER, statut INTEGER, streamchannelid TEXT)');
 
     await db.execute(
         'CREATE TABLE parameters (id INTEGER PRIMARY KEY,state TEXT,travellocal INTEGER,'
-            'travelabroad INTEGER, notification INTEGER, epochdebut INTEGER, epochfin INTEGER)');
+            'travelabroad INTEGER, notification INTEGER, epochdebut INTEGER, epochfin INTEGER, comptevalide INTEGER'
+            ', deviceregistered INTEGER)');
 
     await db.execute(
         'CREATE TABLE filiation (id INTEGER PRIMARY KEY,code TEXT,bonus REAL)');
@@ -123,11 +127,8 @@ class DatabaseHelper {
     await database.insert('ville', Ville(id: 10, name: 'Gagnoa', paysid: 2).toDatabaseJson());
     // Add parameters :
     await database.insert('parameters', Parameters(id: 1, state: 'resumed', travellocal: 500, travelabroad: 5000
-        , notification: 0, epochdebut: 0, epochfin: 0).toDatabaseJson());
-  }
+        , notification: 0, epochdebut: 0, epochfin: 0, comptevalide: 0, deviceregistered: 0).toDatabaseJson());
 
-  Future<void> _addTownsFirstBatch(Database database) async {
-    // Ville Côte d\'Ivoire
     await database.insert('ville', Ville(id: 11, name: 'Korhogo', paysid: 2).toDatabaseJson());
     await database.insert('ville', Ville(id: 12, name: 'San-Pédro', paysid: 2).toDatabaseJson());
     await database.insert('ville', Ville(id: 13, name: 'Anyama', paysid: 2).toDatabaseJson());
@@ -145,4 +146,32 @@ class DatabaseHelper {
     await database.insert('ville', Ville(id: 25, name: 'Bondoukou', paysid: 2).toDatabaseJson());
     await database.insert('ville', Ville(id: 26, name: 'Dabou', paysid: 2).toDatabaseJson());
   }
+
+  /*Future<void> _addTownsFirstBatch(Database database) async {
+    // Ville Côte dIvoire
+    await database.insert('ville', Ville(id: 11, name: 'Korhogo', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 12, name: 'San-Pédro', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 13, name: 'Anyama', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 14, name: 'Divo', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 15, name: 'Soubré', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 16, name: 'Duékoué', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 17, name: 'Bouaflé', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 18, name: 'Bingerville', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 19, name: 'Guiglo', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 20, name: 'Lakota', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 21, name: 'Abengourou', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 22, name: 'Ferké', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 23, name: 'Adzopé', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 24, name: 'Méagui', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 25, name: 'Bondoukou', paysid: 2).toDatabaseJson());
+    await database.insert('ville', Ville(id: 26, name: 'Dabou', paysid: 2).toDatabaseJson());
+  }
+
+  // add  streamchannelid
+  Future _addStreamChatObject(Database db) async {
+    await db.execute('ALTER TABLE publication ADD COLUMN streamchannelid text');
+    await db.execute('ALTER TABLE souscription ADD COLUMN streamchannelid text');
+    await db.execute('ALTER TABLE parameters ADD COLUMN comptevalide INTEGER');
+    await db.execute('UPDATE parameters SET comptevalide = 0');
+  }*/
 }

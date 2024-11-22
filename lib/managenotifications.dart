@@ -182,7 +182,8 @@ class _ManageNotificationState extends State<ManageNotification> {
         travelabroad: parameters!.travelabroad,
         notification: _notification == ChoixNotification.perpetuelle ? 0 : 1,
         epochdebut: millisecondsDebut,
-        epochfin: millisecondsFin,
+        epochfin: millisecondsFin, comptevalide: parameters!.comptevalide,
+        deviceregistered: parameters!.deviceregistered,
       );
       await _repository.update(updateParam);
       // Set FLAG :

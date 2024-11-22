@@ -12,6 +12,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/simple/get_state.dart';
 import 'package:http/http.dart';
 import 'package:money_formatter/money_formatter.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:tro/getxcontroller/getpublicationcontroller.dart';
 import 'package:tro/getxcontroller/getsouscriptioncontroller.dart';
 import 'package:tro/messagerie.dart';
@@ -20,7 +21,9 @@ import 'package:tro/repositories/pays_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/reserverscreen.dart';
 import 'package:tro/singletons/outil.dart';
+import 'package:tro/streamchat.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:stream_chat/src/core/models/user.dart' as streamuser;
 
 import 'constants.dart';
 import 'httpbeans/hubwaveresponse.dart';
@@ -28,7 +31,7 @@ import 'main.dart';
 import 'managedeparture.dart';
 import 'models/pays.dart';
 import 'models/publication.dart';
-import 'models/user.dart';
+import 'models/user.dart' as databaseuser;
 import 'models/ville.dart';
 
 class HistoriqueAnnonce extends StatefulWidget {
@@ -40,9 +43,10 @@ class HistoriqueAnnonce extends StatefulWidget {
   final int userOrSuscriber;
   final bool historique;
   final Client client;
+  final StreamChatClient streamclient;
 
   HistoriqueAnnonce({Key? key, required this.publication, required this.ville, required this.villeDepart,
-    required this.userOrSuscriber, required this.historique, required this.client}) : super(key: key);
+    required this.userOrSuscriber, required this.historique, required this.client, required this.streamclient}) : super(key: key);
   //ArticleEcran.setId(this.idart, this.fromadapter, this.qte, this.client);
 
   @override
@@ -58,9 +62,9 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   late int userOrSuscriber; // 0 : Suscriber, 1 : Owner
   final _userRepository = UserRepository();
   final _paysRepository = PaysRepository();
-  User? owner;
-  User? cUser;
-  late List<User> listeUser;
+  databaseuser.User? owner;
+  databaseuser.User? cUser;
+  late List<databaseuser.User> listeUser;
   late BuildContext dialogContextPaiement;
   int choixpaiement = 0;
   final typePaiement = ["CinetPAY", "WAVE"];
@@ -86,6 +90,17 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
 
 
   // M E T H O D S
+  void openStramChat(StreamChatClient clt, Channel cnl) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context){
+              return StreamChatApp(channel: cnl);
+            }
+        )
+    );
+  }
+
   String formatPrice(int price){
     if(price > 0) {
       MoneyFormatter fmf = MoneyFormatter(
@@ -166,7 +181,8 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
         identifiant: publication.identifiant,
         devise: publication.devise,
         prix: publication.prix,
-        read: 1
+        read: 1,
+        streamchannelid: publication.streamchannelid
     );
     await outil.updatePublication(pub);
   }
@@ -177,7 +193,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   }
 
   // Charger les informations du OWNER si présent :
-  Future<List<User>> loadOwner() async{
+  Future<List<databaseuser.User>> loadOwner() async{
 
     // Set this to null
     outil.setPublicationSuscribed();
@@ -189,7 +205,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     // Get Devise
     devise = outil.getDevises().where((dev) => dev.id == publication.devise).single.libelle;
 
-    List<User> retour = [];
+    List<databaseuser.User> retour = [];
     if(userOrSuscriber ==0) {
       owner = await outil.findUserById(publication.souscripteur);
       if(owner != null){
@@ -205,7 +221,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
         // Get User Ids list :
         List<int> userIds = lesSouscriptions.map((e) => e.iduser).toList();
         // Now get Users :
-        List<User> liste = await outil.findAllUserByIdin(userIds);
+        List<databaseuser.User> liste = await outil.findAllUserByIdin(userIds);
         retour.addAll(liste);
 
         // Sum up reserve of SUSCRIBERs
@@ -415,11 +431,16 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                 else{
                   displayFloat('Réception déjà établie !', choix: 1);
                 }
-              }
-              ,
+              },
               onTap: () async {
-                // Display DIALOG
-                final result = await Navigator.push(context,
+                // Display DIALOG :
+                if(widget.streamclient.wsConnectionStatus == ConnectionStatus.connected){
+                  final channel = widget.streamclient.channel('messaging', id: publication.streamchannelid);
+                  channel.watch();
+                  openStramChat(widget.streamclient, channel);
+                }
+
+                /*final result = await Navigator.push(context,
                   MaterialPageRoute(
                     builder: (context) {
                       return Messagerie(idpub: publication.id, owner: ('${outil.getPublicationOwner()!.nom} ${outil.getPublicationOwner()!.prenom}'),
@@ -427,10 +448,9 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                     }
                   )
                 );
-
                 if(result == '1'){
                   await outil.refreshAllChatsFromResumed(0);
-                }
+                }*/
               },
               child: Container(
                   //margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
@@ -499,7 +519,8 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
           iduser: iduser,
           millisecondes: souscription.millisecondes,
           reserve: souscription.reserve,
-          statut: 1
+          statut: 1,
+          streamchannelid: souscription.streamchannelid
       );
       await outil.updateSouscription(souscriptionUpdate);
 
@@ -537,7 +558,8 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
           identifiant: publication.identifiant,
           devise: publication.devise,
           prix: publication.prix,
-          read: publication.read
+          read: publication.read,
+        streamchannelid: publication.streamchannelid
       );
       await outil.updatePublicationWithoutFurtherActions(pub);
       publicationDeletionDone = true;
@@ -572,7 +594,8 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
           identifiant: publication.identifiant,
           devise: publication.devise,
           prix: publication.prix,
-          read: publication.read
+          read: publication.read,
+          streamchannelid: publication.streamchannelid
       );
       await outil.updatePublicationWithoutFurtherActions(pub);
       publicationDeletionDone = true;
@@ -609,7 +632,8 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
           identifiant: publication.identifiant,
           devise: publication.devise,
           prix: publication.prix,
-          read: 1
+          read: 1,
+          streamchannelid: publication.streamchannelid
       );
       await outil.updatePublicationWithoutFurtherActions(pub);
 
@@ -1167,7 +1191,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                               },
                                               onTap: () async {
                                                 // Display DIALOG
-                                                final result = await Navigator.push(context,
+                                                /*final result = await Navigator.push(context,
                                                     MaterialPageRoute(
                                                         builder: (context) {
                                                           return Messagerie(idpub: publication.id, owner: ('${listeUser[index].nom} ${listeUser[index].prenom}'),
@@ -1180,6 +1204,14 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                                 //
                                                 if(result == '1'){
                                                   await outil.refreshAllChatsFromResumed(0);
+                                                }*/
+
+                                                Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(publication.id, listeUser[index].id);
+                                                if(widget.streamclient.wsConnectionStatus == ConnectionStatus.connected) {
+                                                  final channel = widget.streamclient.channel(
+                                                      'messaging', id: souscription.streamchannelid);
+                                                  channel.watch();
+                                                  openStramChat(widget.streamclient, channel);
                                                 }
                                               },
                                               child: Container(

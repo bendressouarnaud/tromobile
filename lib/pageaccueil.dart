@@ -22,13 +22,16 @@ import 'package:tro/models/user.dart' as databaseuser;
 import 'package:tro/repositories/parameters_repository.dart';
 import 'package:tro/repositories/pays_repository.dart';
 import 'package:tro/repositories/publication_repository.dart';
+import 'package:tro/repositories/souscription_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
 import 'package:tro/screens/listannonce.dart';
 import 'package:tro/services/servicegeo.dart';
 import 'package:tro/skeleton.dart';
 import 'package:tro/streamchat.dart';
+import 'package:tro/streamcontroller/mycustomeventhandler.dart';
 
+import 'annonces.dart';
 import 'chatmanagement.dart';
 import 'constants.dart';
 import 'getxcontroller/getnavbarchat.dart';
@@ -56,7 +59,8 @@ import 'models/user.dart';
 
 class WelcomePage extends StatefulWidget {
   final Client client;
-  const WelcomePage({Key? key, required this.client}) : super(key: key);
+  final StreamChatClient streamclient;
+  const WelcomePage({Key? key, required this.client, required this.streamclient}) : super(key: key);
 
   @override
   State<WelcomePage> createState() => _WelcomePageState();
@@ -81,6 +85,7 @@ class _WelcomePageState extends State<WelcomePage> {
   final _userRepository = UserRepository();
   final _villeRepository = VilleRepository();
   final _publicationRepository = PublicationRepository();
+  final _souscriptionRepository = SouscriptionRepository();
   List<Pays> listePays = [];
   List<Ville> listeVille = [];
   late List<Publication> listePublication;
@@ -94,6 +99,17 @@ class _WelcomePageState extends State<WelcomePage> {
   int cptInitTaillePublication = 0;
   //
   int tailleChatNotRead = 0;
+  late databaseuser.User locUser;
+  bool streamUserConnected = false;
+  //
+  List<Publication> listePub = [];
+  List<Souscription> listeSouscription = [];
+  late StreamSubscription<ConnectivityResult> _subscription;
+  bool checkNetworkConnected = false;
+
+  // Try for a TEST :
+  //late StreamChannelListController _listController;
+
 
 
   // M e t h o d  :
@@ -103,7 +119,20 @@ class _WelcomePageState extends State<WelcomePage> {
     //getPublicationNotRead();
     setupInteractedMessage();
     chechNotificationPermission();
+    // Try THIS :
+    //getPubAndSouscription();
+    //initLocalConnection();
 
+    _subscription = Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+      // Handle the new connectivity status!
+      if (result == ConnectivityResult.mobile || result == ConnectivityResult.wifi) {
+        checkNetworkConnected = true;
+      }
+      else{
+        checkNetworkConnected = false;
+      }
+      outil.setCheckNetworkConnected(checkNetworkConnected);
+    });
 
     // Initialize the AppLifecycleListener class and pass callbacks
     _listener = AppLifecycleListener(
@@ -163,6 +192,7 @@ class _WelcomePageState extends State<WelcomePage> {
   // Check if user has logged in and check if NOTIFICATIONs PERMISSIONs has been given :
   void chechNotificationPermission() async{
     databaseuser.User? usr = await outil.pickLocalUser();
+    locUser = usr!;
     //FirebaseMessaging messaging = FirebaseMessaging.instance;
     //NotificationSettings settings = await messaging.getNotificationSettings();
     if(usr != null){
@@ -171,6 +201,75 @@ class _WelcomePageState extends State<WelcomePage> {
         initFire();
       }
     }
+  }
+
+  // String
+  String getFirstPrenomIfNeeded(String prenom){
+    List<String> tp = prenom.split(" ");
+    return tp[0];
+  }
+
+  void initLocalConnection() async {
+    try {
+      final client = StreamChatCore
+          .of(context)
+          .client;
+      final streamUser = streamuser.User(
+          id: locUser.id.toString(),
+          name: '${locUser.nom} ${getFirstPrenomIfNeeded(locUser.prenom)}'
+      );
+      if(!(widget.streamclient.wsConnectionStatus == ConnectionStatus.connected)){
+        await widget.streamclient.connectUser(
+            streamUser,
+            locUser.streamtoken);
+        await client.updateUser(streamUser);
+        //
+        //print('Connexion ******** effectuée');
+        streamUserConnected = true;
+
+        // Register DEVICE if NOT :
+        Parameters? prms = await _parametersController.refreshData();
+        if(prms!.deviceregistered == 0) {
+          //
+          if (defaultTargetPlatform == TargetPlatform.android) {
+            await client.addDevice(locUser.fcmtoken,
+                defaultTargetPlatform == TargetPlatform.android ? PushProvider
+                    .firebase : PushProvider.apn, pushProviderName: 'bagages_messaging');
+            // Update :
+            prms = Parameters(id: prms.id,
+              state: prms.state,
+              travellocal: prms.travellocal,
+              travelabroad: prms.travelabroad,
+              notification: prms.notification,
+              epochdebut: prms.epochdebut,
+              epochfin: prms.epochfin,
+              comptevalide: prms.comptevalide,
+              deviceregistered: 1
+            );
+            await _parametersController.updateData(prms);
+          }
+        }
+
+
+        /*_listController = StreamChannelListController(
+          client: widget.streamclient,
+          eventHandler: MyCustomEventHandler(),
+        );*/
+      }
+    }
+    catch (e){
+      print('Impossible de connecter l\'utilisateur : $e');
+      displaySnack('Impossible de connecter l\'utilisateur : $e');
+    }
+  }
+
+  void displaySnack(String message){
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          duration: const Duration(milliseconds: 1500),
+          content: Text(message)
+      ),
+    );
   }
 
   // Update things :
@@ -183,6 +282,8 @@ class _WelcomePageState extends State<WelcomePage> {
         notification: prms != null ? prms.notification : 0,
         epochdebut: prms != null ? prms.epochdebut : 0,
         epochfin: prms != null ? prms.epochfin : 0,
+      comptevalide: prms!.comptevalide,
+      deviceregistered: prms!.deviceregistered,
     );
     await _parametersController.updateData(prms);
   }
@@ -190,22 +291,22 @@ class _WelcomePageState extends State<WelcomePage> {
   @override
   void dispose() {
     // Do not forget to dispose the listener
+    _subscription.cancel();
     _listener.dispose();
     _parametersController.dispose();
     _userController.dispose();
+    try {
+      widget.streamclient.disconnectUser();
+      widget.streamclient.closeConnection();
+      widget.streamclient.dispose();
+      //
+      print('DéConnexion effectuée');
+    }
+    catch (e){
+      print('Opératio déConnexion : $e');
+    }
     //_publicationController.dispose();
     super.dispose();
-  }
-
-  void openStramChat(StreamChatClient clt, Channel cnl) {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context){
-              return StreamChatApp(client: clt, channel: cnl);
-            }
-        )
-    );
   }
 
   // Init Objects :
@@ -217,6 +318,7 @@ class _WelcomePageState extends State<WelcomePage> {
     //
     List<Publication> lte = await outil.findAllPublication();//publicationData;
     //taillePublicationNotRead = lte.where((element) => element.read == 0).toList().length;
+    if(!streamUserConnected) initLocalConnection();
     return lte;
   }
 
@@ -247,102 +349,113 @@ class _WelcomePageState extends State<WelcomePage> {
   // Factoriser le code :
   void processIncomingFCMessage(RemoteMessage message, bool fromNotification) async{
     // Create Object :
-    int sujet = int.parse(message.data['sujet']);
-    switch(sujet){
-      case 1:
-        if(!fromNotification) {
-          Publication? publication = Servicegeo().generatePublication(message);
-          if (publication != null) {
-            // Check if this ONE exists ALREADY or NOT :
-            Publication? pubCheck = await outil.findOptionalPublicationById(publication.id);
-            if(pubCheck == null){
-              // Create
-              outil.addPublication(publication);
-            }
-            else{
-              // Update :
-              await outil.updatePublicationWithoutFurtherActions(publication);
+    String tampon = message.data['type'];
+    if(tampon == "message.new"){
+      // From STREAM CHAT, Display 'MESSAGE' :
+      displaySnack('Vous avez un nouveau message !!!');
+    }
+    else {
+      int sujet = int.parse(message.data['sujet']);
+      switch(sujet){
+        case 1:
+          if(!fromNotification) {
+            Publication? publication = Servicegeo().generatePublication(message);
+            if (publication != null) {
+              // Check if this ONE exists ALREADY or NOT :
+              Publication? pubCheck = await outil.findOptionalPublicationById(publication.id);
+              if(pubCheck == null){
+                // Create
+                outil.addPublication(publication);
+              }
+              else{
+                // Update :
+                await outil.updatePublicationWithoutFurtherActions(publication);
+              }
             }
           }
-        }
-        else{
-          // Open 'HistoriqueAnnonce'
-          Publication pub = await outil.refreshPublication(int.parse(message.data['id']));
-          Ville vDepart = await outil.getVilleById(int.parse(message.data['villedepart']));
-          Ville vDest = await outil.getVilleById(int.parse(message.data['villedestination']));
-          databaseuser.User? lUser = await outil.pickLocalUser();
-          int userType = !(lUser!.id == int.parse(message.data['userid'])) ? 0 : 1;
-          openHistoriqueAnnonce(pub, vDepart, vDest, userType, false);
-        }
-        break;
+          else{
+            // Open 'HistoriqueAnnonce'
+            Publication pub = await outil.refreshPublication(int.parse(message.data['id']));
+            Ville vDepart = await outil.getVilleById(int.parse(message.data['villedepart']));
+            Ville vDest = await outil.getVilleById(int.parse(message.data['villedestination']));
+            databaseuser.User? lUser = await outil.pickLocalUser();
+            int userType = !(lUser!.id == int.parse(message.data['userid'])) ? 0 : 1;
+            openHistoriqueAnnonce(pub, vDepart, vDest, userType, false);
+          }
+          break;
 
-      case 2:
-        if(!fromNotification) {
-          // Create User if not exist :
-          Servicegeo().processReservationNotif(message, outil);
-        }
-        else{
-          // Open 'HistoriqueAnnonce'
-          Publication pub = await outil.refreshPublication(int.parse(message.data['idpub']));
-          Ville vDepart = await outil.getVilleById(pub.villedepart);
-          Ville vDest = await outil.getVilleById(pub.villedestination);
-          openHistoriqueAnnonce(pub, vDepart, vDest, 1, false);
-        }
-        break;
+        case 2:
+          if(!fromNotification) {
+            // Create User if not exist :
+            Servicegeo().processReservationNotif(message, outil);
+          }
+          else{
+            // Open 'HistoriqueAnnonce'
+            Publication pub = await outil.refreshPublication(int.parse(message.data['idpub']));
+            Ville vDepart = await outil.getVilleById(pub.villedepart);
+            Ville vDest = await outil.getVilleById(pub.villedestination);
+            openHistoriqueAnnonce(pub, vDepart, vDest, 1, false);
+          }
+          break;
 
-      case 3:
-        if(!fromNotification) {
-          // Create User if not exist :
-          Servicegeo().processIncommingChat(message, outil, widget.client);
-        }
-        else{
-          // Open 'CHAT'
-          databaseuser.User usr = (await outil.findAllUserByIdin([int.parse(message.data['sender'])])).single;
-          openMessage(int.parse(message.data['idpub']),
-              ("${usr.nom} ${usr.prenom}"),
-              usr.id
-          );
-        }
-        break;
+        case 3:
+          if(!fromNotification) {
+            // Create User if not exist :
+            Servicegeo().processIncommingChat(message, outil, widget.client);
+          }
+          else{
+            // Open 'CHAT'
+            databaseuser.User usr = (await outil.findAllUserByIdin([int.parse(message.data['sender'])])).single;
+            openMessage(int.parse(message.data['idpub']),
+                ("${usr.nom} ${usr.prenom}"),
+                usr.id
+            );
+          }
+          break;
 
-      case 4:
-        if(!fromNotification) {
-          // Create User if not exist :
-          Servicegeo().performReservationCheck(message, outil);
-        }
-        else{
-          // Open 'HistoriqueAnnonce'
-          Publication pub = await outil.refreshPublication(int.parse(message.data['publicationid']));
-          Ville vDepart = await outil.getVilleById(pub.villedepart);
-          Ville vDest = await outil.getVilleById(pub.villedestination);
-          openHistoriqueAnnonce(pub, vDepart, vDest, 0, false);
-        }
-        break;
+        case 4:
+          if(!fromNotification) {
+            // Create User if not exist :
+            Servicegeo().performReservationCheck(message, outil);
+          }
+          else{
+            // Open 'HistoriqueAnnonce'
+            Publication pub = await outil.refreshPublication(int.parse(message.data['publicationid']));
+            Ville vDepart = await outil.getVilleById(pub.villedepart);
+            Ville vDest = await outil.getVilleById(pub.villedestination);
+            openHistoriqueAnnonce(pub, vDepart, vDest, 0, false);
+          }
+          break;
 
-      case 5:
+        case 5:
         //
-        Servicegeo().trackPublicationDelivery(message, outil);
-        break;
+          Servicegeo().trackPublicationDelivery(message, outil);
+          break;
 
-      case 6:
-        Servicegeo().markChatReceipt(message);
-        break;
+        case 6:
+          Servicegeo().markChatReceipt(message);
+          break;
 
-      case 7:
-        Servicegeo().updatePublicationReserve(message);
-        break;
+        case 7:
+          Servicegeo().updatePublicationReserve(message);
+          break;
 
-      case 8:
-        Servicegeo().deactivatePublicationFromOwner(message);
-        break;
+        case 8:
+          Servicegeo().deactivatePublicationFromOwner(message);
+          break;
 
-      case 9:
-        Servicegeo().deactivateSubscription(message);
-        break;
+        case 9:
+          Servicegeo().deactivateSubscription(message);
+          break;
 
-      case 10:
-        Servicegeo().upgradeBonus(message);
-        break;
+        case 10:
+          Servicegeo().upgradeBonus(message);
+          break;
+
+        case 11:
+          Servicegeo().updatePublicationChannelID(message);
+          break;
+      }
     }
   }
 
@@ -356,7 +469,7 @@ class _WelcomePageState extends State<WelcomePage> {
                   villeDepart: destination,
                   userOrSuscriber: userType,
                 historique: historique,
-                client: widget.client,
+                client: widget.client, streamclient: widget.streamclient,
               );
             }
         )
@@ -531,17 +644,17 @@ class _WelcomePageState extends State<WelcomePage> {
                   // Close dialog
                   Navigator.pop(sContext);
 
-                  final sClient = StreamChatClient('tbyj8qz6ucx7');
-                  await sClient.connectUser(streamuser.User(id: '1'),
-                      'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiam9obiIsImlhdCI6MTczMTUwNTIzNywiaXNzIjoiU3RyZWFtIENo'
-                          'YXQgSmF2YSBTREsiLCJzdWIiOiJTdHJlYW0gQ2hhdCBKYXZhIFNESyJ9.T1877-v-yHHC_7vJk2-THmxW_uGy4l1YvKSQcF0SrnU');
-                  final channel = sClient.channel('messaging', id: 'flutterdev');
+                  /*final sClient = StreamChatClient('tbyj8qz6ucx7');
+                  await sClient.connectUser(streamuser.User(id: 'ngbandamakonan'),
+                      'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoibmdiYW5kYW1ha29uYW4iLCJpYXQiOjE3MzE4MzQzNDksImlzcyI6IlN0cmVhbSBDaGF0IEphdmEgU0RLIiwic3ViIjoiU3RyZWFtIENoYXQgSmF2YSBTREsifQ.Z_6Qv621l38j9WrSvijQUMN6qUKw9818qWsKnu1bCbw');
+                  final channel = sClient.channel('messaging', id: 'flutterdevi');
                   channel.watch();
 
                   //
-                  openStramChat(sClient, channel);
+                  openStramChat(sClient, channel);*/
+
                   // Launch ACTIVITY if needed :
-                  /*Navigator.push(
+                  Navigator.push(
                       sContext,
                       MaterialPageRoute(
                           builder: (context){
@@ -550,7 +663,7 @@ class _WelcomePageState extends State<WelcomePage> {
                               client: widget.client);
                           }
                       )
-                  );*/
+                  );
                 },
                 child: const Text('Valider',
                   style: TextStyle(
@@ -595,7 +708,7 @@ class _WelcomePageState extends State<WelcomePage> {
     if(tailleChatNotRead > 0){
 
       // From There we can clear NOTIFICATIONS :
-      clearNotifications();
+      //clearNotifications();
 
       return Badge.count(
           count: tailleChatNotRead,
@@ -605,6 +718,12 @@ class _WelcomePageState extends State<WelcomePage> {
     else {
       return Icon(iconData);
     }
+  }
+
+  // Get Publication & Souscription for which stramchannelId is set :
+  void getPubAndSouscription() async {
+    listePub = await _publicationRepository.findAll();// WithStreamId();
+    listeSouscription = await _souscriptionRepository.findAllWithStreamId();
   }
 
   @override
@@ -620,6 +739,9 @@ class _WelcomePageState extends State<WelcomePage> {
                 bottomLeft: Radius.circular(30),
               )),
           onDestinationSelected: (int index) {
+            // Refresh the LISTS
+            getPubAndSouscription();
+
             setState(() {
               displayFloatBut = index == 0 ? true : false;
               currentPageIndex = index;
@@ -669,7 +791,8 @@ class _WelcomePageState extends State<WelcomePage> {
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
-              )),
+              )
+          ),
           /*actions: [
             IconButton(
                 onPressed: () {},
@@ -721,7 +844,7 @@ class _WelcomePageState extends State<WelcomePage> {
                       return SingleChildScrollView(
                         child: EcranAnnonce().displayAnnonce(reste
                             , listePays, listeVille,
-                        _userController.userData ,context, false, widget.client),
+                        _userController.userData ,context, false, widget.client, widget.streamclient),
                       );
                     }
                 );
@@ -733,8 +856,8 @@ class _WelcomePageState extends State<WelcomePage> {
               }
             }
           ),
-          ChatManagement(client: widget.client),
-          Historique(client: widget.client),
+          AnnoncesUsers(streamclient: widget.streamclient, listePublication: listePub, listeSouscription: listeSouscription),//ChatManagement(client: widget.client),
+          Historique(client: widget.client, streamclient: widget.streamclient),
           EcranCompte(client: widget.client),
         ][currentPageIndex]);
   }
