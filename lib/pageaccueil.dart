@@ -176,9 +176,14 @@ class _WelcomePageState extends State<WelcomePage> {
         //updateAppState('detached');
       case AppLifecycleState.resumed:
         // Try to refresh PUBLICATION from THERE :
+        //print('--------->      resumed');
         outil.refreshAllPublicationsFromResumed();
       case AppLifecycleState.inactive:
         //print('--------->      inactive');
+        if(outil.getListDate().isNotEmpty){
+          // Check to CLEAN the LIST before being called in displayAnnonce(...) method of listannonce.dart
+          outil.resetListe();
+        }
         //updateAppState('inactive');
       case AppLifecycleState.hidden:
         //print('--------->      hidden');
@@ -741,6 +746,12 @@ class _WelcomePageState extends State<WelcomePage> {
           onDestinationSelected: (int index) {
             // Refresh the LISTS
             getPubAndSouscription();
+
+            // Set the refresh CHECK there too :
+            if(outil.getListDate().isNotEmpty){
+              // Check to CLEAN the LIST before being called in displayAnnonce(...) method of listannonce.dart
+              outil.resetListe();
+            }
 
             setState(() {
               displayFloatBut = index == 0 ? true : false;

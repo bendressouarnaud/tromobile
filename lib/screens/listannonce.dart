@@ -10,6 +10,7 @@ import 'package:tro/repositories/ville_repository.dart';
 import '../constants.dart';
 import '../getxcontroller/getpublicationcontroller.dart';
 import '../historiqueannonce.dart';
+import '../main.dart';
 import '../models/publication.dart';
 import '../models/user.dart' as databaseuser;
 import '../models/ville.dart';
@@ -25,7 +26,8 @@ class EcranAnnonce {
   final lesCouleurs = [Colors.black12, Colors.blue[100], Colors.blueGrey[100], Colors.red[100], Colors.orange[100], Colors.yellow[100],
   Colors.green[100], Colors.purple[100], Colors.brown[100], Colors.white70, Colors.pink[100]];
   int cptCouleur = 0;
-  List<String> listeDate = [];
+  List<String> listeDate = List.empty(growable: true);
+  bool raiseFlag = false;
 
 
   // Limit Country length :
@@ -168,17 +170,17 @@ class EcranAnnonce {
   }
 
   String displayDate(String date) {
-    if( listeDate.isEmpty ){
-      listeDate.add(processDateDisplay(date));
-      return listeDate[0];
+    if( outil.getListDate().isEmpty ){
+      outil.addNewDate(processDateDisplay(date));
+      return outil.getListDate()[0];
     }
     else{
       String tampon = processDateDisplay(date);
       // Look for this :
-      int taille = listeDate.where((element) => element == tampon).toList().length;
+      int taille = outil.getListDate().where((element) => element == tampon).toList().length;
       if(taille == 0){
         // No match, add :
-        listeDate.add(tampon);
+        outil.addNewDate(tampon);
         return tampon;
       }
       else{
@@ -310,78 +312,81 @@ class EcranAnnonce {
   // Methods
   Widget displayAnnonce(List<Publication> liste, List<Pays> pays, List<Ville> villes, List<databaseuser.User> user,BuildContext context,
       bool historique, Client client, StreamChatClient streamChatClient){
-    return
-    liste.length > 0 ?
-    ListView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        scrollDirection: Axis.vertical,
-        shrinkWrap: true,
-        itemCount: liste.length,
-        itemBuilder: (BuildContext context, int index) {
-          return GetBuilder<PublicationGetController>(
-              builder: (_)
-              {
-                String currentDate = displayDate(liste[index].datepublication);
-                return currentDate.isNotEmpty ?
-                Column(
-                  children: [
-                    Container(
-                      //alignment: Alignment.centerLeft,
-                      margin: const EdgeInsets.only(left: 7,right: 7, top: 15),
-                      child: Text(currentDate)
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(left: 7,right: 7, top: 7, bottom: 7),
-                      child: const Divider(
-                        color: Colors.black,
-                        height: 5,
-                      )
-                    ),
-                    displayObjectData(liste[index], pays, villes, user, context, historique, client, streamChatClient)
-                  ],
-                ) :
-                displayObjectData(liste[index], pays, villes, user, context, historique, client, streamChatClient);
-              }
-          );
-        }
-    ) :
-    Container(
-      margin: EdgeInsets.only(top: (MediaQuery.of(context).size.width / 2)),
-        width: MediaQuery.of(context).size.width,
-        child: Column(
-          children: [
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.airplanemode_active,
-                  color: Colors.black,
-                  size: 50.0,
-                ),
-                Icon(
-                  Icons.car_repair,
-                  color: Colors.brown,
-                  size: 50.0,
-                ),
-                Icon(
-                  Icons.directions_boat_outlined,
-                  color: Color.fromRGBO(51, 159, 255, 1.0),
-                  size: 50.0,
-                )
-              ],
-            ),
-            Container(
-              margin: const EdgeInsets.only(top: 20),
-              child: const Text("Aucune annonce",
-                  style: TextStyle(
+    if(liste.length > 0){
+      ListView listeT = ListView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          scrollDirection: Axis.vertical,
+          shrinkWrap: true,
+          itemCount: liste.length,
+          itemBuilder: (BuildContext context, int index) {
+            return GetBuilder<PublicationGetController>(
+                builder: (_)
+                {
+                  String currentDate = displayDate(liste[index].datepublication);
+                  return currentDate.isNotEmpty ?
+                  Column(
+                    children: [
+                      Container(
+                        //alignment: Alignment.centerLeft,
+                          margin: const EdgeInsets.only(left: 7,right: 7, top: 15),
+                          child: Text(currentDate)
+                      ),
+                      Container(
+                          margin: const EdgeInsets.only(left: 7,right: 7, top: 7, bottom: 7),
+                          child: const Divider(
+                            color: Colors.black,
+                            height: 5,
+                          )
+                      ),
+                      displayObjectData(liste[index], pays, villes, user, context, historique, client, streamChatClient)
+                    ],
+                  ) :
+                  displayObjectData(liste[index], pays, villes, user, context, historique, client, streamChatClient);
+                }
+            );
+          }
+      );
+      return listeT;
+    }
+    else{
+      return Container(
+          margin: EdgeInsets.only(top: (MediaQuery.of(context).size.width / 2)),
+          width: MediaQuery.of(context).size.width,
+          child: Column(
+            children: [
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.airplanemode_active,
                     color: Colors.black,
-                    //fontWeight: FontWeight.bold,
-                    fontSize: 20,
+                    size: 50.0,
+                  ),
+                  Icon(
+                    Icons.car_repair,
+                    color: Colors.brown,
+                    size: 50.0,
+                  ),
+                  Icon(
+                    Icons.directions_boat_outlined,
+                    color: Color.fromRGBO(51, 159, 255, 1.0),
+                    size: 50.0,
+                  )
+                ],
+              ),
+              Container(
+                  margin: const EdgeInsets.only(top: 20),
+                  child: const Text("Aucune annonce",
+                      style: TextStyle(
+                        color: Colors.black,
+                        //fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      )
                   )
               )
-            )
-          ],
-        )
-    );
+            ],
+          )
+      );
+    }
   }
 }

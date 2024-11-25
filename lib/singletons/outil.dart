@@ -39,6 +39,7 @@ class Outil {
   ];
   bool fcmFlag = false;
   bool checkNetworkConnected = false;
+  List<String> listeDate = [];
 
   // M E T H O D S
   // using a factory is important because it promises to return _an_ object of this type but it doesn't promise to make a new one.
@@ -310,5 +311,17 @@ class Outil {
 
   bool getCheckNetworkConnected() {
     return checkNetworkConnected;
+  }
+
+  void resetListe() {
+    listeDate = [];
+  }
+
+  void addNewDate(String date) {
+    listeDate.add(date);
+  }
+
+  List<String> getListDate() {
+    return listeDate;
   }
 }
