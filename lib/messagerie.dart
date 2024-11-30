@@ -62,7 +62,7 @@ class _HMessagerie extends State<Messagerie> {
     idSuscriber = widget.idSuscriber;
     owner = widget.owner;
 
-    _subscription = Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+    /*_subscription = Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
       // Handle the new connectivity status!
       if (result == ConnectivityResult.mobile || result == ConnectivityResult.wifi) {
         checkNetworkConnected = true;
@@ -70,7 +70,7 @@ class _HMessagerie extends State<Messagerie> {
       else{
         checkNetworkConnected = false;
       }
-    });
+    });*/
   }
 
 
