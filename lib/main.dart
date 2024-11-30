@@ -571,15 +571,15 @@ Future<void> main() async {
   // Wait for :
   WidgetsFlutterBinding.ensureInitialized();
 
-  //if(defaultTargetPlatform == TargetPlatform.android) {
+  if(defaultTargetPlatform == TargetPlatform.android) {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
     // Set the background messaging handler early on, as a named top-level function
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  //}
+  }
 
   // Init SERVICE :
-  //await initializeService();
+  await initializeService();
   client = await getSSLPinningClient();
   streamClient = StreamChatClient(dotenv.env['API_STREAM']!);
 

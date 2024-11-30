@@ -540,150 +540,152 @@ class _NewCreationState extends State<EcranCreationCompte> {
               Expanded(
                 child: Align(
                   alignment: FractionalOffset.bottomLeft,
-                  child: SafeArea(
-                    child: Container(
-                        padding: const EdgeInsets.all(10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            ElevatedButton.icon(
-                              style: ButtonStyle(
-                                  backgroundColor: MaterialStateColor.resolveWith((states) => Colors.blueGrey)
-                              ),
-                              label: const Text("Retour",
-                                  style: TextStyle(
-                                      color: Colors.white
-                                  )),
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              icon: const Icon(
-                                Icons.arrow_back_ios_new,
-                                size: 20,
-                                color: Colors.white,
-                              ),
-                            ),
-                            ElevatedButton.icon(
-                              style: ButtonStyle(
-                                  backgroundColor: MaterialStateColor.resolveWith((states) => Colors.brown)
-                              ),
-                              label: const Text("Enregistrer",
-                                  style: TextStyle(
-                                      color: Colors.white
-                                  )
-                              ),
-                              onPressed: () async{
-                                outil.setCheckNetworkConnected(true); // We force this :
-                                if(outil.getCheckNetworkConnected()) {
-                                  if(checkField()){
-                                    Fluttertoast.showToast(
-                                        msg: "Veuillez renseigner tous les champs !",
-                                        toastLength: Toast.LENGTH_LONG,
-                                        gravity: ToastGravity.CENTER,
-                                        timeInSecForIosWeb: 3,
-                                        backgroundColor: Colors.red,
-                                        textColor: Colors.white,
-                                        fontSize: 16.0
-                                    );
-                                  }
-                                  else{
-                                    // Further CHECK on EMAIL :
-                                    if(!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
-                                        .hasMatch(emailController.text.trim())){
-                                      displayToast("Renseignez une adresse email vailde !");
-                                      return;
-                                    }
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        ElevatedButton.icon(
+                          style: ButtonStyle(
+                              backgroundColor: MaterialStateColor.resolveWith((states) => Colors.blueGrey)
+                          ),
+                          label: const Text("Retour",
+                              style: TextStyle(
+                                  color: Colors.white
+                              )),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          style: ButtonStyle(
+                              backgroundColor: MaterialStateColor.resolveWith((states) => Colors.brown)
+                          ),
+                          label: const Text("Enregistrer",
+                              style: TextStyle(
+                                  color: Colors.white
+                              )
+                          ),
+                          onPressed: () {
+                            outil.setCheckNetworkConnected(true); // We force this :
+                            if(outil.getCheckNetworkConnected()) {
+                              if(checkField()){
+                                Fluttertoast.showToast(
+                                    msg: "Veuillez renseigner tous les champs !",
+                                    toastLength: Toast.LENGTH_LONG,
+                                    gravity: ToastGravity.CENTER,
+                                    timeInSecForIosWeb: 3,
+                                    backgroundColor: Colors.red,
+                                    textColor: Colors.white,
+                                    fontSize: 16.0
+                                );
+                              }
+                              else{
+                                // Further CHECK on EMAIL :
+                                if(!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+                                    .hasMatch(emailController.text.trim())){
+                                  displayToast("Renseignez une adresse email vailde !");
+                                  return;
+                                }
 
-                                    // Get 'COMMUNE' id
-                                    var abrevPays = listeCountry.where((element) => element == paysDepartMenu!)
-                                        .first.iso2;
-                                    // Get 'Genre' id :
-                                    //var idGenr = defaultGenre == "M" ? 1 : 0;
-                                    var idGenr = 1;
-                                    showDialog(
-                                        barrierDismissible: false,
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          dialogContext = context;
-                                          return WillPopScope(
-                                              onWillPop: () async => false,
-                                              child: const AlertDialog(
-                                                  title: Text('Information'),
-                                                  content: SizedBox(
-                                                      height: 100,
-                                                      child: Column(
-                                                        children: [
-                                                          Text("Création du compte ..."),
-                                                          SizedBox(
-                                                            height: 20,
-                                                          ),
-                                                          SizedBox(
-                                                              height: 30.0,
-                                                              width: 30.0,
-                                                              child: CircularProgressIndicator(
-                                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                                                                strokeWidth: 3.0, // Width of the circular line
-                                                              )
+                                // Get 'COMMUNE' id
+                                var abrevPays = listeCountry.where((element) => element == paysDepartMenu!)
+                                    .first.iso2;
+                                // Get 'Genre' id :
+                                //var idGenr = defaultGenre == "M" ? 1 : 0;
+                                var idGenr = 1;
+                                showDialog(
+                                    barrierDismissible: false,
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      dialogContext = context;
+                                      return WillPopScope(
+                                          onWillPop: () async => false,
+                                          child: const AlertDialog(
+                                              title: Text('Information'),
+                                              content: SizedBox(
+                                                  height: 100,
+                                                  child: Column(
+                                                    children: [
+                                                      Text("Création du compte ..."),
+                                                      SizedBox(
+                                                        height: 20,
+                                                      ),
+                                                      SizedBox(
+                                                          height: 30.0,
+                                                          width: 30.0,
+                                                          child: CircularProgressIndicator(
+                                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                                            strokeWidth: 3.0, // Width of the circular line
                                                           )
-                                                        ],
                                                       )
+                                                    ],
                                                   )
                                               )
-                                          );
-                                        }
-                                    );
-
-                                    // Send DATA :
-                                    flagSendData = true;
-                                    flagServerResponse = true;
-
-                                    final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-                                    if(apnsToken != null){
-                                      generateTokenSuscription(abrevPays, paysDepartMenu!.name);
-                                      // Run TIMER :
-                                      Timer.periodic(
-                                        const Duration(seconds: 1),
-                                            (timer) {
-                                          // Update user about remaining time
-                                          if(!flagServerResponse){
-                                            Navigator.pop(dialogContext);
-                                            timer.cancel();
-
-                                            // Kill ACTIVITY :
-                                            if(!flagSendData) {
-                                              if (widget.returnValue) {
-                                                Navigator.pop(context, 1);
-                                              }
-                                              else {
-                                                Navigator.pop(context);
-                                              }
-                                              //Navigator.of(context).pop({'selection': '1'});
-                                            }
-                                            else {
-                                              displaySnack('Création du compte impossible!');
-                                            }
-                                          }
-                                        },
+                                          )
                                       );
                                     }
-                                    else {
-                                      displaySnack('APN Indisponible');
-                                    }
-                                  }
+                                );
+
+                                // Send DATA :
+                                flagSendData = true;
+                                flagServerResponse = true;
+                                if(defaultTargetPlatform == TargetPlatform.android){
+                                  generateTokenSuscription(abrevPays, paysDepartMenu!.name); // FOr TOKEN
                                 }
                                 else{
-                                  displaySnack('Assure-vous d\'avoir la connexion INTERNET!');
+                                  // Currently not running FCM for iphone
+                                  sendAccountRequest(abrevPays, paysDepartMenu!.name);
                                 }
-                              },
-                              icon: const Icon(
-                                Icons.save,
-                                size: 20,
-                                color: Colors.white,
-                              ),
-                            )
-                          ],
-                        ),
-                      )
+
+                                // Run TIMER :
+                                Timer.periodic(
+                                  const Duration(seconds: 1),
+                                      (timer) {
+                                    // Update user about remaining time
+                                    if(!flagSendData){
+                                      Navigator.pop(dialogContext);
+                                      timer.cancel();
+
+                                      // Kill ACTIVITY :
+                                      if(!flagServerResponse) {
+                                        if (Navigator.canPop(context)) {
+                                          if(!flagSendData) {
+                                            if (widget.returnValue) {
+                                              Navigator.pop(context, 1);
+                                            }
+                                            else {
+                                              Navigator.pop(context);
+                                            }
+                                            //Navigator.of(context).pop({'selection': '1'});
+                                          }
+                                          else {
+                                            displaySnack('Création du compte impossible!');
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                );
+                              }
+                            }
+                            else{
+                              displaySnack('Assure-vous d\'avoir la connexion INTERNET!');
+                            }
+                          },
+                          icon: const Icon(
+                            Icons.save,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                        )
+                      ],
+                    ),
                   )
                 ),
               ),

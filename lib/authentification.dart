@@ -359,15 +359,13 @@ class _NewAuth extends State<AuthentificationEcran> {
                             // Send DATA :
                             flagSendData = true;
                             closeAlertDialog = true;
-                            generateTokenSuscription();
-                            /*
                             if(defaultTargetPlatform == TargetPlatform.android){
                               generateTokenSuscription();//
                             }
                             else{
                               // Currently not running FCM for iphone
                               authenicatemobilecustomer();
-                            }*/
+                            }
 
                             // Run TIMER :
                             Timer.periodic(
