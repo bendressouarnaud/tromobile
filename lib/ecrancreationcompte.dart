@@ -634,38 +634,48 @@ class _NewCreationState extends State<EcranCreationCompte> {
                                     );
 
                                     // Send DATA :
+                                    // Send DATA :
                                     flagSendData = true;
                                     flagServerResponse = true;
 
-                                    final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-                                    if(apnsToken != null){
+                                    if(defaultTargetPlatform == TargetPlatform.iOS){
+                                      final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+                                      if(apnsToken == null){
+                                        flagServerResponse = false;
+                                      }
+                                      else{
+                                        generateTokenSuscription(abrevPays, paysDepartMenu!.name);
+                                      }
+                                    }
+                                    else{
                                       generateTokenSuscription(abrevPays, paysDepartMenu!.name);
-                                      // Run TIMER :
-                                      Timer.periodic(
-                                        const Duration(seconds: 1),
-                                            (timer) {
-                                          // Update user about remaining time
-                                          if(!flagServerResponse){
-                                            Navigator.pop(dialogContext);
-                                            timer.cancel();
+                                    }
 
-                                            // Kill ACTIVITY :
-                                            if(!flagSendData) {
-                                              if (widget.returnValue) {
-                                                Navigator.pop(context, 1);
-                                              }
-                                              else {
-                                                Navigator.pop(context);
-                                              }
-                                              //Navigator.of(context).pop({'selection': '1'});
+                                    // Run TIMER :
+                                    Timer.periodic(
+                                      const Duration(seconds: 1),
+                                          (timer) {
+                                        // Update user about remaining time
+                                        if(!flagServerResponse){
+                                          Navigator.pop(dialogContext);
+                                          timer.cancel();
+
+                                          // Kill ACTIVITY :
+                                          if(!flagSendData) {
+                                            if (widget.returnValue) {
+                                              Navigator.pop(context, 1);
                                             }
                                             else {
-                                              displaySnack('Création du compte impossible!');
+                                              Navigator.pop(context);
                                             }
+                                            //Navigator.of(context).pop({'selection': '1'});
                                           }
-                                        },
-                                      );
-                                    }
+                                          else {
+                                            displaySnack('Création du compte impossible !');
+                                          }
+                                        }
+                                      },
+                                    );
                                   }
                                 }
                                 else{
