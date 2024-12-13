@@ -22,6 +22,15 @@ class SouscriptionDao {
     return result;
   }
 
+  Future<List<Souscription>> findAllByPublicationsIn(List<int> pubIds) async {
+    final db = await dbProvider.database;
+    var data = await db.query('souscription', where: 'idpub in (${pubIds.join(', ')})');
+    List<Souscription> liste = data.isNotEmpty
+        ? data.map((c) => Souscription.fromDatabaseJson(c)).toList()
+        : [];
+    return liste;
+  }
+
   Future<List<Souscription>> findAllByIdpub(int idpub) async {
     final db = await dbProvider.database;
     var data = await db.query('souscription', where: 'idpub = ?', whereArgs: [idpub]);

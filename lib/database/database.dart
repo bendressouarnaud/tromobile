@@ -74,7 +74,7 @@ class DatabaseHelper {
     await db.execute(
         'CREATE TABLE user (id INTEGER PRIMARY KEY,typepieceidentite TEXT,numeropieceidentite TEXT,'
             'nom TEXT, prenom TEXT, email TEXT,numero TEXT,adresse TEXT,fcmtoken TEXT,pwd TEXT, codeinvitation TEXT,'
-            'nationnalite TEXT, villeresidence INTEGER, streamtoken TEXT)');
+            'nationnalite TEXT, villeresidence INTEGER, streamtoken TEXT, streamid TEXT)');
     await db.execute(
         'CREATE TABLE pays (id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT,iso2 TEXT,iso3 TEXT,unicodeFlag TEXT)');
 
@@ -145,6 +145,11 @@ class DatabaseHelper {
     await database.insert('ville', Ville(id: 24, name: 'Méagui', paysid: 2).toDatabaseJson());
     await database.insert('ville', Ville(id: 25, name: 'Bondoukou', paysid: 2).toDatabaseJson());
     await database.insert('ville', Ville(id: 26, name: 'Dabou', paysid: 2).toDatabaseJson());
+
+    await database.insert('ville', Ville(id: 27, name: 'Montelimar', paysid: 1).toDatabaseJson());
+    await database.insert('ville', Ville(id: 28, name: 'Blain', paysid: 1).toDatabaseJson());
+    await database.insert('ville', Ville(id: 29, name: 'Rennes', paysid: 1).toDatabaseJson());
+    await database.insert('ville', Ville(id: 30, name: 'Lille', paysid: 1).toDatabaseJson());
   }
 
   /*Future<void> _addTownsFirstBatch(Database database) async {

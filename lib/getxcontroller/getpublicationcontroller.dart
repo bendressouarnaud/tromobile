@@ -1,6 +1,8 @@
 
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
+import 'package:tro/models/souscription.dart';
+import 'package:tro/repositories/souscription_repository.dart';
 
 import '../models/publication.dart';
 import '../repositories/publication_repository.dart';
@@ -9,7 +11,9 @@ class PublicationGetController extends GetxController {
 
   //
   var publicationData = <Publication>[].obs;
+  var souscriptionData = <Souscription>[].obs;
   final _publicationRepository = PublicationRepository();
+  final _souscriptionRepository = SouscriptionRepository();
 
 
   @override
@@ -22,7 +26,11 @@ class PublicationGetController extends GetxController {
   Future<void> findAll() async {
     //List<Publication> lte = await _publicationRepository.findOngoingAll(DateTime.now().millisecondsSinceEpoch);
     List<Publication> lte = await _publicationRepository.findAll();
+    // Pick All Subscription :
+    List<int> pubids = lte.map((e) => e.id).toList();
+    List<Souscription> sousList = await _souscriptionRepository.findAllByPublicationsIn(pubids);
     publicationData.addAll(lte);
+    souscriptionData.addAll(sousList);
   }
 
   Future<List<Publication>> findAllPublication() async {
@@ -76,6 +84,14 @@ class PublicationGetController extends GetxController {
 
   // Find Publication :
   Future<Publication> refreshPublication(int idpub) async {
+    // Add this one :
+    Publication tampon = await _publicationRepository.findPublicationById(idpub);
+    Publication? pub = publicationData.where((p0) => p0.id == tampon.id).firstOrNull;
+    if(pub == null){
+      // Add it :
+      publicationData.add(tampon);
+      update();
+    }
     return await _publicationRepository.findPublicationById(idpub);
   }
 
@@ -88,5 +104,9 @@ class PublicationGetController extends GetxController {
     int ret = await _publicationRepository.deleteAllPublications();
     update();
     return ret;
+  }
+
+  List<Souscription> getAllSouscription() {
+    return souscriptionData;
   }
 }

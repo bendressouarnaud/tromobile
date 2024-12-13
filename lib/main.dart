@@ -73,17 +73,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   //showFlutterNotification(message, 'Num. : ${message.data['identifiant']}', 'Réserve initiale : ${message.data['reserve']} Kg');
   // If you're going to use other Firebase services in the background, such as Firestore,
   // make sure you call `initializeApp` before using other Firebase services.
-
   databaseuser.User? localUser = await outil.pickLocalUser();
-  //
-  /*streamClient.connectUser(
-    User(
-      id: localUser!.id.toString(),
-      name: '${localUser.nom} ${getFirstPrenomIfNeeded(localUser.prenom)}'
-    ),
-    localUser.streamtoken,
-    connectWebSocket: false,
-  );*/
   String tampon = message.data['type'];
   if(tampon == "message.new"){
     // From STREAM CHAT, Display 'MESSAGE' :
@@ -143,7 +133,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
               fcmtoken: '',
               pwd: "123",
               codeinvitation: "123",
-              villeresidence: 0, streamtoken: '');
+              villeresidence: 0, streamtoken: '', streamid: '');
           // Save :
           outil.addUser(user);
         }
@@ -218,7 +208,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
               fcmtoken: '',
               pwd: "123",
               codeinvitation: "123",
-              villeresidence: 0, streamtoken: '');
+              villeresidence: 0, streamtoken: '', streamid: '');
           // Save :
           outil.addUser(user);
         }
@@ -241,7 +231,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
             devise: pub.devise,
             prix: pub.prix,
             read: 1,
-            streamchannelid: pub.streamchannelid
+            streamchannelid: message.data['channelid']
         );
         // Update  :
         //await outil.updatePublication(newPub);
@@ -574,8 +564,8 @@ Future<void> main() async {
   //if(defaultTargetPlatform == TargetPlatform.android) {
   await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform);
-  // Set the background messaging handler early on, as a named top-level function
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  // Set the background messaging handler early on, as a named top-level function
   //}
 
   // Init SERVICE :
@@ -605,6 +595,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       builder: (context, child) {
         return StreamChatCore(client: streamclient, child: child!);
       },
@@ -628,6 +619,7 @@ class MyAppMail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         // This is the theme of your application.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),

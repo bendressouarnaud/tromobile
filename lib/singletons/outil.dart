@@ -223,6 +223,11 @@ class Outil {
     return await _souscriptionController.updateSouscription(data);
   }
 
+  // Pick this one from 'publicationController'
+  List<Souscription> getAllSouscriptionFromPublication() {
+    return _publicationController.getAllSouscription();
+  }
+
   // for  P U B L I C A T I O N
   Future<int> deleteAllPublications() async{
     // Delete OTHERS

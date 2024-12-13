@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 
 class StreamChatApp extends StatelessWidget {
@@ -33,18 +34,22 @@ class ChannelPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      appBar: StreamChannelHeader(
-
-      ),
-      body: Column(
-        children: [
-          Expanded(
-              child: StreamMessageListView()
-          ),
-          StreamMessageInput()
-        ],
-      )
-    );
+    return PopScope(
+      canPop: false,
+        child: Scaffold(
+            appBar: StreamChannelHeader(
+              onBackPressed: () {
+                Navigator.of(context, rootNavigator: true).pop(context);
+              },
+            ),
+            body: Column(
+              children: [
+                Expanded(
+                    child: StreamMessageListView()
+                ),
+                StreamMessageInput()
+              ],
+            )
+        ));
   }
 }

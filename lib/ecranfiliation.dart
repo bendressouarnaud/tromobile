@@ -7,6 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_share/flutter_share.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -251,6 +252,30 @@ class _GestionFiliation extends State<GestionFiliation> {
                             )
                           ],
                         )
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(right: 20, left: 20, top: 5),
+                      alignment: Alignment.centerRight,
+                      child: ElevatedButton.icon(
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateColor.resolveWith((states) => Colors.blue)
+                        ),
+                        label: const Text("Partager",
+                            style: TextStyle(
+                                color: Colors.white
+                            )),
+                        onPressed: () async {
+                          await FlutterShare.share(
+                              title: 'Code Parrainage',
+                              text: codeParrainage,
+                              chooserTitle: 'Partager le code');
+                        },
+                        icon: const Icon(
+                          Icons.share,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                     const SizedBox(
                       height: 30,

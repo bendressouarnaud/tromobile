@@ -14,10 +14,11 @@ class SouscriptionBean {
   final int millisecondes;
   final int reserve;
   final int statut;
+  final String channelid;
 
   // M e t h o d s  :
   SouscriptionBean({required this.iduser, required this.idpub, required this.millisecondes, required this.reserve
-    , required this.statut});
+    , required this.statut, required this.channelid});
   factory SouscriptionBean.fromJson(Map<String, dynamic> json) {
     return SouscriptionBean(
       //This will be used to convert JSON objects that
@@ -27,7 +28,8 @@ class SouscriptionBean {
         idpub: json['idpub'],
         millisecondes: json['millisecondes'],
         reserve: json['reserve'],
-        statut: json['statut']
+        statut: json['statut'],
+        channelid: json['channelid']
     );
   }
 }

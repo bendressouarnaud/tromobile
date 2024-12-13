@@ -104,7 +104,9 @@ class _WelcomePageState extends State<WelcomePage> {
   //
   List<Publication> listePub = [];
   List<Souscription> listeSouscription = [];
-  late StreamSubscription<ConnectivityResult> _subscription;
+  List<ConnectivityResult> _connectionStatus = [ConnectivityResult.none];
+  final Connectivity _connectivity = Connectivity();
+  late StreamSubscription<List<ConnectivityResult>> _subscription;
   bool checkNetworkConnected = false;
 
   // Try for a TEST :
@@ -123,16 +125,7 @@ class _WelcomePageState extends State<WelcomePage> {
     //getPubAndSouscription();
     //initLocalConnection();
 
-    _subscription = Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
-      // Handle the new connectivity status!
-      if (result == ConnectivityResult.mobile || result == ConnectivityResult.wifi) {
-        checkNetworkConnected = true;
-      }
-      else{
-        checkNetworkConnected = false;
-      }
-      outil.setCheckNetworkConnected(checkNetworkConnected);
-    });
+    _subscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
 
     // Initialize the AppLifecycleListener class and pass callbacks
     _listener = AppLifecycleListener(
@@ -142,6 +135,16 @@ class _WelcomePageState extends State<WelcomePage> {
     // Run this to check :
     //outil.refreshAllChatsFromResumed(0);
     super.initState();
+  }
+
+  Future<void> _updateConnectionStatus(List<ConnectivityResult> result) async {
+    if(result.isNotEmpty && (result.first == ConnectivityResult.wifi || result.first == ConnectivityResult.mobile)){
+      checkNetworkConnected = true;
+    }
+    else{
+      checkNetworkConnected = true;
+    }
+    outil.setCheckNetworkConnected(checkNetworkConnected);
   }
 
   /*void checkPublicationNotRead() async {
@@ -198,13 +201,15 @@ class _WelcomePageState extends State<WelcomePage> {
   void chechNotificationPermission() async{
     databaseuser.User? usr = await outil.pickLocalUser();
     locUser = usr!;
-    //FirebaseMessaging messaging = FirebaseMessaging.instance;
-    //NotificationSettings settings = await messaging.getNotificationSettings();
-    if(usr != null){
-      // We can request :
-      if (defaultTargetPlatform == TargetPlatform.android) {
+    // We can request :
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+      if(apnsToken != null){
         initFire();
       }
+    }
+    else{
+      initFire();
     }
   }
 
@@ -216,14 +221,16 @@ class _WelcomePageState extends State<WelcomePage> {
 
   void initLocalConnection() async {
     try {
-      final client = StreamChatCore
-          .of(context)
-          .client;
-      final streamUser = streamuser.User(
-          id: locUser.id.toString(),
-          name: '${locUser.nom} ${getFirstPrenomIfNeeded(locUser.prenom)}'
-      );
       if(!(widget.streamclient.wsConnectionStatus == ConnectionStatus.connected)){
+
+        final client = StreamChatCore
+            .of(context)
+            .client;
+        final streamUser = streamuser.User(
+            id: locUser.streamid,
+            name: '${locUser.nom} ${getFirstPrenomIfNeeded(locUser.prenom)}'
+        );
+
         await widget.streamclient.connectUser(
             streamUser,
             locUser.streamtoken);
@@ -236,12 +243,13 @@ class _WelcomePageState extends State<WelcomePage> {
         Parameters? prms = await _parametersController.refreshData();
         if(prms!.deviceregistered == 0) {
           //
-          if (defaultTargetPlatform == TargetPlatform.android) {
-            await client.addDevice(locUser.fcmtoken,
-                defaultTargetPlatform == TargetPlatform.android ? PushProvider
-                    .firebase : PushProvider.apn, pushProviderName: 'bagages_messaging');
-            // Update :
-            prms = Parameters(id: prms.id,
+          await client.addDevice(locUser.fcmtoken,
+              defaultTargetPlatform == TargetPlatform.android ? PushProvider
+                  .firebase : PushProvider.apn,
+              pushProviderName: defaultTargetPlatform == TargetPlatform.android ? 'bagages_messaging' :
+          'bagage_messaging_apn');
+          // Update :
+          prms = Parameters(id: prms.id,
               state: prms.state,
               travellocal: prms.travellocal,
               travelabroad: prms.travelabroad,
@@ -250,9 +258,8 @@ class _WelcomePageState extends State<WelcomePage> {
               epochfin: prms.epochfin,
               comptevalide: prms.comptevalide,
               deviceregistered: 1
-            );
-            await _parametersController.updateData(prms);
-          }
+          );
+          await _parametersController.updateData(prms);
         }
 
 
@@ -263,7 +270,7 @@ class _WelcomePageState extends State<WelcomePage> {
       }
     }
     catch (e){
-      print('Impossible de connecter l\'utilisateur : $e');
+      //print('Impossible de connecter l\'utilisateur : $e');
       displaySnack('Impossible de connecter l\'utilisateur : $e');
     }
   }
@@ -305,7 +312,7 @@ class _WelcomePageState extends State<WelcomePage> {
       widget.streamclient.closeConnection();
       widget.streamclient.dispose();
       //
-      print('DéConnexion effectuée');
+      //print('DéConnexion effectuée');
     }
     catch (e){
       print('Opératio déConnexion : $e');
@@ -322,7 +329,6 @@ class _WelcomePageState extends State<WelcomePage> {
     cUser = await _userRepository.getConnectedUser();
     //
     List<Publication> lte = await outil.findAllPublication();//publicationData;
-    //taillePublicationNotRead = lte.where((element) => element.read == 0).toList().length;
     if(!streamUserConnected) initLocalConnection();
     return lte;
   }
@@ -743,9 +749,13 @@ class _WelcomePageState extends State<WelcomePage> {
                 bottomRight: Radius.circular(30),
                 bottomLeft: Radius.circular(30),
               )),
-          onDestinationSelected: (int index) {
+          onDestinationSelected: (int index) async {
             // Refresh the LISTS
-            getPubAndSouscription();
+            if(index == 1){
+              listePub = await _publicationRepository.findAll();// WithStreamId();
+              listeSouscription = await _souscriptionRepository.findAllWithStreamId();
+            }
+            //getPubAndSouscription();
 
             // Set the refresh CHECK there too :
             if(outil.getListDate().isNotEmpty){
@@ -796,7 +806,7 @@ class _WelcomePageState extends State<WelcomePage> {
           backgroundColor: Colors.white,
           title: const Text(
             "CoBagage",
-            textAlign: TextAlign.start,
+            textAlign: TextAlign.left,
           ),
           shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.only(
@@ -848,14 +858,16 @@ class _WelcomePageState extends State<WelcomePage> {
                     builder: (PublicationGetController controller) {
                       // Sort :
                       var milliseconds = DateTime.now().millisecondsSinceEpoch;
-                      List<Publication> reste = controller.publicationData.where((pub) => (pub.milliseconds >= milliseconds && pub.active == 1))
-                          .toList();
+                      List<Publication> reste = controller.publicationData.
+                        where((pub) => (pub.milliseconds >= milliseconds ))
+                          .toList(); //  && pub.active == 1))
                       reste.sort((a,b) =>
                           b.id.compareTo(a.id));
                       return SingleChildScrollView(
                         child: EcranAnnonce().displayAnnonce(reste
                             , listePays, listeVille,
-                        _userController.userData ,context, false, widget.client, widget.streamclient),
+                        _userController.userData ,context, false, widget.client, widget.streamclient,
+                        controller.souscriptionData),
                       );
                     }
                 );

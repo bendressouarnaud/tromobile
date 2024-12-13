@@ -233,6 +233,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
             "ville": villeResidence!.name,
             "typepieceidentite": dropdownvalueTitre,
             "token": getToken,
+            "smartphonetype": defaultTargetPlatform == TargetPlatform.android ? 1 : 0
           })).timeout(const Duration(seconds: timeOutValue));
 
       // Checks :
@@ -255,7 +256,8 @@ class _NewCreationState extends State<EcranCreationCompte> {
               pwd: "",
               codeinvitation: codeParrainageController.text,
               villeresidence: villeResidence!.id,
-              streamtoken: ur.streamchatoken);
+              streamtoken: ur.streamchatoken,
+              streamid: ur.streamchatid);
           // Save :
           _userController.addData(user);
 

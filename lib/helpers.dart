@@ -37,7 +37,8 @@ abstract class Helpers {
           pubId = pub.identifiant;
         }*/
         
-        return otherMembers!.first.user?.name ?? 'No name';
+        String tampName = otherMembers!.first.user?.name ?? 'No name';
+        return tampName.length > 10 ? '${tampName.substring(0,9)}.' : tampName;
       } else {
         return 'Multiple users';
       }

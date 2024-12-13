@@ -62,36 +62,75 @@ class _SConfirmerMail extends State<ConfirmerMail> {
 
   // Send Account DATA :
   Future<void> sendEmailAccountValidation() async {
-    User? lUser = await outil.pickLocalUser();
-    final url = Uri.parse('${dotenv.env['URL']}validatemailaccount');
-    var response = await widget.client.post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "iduser": lUser!.id,
-          "code": codeEmailController.text
-        })).timeout(const Duration(seconds: timeOutValue));
+    try {
+      User? lUser = await outil.pickLocalUser();
+      final url = Uri.parse('${dotenv.env['URL']}validatemailaccount');
+      var response = await widget.client.post(url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "iduser": lUser!.id,
+            "code": codeEmailController.text
+          })).timeout(const Duration(seconds: timeOutValue));
 
-    // Checks :
-    if(response.statusCode == 200){
-      Parameters? prms = await _parametersController.refreshData();
-      prms = Parameters(id: prms!.id,
-        state: prms.state,
-        travellocal: prms.travellocal,
-        travelabroad: prms.travelabroad,
-        notification: prms.notification,
-        epochdebut: prms.epochdebut,
-        epochfin: prms.epochfin,
-        comptevalide: 1, deviceregistered: 0
-      );
-      await _parametersController.updateData(prms);
+      // Checks :
+      if (response.statusCode == 200) {
+        Parameters? prms = await _parametersController.refreshData();
+        prms = Parameters(id: prms!.id,
+            state: prms.state,
+            travellocal: prms.travellocal,
+            travelabroad: prms.travelabroad,
+            notification: prms.notification,
+            epochdebut: prms.epochdebut,
+            epochfin: prms.epochfin,
+            comptevalide: 1,
+            deviceregistered: 0
+        );
+        await _parametersController.updateData(prms);
 
-      // Set FLAG :
-      flagSendData = false;
+        // Set FLAG :
+        flagSendData = false;
+      }
+      else {
+        displayToast("Impossible de traiter la demande");
+      }
+      closeAlertDialog = false;
     }
-    else {
-      displayToast("Impossible de traiter la demande");
+    catch (e) {
+      //
     }
-    closeAlertDialog = false;
+    finally{
+      closeAlertDialog = false;
+    }
+  }
+
+  // Send Account DATA :
+  Future<void> reSendPassword() async {
+    try {
+      User? lUser = await outil.pickLocalUser();
+      final url = Uri.parse('${dotenv.env['URL']}resendpassword');
+      var response = await widget.client.post(url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "iduser": lUser!.id,
+            "code": lUser!.email
+          })).timeout(const Duration(seconds: timeOutValue));
+
+      // Checks :
+      if (response.statusCode == 200) {
+        // Set FLAG :
+        flagSendData = false;
+      }
+      else {
+        displayToast("Impossible de traiter la demande");
+      }
+      closeAlertDialog = false;
+    }
+    catch (e) {
+      //
+    }
+    finally{
+      closeAlertDialog = false;
+    }
   }
 
   // Our TOAST :
@@ -167,131 +206,206 @@ class _SConfirmerMail extends State<ConfirmerMail> {
               )
           ),
         ),
-        body: Center(
-            child: Container(
-                margin: const EdgeInsets.only(top: 100),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.account_circle,
-                      size: 90,
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(top: 10),
-                      child: const Text('Renseignez le code reçu par mail',
-                      style: TextStyle(
-                        fontSize: 19
-                      ),),
-                    ),
-                    Container(
-                      width: 300,
-                      padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
-                      margin: const EdgeInsets.only(bottom: 40),
-                      child: TextField(
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 19
-                        ),
-                        keyboardType: TextInputType.text,
-                        controller: codeEmailController,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Code...'
-                        ),
-                        textInputAction: TextInputAction.next,
+        body: SingleChildScrollView(
+          child: Center(
+              child: Container(
+                  margin: const EdgeInsets.only(top: 100),
+                  child: Column(
+                    children: [
+                      const Icon(
+                        Icons.account_circle,
+                        size: 90,
                       ),
-                    ),
-                    ElevatedButton.icon(
-                      style: ButtonStyle(
-                          backgroundColor: MaterialStateColor.resolveWith((states) => Colors.brown)
-                      ),
-                      label: const Text("Soumettre",
+                      Container(
+                        margin: const EdgeInsets.only(top: 10),
+                        child: const Text('Renseignez le code reçu par mail',
                           style: TextStyle(
-                              color: Colors.white
+                              fontSize: 19
+                          ),),
+                      ),
+                      Container(
+                        width: 300,
+                        padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
+                        margin: const EdgeInsets.only(bottom: 40),
+                        child: TextField(
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              fontSize: 19
+                          ),
+                          keyboardType: TextInputType.text,
+                          controller: codeEmailController,
+                          decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Code...'
+                          ),
+                          textInputAction: TextInputAction.next,
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateColor.resolveWith((states) => Colors.brown)
+                        ),
+                        label: const Text("Soumettre",
+                            style: TextStyle(
+                                color: Colors.white
+                            )
+                        ),
+                        onPressed: () {
+                          if(codeEmailController.text.isEmpty){
+                            Fluttertoast.showToast(
+                                msg: "Veuillez saisir le code !",
+                                toastLength: Toast.LENGTH_LONG,
+                                gravity: ToastGravity.CENTER,
+                                timeInSecForIosWeb: 3,
+                                backgroundColor: Colors.red,
+                                textColor: Colors.white,
+                                fontSize: 16.0
+                            );
+                          }
+                          else{
+                            showDialog(
+                                barrierDismissible: false,
+                                context: context,
+                                builder: (BuildContext context) {
+                                  dialogContext = context;
+                                  return WillPopScope(
+                                      onWillPop: () async => false,
+                                      child: const AlertDialog(
+                                          title: Text('Information'),
+                                          content: SizedBox(
+                                              height: 100,
+                                              child: Column(
+                                                children: [
+                                                  Text("Validation du mail ..."),
+                                                  SizedBox(
+                                                    height: 20,
+                                                  ),
+                                                  SizedBox(
+                                                      height: 30.0,
+                                                      width: 30.0,
+                                                      child: CircularProgressIndicator(
+                                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                                        strokeWidth: 3.0, // Width of the circular line
+                                                      )
+                                                  )
+                                                ],
+                                              )
+                                          )
+                                      )
+                                  );
+                                }
+                            );
+
+                            // Send DATA :
+                            flagSendData = true;
+                            closeAlertDialog = true;
+                            sendEmailAccountValidation();
+
+                            // Run TIMER :
+                            Timer.periodic(
+                              const Duration(seconds: 1),
+                                  (timer) {
+                                // Update user about remaining time
+                                if(!closeAlertDialog){
+                                  Navigator.pop(dialogContext);
+                                  timer.cancel();
+
+                                  // Kill ACTIVITY :
+                                  if(!flagSendData) {
+                                    //widget.tache == 1 ? displayDisplay() : Navigator.pop(context);
+                                    displayDisplay();
+                                  }
+                                  else{
+                                    displayToast("Veuillez réessayer la validation !");
+                                  }
+                                }
+                              },
+                            );
+                          }
+                        },
+                        icon: const Icon(
+                          Icons.send,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Container(
+                          margin: EdgeInsets.only(top: 45),
+                          child: GestureDetector(
+                              onTap: () {
+                                showDialog(
+                                    barrierDismissible: false,
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      dialogContext = context;
+                                      return PopScope(
+                                          canPop: false,
+                                          child: const AlertDialog(
+                                              title: Text('Information'),
+                                              content: SizedBox(
+                                                  height: 100,
+                                                  child: Column(
+                                                    children: [
+                                                      Text("Renvoi du mot de passe ..."),
+                                                      SizedBox(
+                                                        height: 20,
+                                                      ),
+                                                      SizedBox(
+                                                          height: 30.0,
+                                                          width: 30.0,
+                                                          child: CircularProgressIndicator(
+                                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                                            strokeWidth: 3.0, // Width of the circular line
+                                                          )
+                                                      )
+                                                    ],
+                                                  )
+                                              )
+                                          )
+                                      );
+                                    }
+                                );
+
+                                // Send DATA :
+                                flagSendData = true;
+                                closeAlertDialog = true;
+                                reSendPassword();
+
+                                // Run TIMER :
+                                Timer.periodic(
+                                  const Duration(seconds: 1),
+                                      (timer) {
+                                    // Update user about remaining time
+                                    if(!closeAlertDialog){
+                                      Navigator.pop(dialogContext);
+                                      timer.cancel();
+
+                                      // Kill ACTIVITY :
+                                      if(!flagSendData) {
+                                        displayToast("Renvoi du mot de passe effectué !");
+                                      }
+                                      else{
+                                        displayToast("Veuillez vérifier votre connexion !");
+                                      }
+                                    }
+                                  },
+                                );
+                              },
+                              child: Text(
+                                  'Renvoyer le mot de passe',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.red,
+                                    decoration: TextDecoration.underline,
+                                  )
+                              )
                           )
                       ),
-                      onPressed: () {
-                        if(codeEmailController.text.isEmpty){
-                          Fluttertoast.showToast(
-                              msg: "Veuillez saisir le code !",
-                              toastLength: Toast.LENGTH_LONG,
-                              gravity: ToastGravity.CENTER,
-                              timeInSecForIosWeb: 3,
-                              backgroundColor: Colors.red,
-                              textColor: Colors.white,
-                              fontSize: 16.0
-                          );
-                        }
-                        else{
-                          showDialog(
-                              barrierDismissible: false,
-                              context: context,
-                              builder: (BuildContext context) {
-                                dialogContext = context;
-                                return WillPopScope(
-                                    onWillPop: () async => false,
-                                    child: const AlertDialog(
-                                        title: Text('Information'),
-                                        content: SizedBox(
-                                            height: 100,
-                                            child: Column(
-                                              children: [
-                                                Text("Validation du mail ..."),
-                                                SizedBox(
-                                                  height: 20,
-                                                ),
-                                                SizedBox(
-                                                    height: 30.0,
-                                                    width: 30.0,
-                                                    child: CircularProgressIndicator(
-                                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                                                      strokeWidth: 3.0, // Width of the circular line
-                                                    )
-                                                )
-                                              ],
-                                            )
-                                        )
-                                    )
-                                );
-                              }
-                          );
 
-                          // Send DATA :
-                          flagSendData = true;
-                          closeAlertDialog = true;
-                          sendEmailAccountValidation();
-
-                          // Run TIMER :
-                          Timer.periodic(
-                            const Duration(seconds: 1),
-                                (timer) {
-                              // Update user about remaining time
-                              if(!closeAlertDialog){
-                                Navigator.pop(dialogContext);
-                                timer.cancel();
-
-                                // Kill ACTIVITY :
-                                if(!flagSendData) {
-                                  //widget.tache == 1 ? displayDisplay() : Navigator.pop(context);
-                                  displayDisplay();
-                                }
-                                else{
-                                  displayToast("Veuillez réessayer la validation !");
-                                }
-                              }
-                            },
-                          );
-                        }
-                      },
-                      icon: const Icon(
-                        Icons.send,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                    )
-                  ],
-                )
-            )
+                    ],
+                  )
+              )
+          ),
         )
     );
   }

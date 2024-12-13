@@ -5,6 +5,7 @@ import 'package:get/get_state_manager/src/simple/get_state.dart';
 import 'package:http/http.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:tro/models/pays.dart';
+import 'package:tro/models/souscription.dart';
 import 'package:tro/repositories/ville_repository.dart';
 
 import '../constants.dart';
@@ -36,7 +37,7 @@ class EcranAnnonce {
     Ville ville = villes.where((ville) => ville.id == idVill).single;
     // Get Country
     Pays lePays = pays.where((pys) => pys.id == ville.paysid).single;
-    String tampnVille = ville.name.length > 15 ? '${ville.name.substring(0,14)}...' : ville.name;
+    String tampnVille = ville.name.length > 6 ? '${ville.name.substring(0,5)}..' : ville.name;
     //String tampnPays  = lePays.name.length > 15 ? '${lePays.name.substring(0,14)}...' : lePays.name;
     String tampnPays  = lePays.iso3;
     // Get the country :
@@ -45,7 +46,7 @@ class EcranAnnonce {
   }
 
   Widget displayObjectData(Publication pub, List<Pays> pays, List<Ville> villes, List<databaseuser.User> user, BuildContext context,
-      bool historique, Client client, StreamChatClient streamChatClient) {
+      bool historique, Client client, StreamChatClient streamChatClient, bool souscription) {
     return GestureDetector(
       onTap: () {
         // Display DIALOG
@@ -92,10 +93,35 @@ class EcranAnnonce {
                   child: Column(
                     children: [
                       Container(
+                        height: 20,
                         alignment: Alignment.topLeft,
-                        child: Text(pub.identifiant),
+                        margin: EdgeInsets.only(right: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(pub.identifiant),
+                            pub.userid == user.first.id ?
+                            (souscription ?
+                              Icon(
+                                  Icons.luggage,
+                                  color: Colors.blueAccent,
+                                  size: 17
+                              )
+                              : Text('')
+                            )
+                            :
+                            pub.streamchannelid.trim().isNotEmpty ?
+                                Icon(
+                                    Icons.luggage,
+                                  color: Colors.blueAccent,
+                                  size: 17
+                                ) :
+                            Text('')
+                          ],
+                        )
                       ),
                       Container(
+                        height: 20,
                         margin: EdgeInsets.only(right: 10),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -114,6 +140,7 @@ class EcranAnnonce {
                         ),
                       ),
                       Container(
+                        height: 20,
                         margin: const EdgeInsets.only(right: 10),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -124,6 +151,7 @@ class EcranAnnonce {
                         ),
                       ),
                       Container(
+                          height: 22,
                           margin: const EdgeInsets.only(right: 10),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -310,8 +338,15 @@ class EcranAnnonce {
 
 
   // Methods
-  Widget displayAnnonce(List<Publication> liste, List<Pays> pays, List<Ville> villes, List<databaseuser.User> user,BuildContext context,
-      bool historique, Client client, StreamChatClient streamChatClient){
+  Widget displayAnnonce(List<Publication> liste, List<Pays> pays, List<Ville> villes,
+      List<databaseuser.User> user,BuildContext context,
+      bool historique, Client client, StreamChatClient streamChatClient, List<Souscription> lesSouscriptions){
+
+    /*final Size size = View.of(context).physicalSize;
+    print('Largeur : ${size.width}');
+    print('Longueur : ${size.height}');
+    print('Taille : ${size.aspectRatio}');*/
+
     if(liste.length > 0){
       ListView listeT = ListView.builder(
           physics: const NeverScrollableScrollPhysics(),
@@ -338,10 +373,12 @@ class EcranAnnonce {
                             height: 5,
                           )
                       ),
-                      displayObjectData(liste[index], pays, villes, user, context, historique, client, streamChatClient)
+                      displayObjectData(liste[index], pays, villes, user, context, historique, client, streamChatClient,
+                          lesSouscriptions.where((souscript) => souscript.idpub == liste[index].id).firstOrNull != null)
                     ],
                   ) :
-                  displayObjectData(liste[index], pays, villes, user, context, historique, client, streamChatClient);
+                  displayObjectData(liste[index], pays, villes, user, context, historique, client, streamChatClient,
+                      lesSouscriptions.where((souscript) => souscript.idpub == liste[index].id).firstOrNull != null);
                 }
             );
           }

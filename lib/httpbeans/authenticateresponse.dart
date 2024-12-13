@@ -23,6 +23,7 @@ class AuthenticateResponse {
   final String adresse;
   final String fcmtoken;
   final String streamtoken;
+  final String streamchatid;
   final String pwd;
   final String codeinvitation;
   final List<Cible> cibles;
@@ -36,7 +37,7 @@ class AuthenticateResponse {
   AuthenticateResponse({required this.nationnalite, required this.id, required this.typepieceidentite, required this.numeropieceidentite, required this.nom, required this.prenom, required this.email, required this.numero,
     required this.adresse, required this.fcmtoken, required this.pwd, required this.codeinvitation, required this.cibles
     , required this.publications, required this.souscripteurs, required this.sosucriptions, required this.villeresidence
-    , required this.codeparrainage, required this.bonus, required this.streamtoken});
+    , required this.codeparrainage, required this.bonus, required this.streamtoken, required this.streamchatid});
   factory AuthenticateResponse.fromJson(Map<String, dynamic> json) {
     return AuthenticateResponse(
       //This will be used to convert JSON objects that
@@ -61,7 +62,8 @@ class AuthenticateResponse {
       sosucriptions: List<dynamic>.from(json['subscriptions']).map((i) => SouscriptionBean.fromJson(i)).toList(),
       codeparrainage: json['codeparrainage'],
       bonus: json['bonus'],
-        streamtoken: json['streamtoken']
+      streamtoken: json['streamtoken'],
+      streamchatid: json['streamchatid']
     );
   }
 }

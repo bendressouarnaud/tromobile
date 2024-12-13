@@ -12,7 +12,9 @@ import 'package:http/http.dart';
 import 'package:group_radio_button/group_radio_button.dart';
 import 'package:http/src/response.dart' as mreponse;
 import 'package:tro/getxcontroller/getsouscriptioncontroller.dart';
+import 'package:tro/models/parameters.dart';
 import 'package:tro/repositories/filiation_repository.dart';
+import 'package:tro/repositories/parameters_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 
 import 'constants.dart';
@@ -65,6 +67,7 @@ class _NewAuth extends State<AuthentificationEcran> {
   final PublicationGetController _publicationController = Get.put(PublicationGetController());
   final SouscriptionGetController _souscriptionController = Get.put(SouscriptionGetController());
   final _filiationRepository = FiliationRepository();
+  final _repository = ParametersRepository();
   //late https.Client client;
   //
   String? getToken = "";
@@ -100,129 +103,153 @@ class _NewAuth extends State<AuthentificationEcran> {
 
   // Send Account DATA :
   Future<void> authenicatemobilecustomer() async {
-    final url = Uri.parse('${dotenv.env['URL']}authenticate');
-    var response = await widget.client.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "mail": emailController.text,
-        "pwd": pwdController.text,
-        "fcmtoken": getToken
-      })
-    ).timeout(const Duration(seconds: timeOutValue));
+    try {
+      final url = Uri.parse('${dotenv.env['URL']}authenticate');
+      var response = await widget.client.post(
+          url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "mail": emailController.text,
+            "pwd": pwdController.text,
+            "fcmtoken": getToken,
+            "smartphonetype": defaultTargetPlatform == TargetPlatform.android
+                ? 1
+                : 0
+          })
+      ).timeout(const Duration(seconds: timeOutValue));
 
-    // Checks :
-    if(response.statusCode == 200){
-      //List<dynamic> body = jsonDecode(response.body);
-      AuthenticateResponse bn = AuthenticateResponse.fromJson(jsonDecode(const Utf8Decoder().convert(response.bodyBytes)));
-      // Persist user :
-      User user = User(
-          nationnalite: bn.nationnalite,
-          id: bn.id,
-          typepieceidentite: bn.typepieceidentite,
-          numeropieceidentite: bn.numeropieceidentite,
-          nom: bn.nom,
-          prenom: bn.prenom,
-          email: bn.email,
-          numero: bn.numero,
-          adresse: bn.adresse,
-          fcmtoken: getToken!,
-          pwd: "",
-          codeinvitation: "",
-          villeresidence: bn.villeresidence, streamtoken: bn.streamtoken);
-      // Save :
-      _userController.addData(user);
-
-      // From there, Hit NEW FILIATION :
-      Filiation filiation = Filiation(id: 1, code: bn.codeparrainage, bonus: bn.bonus);
-      await _filiationRepository.insert(filiation);
-
-      // Persist CIBLE :
-      for(Cible ce in bn.cibles){
-        Cible cible = Cible(id: ce.id,
-            villedepartid: ce.villedepartid,
-            paysdepartid: ce.paysdepartid, villedestid: ce.villedestid, paysdestid: ce.paysdestid, topic: ce.topic);
-        _cibleController.addData(cible);
-      }
-      // Persist PUBLICATION
-      for(Publication publication in bn.publications){
-        // First SPLIT :
-        List<String> tamponDateTime = publication.datevoyage.split("T");
-        var dateVoyageFinal = DateTime.parse('${tamponDateTime[0]} ${tamponDateTime[1]}Z');
-        Publication pub = Publication(
-            id: publication.id,
-            userid: publication.userid,
-            villedepart: publication.villedepart,
-            villedestination: publication.villedestination,
-            datevoyage: publication.datevoyage,
-            datepublication: publication.datepublication,
-            reserve: publication.reserve,
-            active: 1,
-            reservereelle: publication.reserve,
-            souscripteur: publication.souscripteur, // Use OWNER Id
-            milliseconds: dateVoyageFinal.millisecondsSinceEpoch, // publication.milliseconds,
-            identifiant: publication.identifiant,
-          devise: publication.devise,
-          prix: publication.prix,
-            read: 1,
-            streamchannelid: ''
+      // Checks :
+      if(response.statusCode == 200){
+        // update 'PARAMETERS' :
+        Parameters? parameters = await _repository.findById(1);
+        Parameters updateParam = Parameters(
+          id: parameters!.id,
+          state: parameters.state,
+          travellocal: parameters.travellocal,
+          travelabroad: parameters.travelabroad,
+          notification: parameters.notification,
+          epochdebut: parameters.epochdebut,
+          epochfin: parameters.epochfin,
+          deviceregistered: parameters.deviceregistered,
+          comptevalide: 1,
         );
-        _publicationController.addData(pub);
-      }
+        await _repository.update(updateParam);
 
-      // If the one connected has created PUBLICATION suscribed by PEOPLE, save them :
-      for(UserBean userbean in bn.souscripteurs){
-        User? user = await _userRepository.findById(userbean.iduser);
-        if(user == null){
-          // Persist DATA :
-          // Create new :
-          user = User(nationnalite: userbean.nationalite,
-              id: userbean.iduser,
-              typepieceidentite: '',
-              numeropieceidentite: '',
-              nom: userbean.nom,
-              prenom: userbean.prenom,
-              email: '',
-              numero: '',
-              adresse: userbean.adresse,
-              fcmtoken: '',
-              pwd: "123",
-              codeinvitation: "123",
-              villeresidence: 0, streamtoken: '');
-          // Save :
-          _userController.addData(user);
+        //List<dynamic> body = jsonDecode(response.body);
+        AuthenticateResponse bn = AuthenticateResponse.fromJson(jsonDecode(const Utf8Decoder().convert(response.bodyBytes)));
+        // Persist user :
+        User user = User(
+            nationnalite: bn.nationnalite,
+            id: bn.id,
+            typepieceidentite: bn.typepieceidentite,
+            numeropieceidentite: bn.numeropieceidentite,
+            nom: bn.nom,
+            prenom: bn.prenom,
+            email: bn.email,
+            numero: bn.numero,
+            adresse: bn.adresse,
+            fcmtoken: getToken!,
+            pwd: "",
+            codeinvitation: "",
+            villeresidence: bn.villeresidence, streamtoken: bn.streamtoken,
+            streamid: bn.streamchatid);
+        // Save :
+        _userController.addData(user);
+
+        // From there, Hit NEW FILIATION :
+        Filiation filiation = Filiation(id: 1, code: bn.codeparrainage, bonus: bn.bonus);
+        await _filiationRepository.insert(filiation);
+
+        // Persist CIBLE :
+        for(Cible ce in bn.cibles){
+          Cible cible = Cible(id: ce.id,
+              villedepartid: ce.villedepartid,
+              paysdepartid: ce.paysdepartid, villedestid: ce.villedestid, paysdestid: ce.paysdestid, topic: ce.topic);
+          _cibleController.addData(cible);
         }
-      }
+        // Persist PUBLICATION
+        for(Publication publication in bn.publications){
+          // First SPLIT :
+          List<String> tamponDateTime = publication.datevoyage.split("T");
+          var dateVoyageFinal = DateTime.parse('${tamponDateTime[0]} ${tamponDateTime[1]}Z');
+          Publication pub = Publication(
+              id: publication.id,
+              userid: publication.userid,
+              villedepart: publication.villedepart,
+              villedestination: publication.villedestination,
+              datevoyage: publication.datevoyage,
+              datepublication: publication.datepublication,
+              reserve: publication.reserve,
+              active: 1,
+              reservereelle: publication.reserve,
+              souscripteur: publication.souscripteur, // Use OWNER Id
+              milliseconds: dateVoyageFinal.millisecondsSinceEpoch, // publication.milliseconds,
+              identifiant: publication.identifiant,
+              devise: publication.devise,
+              prix: publication.prix,
+              read: 1,
+              streamchannelid: publication.streamchannelid
+          );
+          _publicationController.addData(pub);
+        }
 
-      // To close, persist 'SUBSCRIPTION' if needed :
-      for(SouscriptionBean souscriptionBean in bn.sosucriptions){
-        Souscription souscription = Souscription(
-            id: 0,
-            idpub: souscriptionBean.idpub,
-            iduser: souscriptionBean.iduser,
-            millisecondes: souscriptionBean.millisecondes,
-            reserve: souscriptionBean.reserve,
-            statut: souscriptionBean.statut,
-            streamchannelid: '');
-        _souscriptionController.addData(souscription);
-      }
+        // If the one connected has created PUBLICATION suscribed by PEOPLE, save them :
+        for(UserBean userbean in bn.souscripteurs){
+          User? user = await _userRepository.findById(userbean.iduser);
+          if(user == null){
+            // Persist DATA :
+            // Create new :
+            user = User(nationnalite: userbean.nationalite,
+                id: userbean.iduser,
+                typepieceidentite: '',
+                numeropieceidentite: '',
+                nom: userbean.nom,
+                prenom: userbean.prenom,
+                email: '',
+                numero: '',
+                adresse: userbean.adresse,
+                fcmtoken: '',
+                pwd: "123",
+                codeinvitation: "123",
+                villeresidence: 0, streamtoken: '', streamid: '');
+            // Save :
+            _userController.addData(user);
+          }
+        }
 
-      // Set FLAG :
-      closeAlertDialog = false;
+        // To close, persist 'SUBSCRIPTION' if needed :
+        for(SouscriptionBean souscriptionBean in bn.sosucriptions){
+          Souscription souscription = Souscription(
+              id: 0,
+              idpub: souscriptionBean.idpub,
+              iduser: souscriptionBean.iduser,
+              millisecondes: souscriptionBean.millisecondes,
+              reserve: souscriptionBean.reserve,
+              statut: souscriptionBean.statut,
+              streamchannelid: souscriptionBean.channelid);
+          _souscriptionController.addData(souscription);
+        }
+
+        // Set FLAG :
+        closeAlertDialog = false;
+      }
+      else{
+        Fluttertoast.showToast(
+            msg: "Identifiants incorrects",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.black,
+            textColor: Colors.white,
+            fontSize: 16.0
+        );
+      }
     }
-    else{
-      Fluttertoast.showToast(
-          msg: "Identifiants incorrects",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.black,
-          textColor: Colors.white,
-          fontSize: 16.0
-      );
+    catch (e) {}
+    finally{
+      // Notify :
+      flagSendData = false;
     }
-    // Notify :
-    flagSendData = false;
   }
 
   @override

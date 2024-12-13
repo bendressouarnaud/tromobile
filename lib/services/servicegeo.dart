@@ -84,7 +84,7 @@ class Servicegeo {
           fcmtoken: '',
           pwd: "123",
           codeinvitation: "123",
-          villeresidence: 0, streamtoken: '');
+          villeresidence: 0, streamtoken: '', streamid: '');
       // Save :
       outil.addUser(user);
     }
@@ -139,7 +139,7 @@ class Servicegeo {
           fcmtoken: '',
           pwd: "123",
           codeinvitation: "123",
-          villeresidence: 0, streamtoken: '');
+          villeresidence: 0, streamtoken: '', streamid: '');
       // Save :
       outil.addUser(user);
     }
@@ -162,7 +162,7 @@ class Servicegeo {
         devise: pub.devise,
         prix: pub.prix,
         read: 1,
-        streamchannelid: pub.streamchannelid
+        streamchannelid: message.data['channelid']
     );
     // Update  :
     await outil.updatePublicationWithoutFurtherActions(newPub);

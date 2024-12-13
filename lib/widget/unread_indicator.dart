@@ -37,6 +37,7 @@ class UnreadIndicator extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 11,
                     color: Colors.blue,
+                    fontWeight: FontWeight.bold
                   ),
                 ),
               ),

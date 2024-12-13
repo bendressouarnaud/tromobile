@@ -15,6 +15,7 @@ class User {
   final String adresse;
   final String fcmtoken;
   final String streamtoken;
+  final String streamid;
   final String pwd;
   final String codeinvitation;
   final int villeresidence;
@@ -22,7 +23,7 @@ class User {
   // M e t h o d s  :
   User({required this.nationnalite, required this.id, required this.typepieceidentite, required this.numeropieceidentite, required this.nom, required this.prenom, required this.email, required this.numero,
     required this.adresse, required this.fcmtoken, required this.pwd, required this.codeinvitation
-    , required this.villeresidence, required this.streamtoken});
+    , required this.villeresidence, required this.streamtoken, required this.streamid});
   factory User.fromDatabaseJson(Map<String, dynamic> data) => User(
     //This will be used to convert JSON objects that
     //are coming from querying the database and converting
@@ -41,6 +42,7 @@ class User {
     nationnalite: data['nationnalite'],
     villeresidence: data['villeresidence'],
     streamtoken: data['streamtoken'],
+    streamid: data['streamid']
   );
 
   Map<String, dynamic> toDatabaseJson() => {
@@ -60,5 +62,6 @@ class User {
     "nationnalite": nationnalite,
     "villeresidence": villeresidence,
     "streamtoken": streamtoken,
+    "streamid": streamid
   };
 }

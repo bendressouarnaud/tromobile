@@ -420,25 +420,53 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
             ),
             GestureDetector(
               onLongPress: () async{
-                if(publication.active == 1){
-                  displayFloat('Le colis n\'a pas encore été remis !', choix: 1);
-                }
-                else if(publication.active == 2){
-                  setState(() {
-                    signalerReception = true;
-                  });
+                if(!signalerReception) {
+                  if (publication.active == 1) {
+                    displayFloat(
+                        'Le colis n\'a pas encore été remis !', choix: 1);
+                  }
+                  else if (publication.active == 2) {
+                    setState(() {
+                      signalerReception = true;
+                    });
+                  }
+                  else {
+                    displayFloat('Réception déjà établie !', choix: 1);
+                  }
                 }
                 else{
-                  displayFloat('Réception déjà établie !', choix: 1);
+                  setState(() {
+                    signalerReception = false;
+                  });
                 }
               },
               onTap: () async {
                 // Display DIALOG :
-                if(widget.streamclient.wsConnectionStatus == ConnectionStatus.connected){
+                if(!signalerReception) {
+                  if (publication.active == 1) {
+                    displayFloat(
+                        'Le colis n\'a pas encore été remis !', choix: 1);
+                  }
+                  else if (publication.active == 2) {
+                    setState(() {
+                      signalerReception = true;
+                    });
+                  }
+                  else {
+                    displayFloat('Réception déjà établie !', choix: 1);
+                  }
+                }
+                else{
+                  setState(() {
+                    signalerReception = false;
+                  });
+                }
+
+                /*if(widget.streamclient.wsConnectionStatus == ConnectionStatus.connected){
                   final channel = widget.streamclient.channel('messaging', id: publication.streamchannelid);
                   channel.watch();
                   openStramChat(widget.streamclient, channel);
-                }
+                }*/
 
                 /*final result = await Navigator.push(context,
                   MaterialPageRoute(
@@ -1086,6 +1114,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                 builder: (SouscriptionGetController controller) {
                                   return Column(
                                     children: [
+                                      // if(souscription.statut == 0) |
                                       Visibility(
                                         visible: !historique,
                                         child: Container(
@@ -1176,17 +1205,31 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                           itemBuilder: (BuildContext context, int index) {
                                             return GestureDetector(
                                               onLongPress: () async{
-                                                Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(publication.id, listeUser[index].id);
-                                                suscriberSouscription = souscription;
-                                                if(souscription.statut == 0){
-                                                  setState(() {
-                                                    iduser = listeUser[index].id;
-                                                    indexSouscripteur = index;
-                                                    signalerLivraison = true;
-                                                  });
+                                                if(!signalerLivraison) {
+                                                  Souscription souscription = await outil
+                                                      .getSouscriptionByIdpubAndIduser(
+                                                      publication.id,
+                                                      listeUser[index].id);
+                                                  suscriberSouscription =
+                                                      souscription;
+                                                  if (souscription.statut ==
+                                                      0) {
+                                                    setState(() {
+                                                      iduser =
+                                                          listeUser[index].id;
+                                                      indexSouscripteur = index;
+                                                      signalerLivraison = true;
+                                                    });
+                                                  }
+                                                  else {
+                                                    displayFloat(
+                                                        'Livraison déjà effectuée');
+                                                  }
                                                 }
                                                 else{
-                                                  displayFloat('Livraison déjà effectuée');
+                                                  setState(() {
+                                                    signalerLivraison = false;
+                                                  });
                                                 }
                                               },
                                               onTap: () async {
@@ -1206,13 +1249,41 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                                   await outil.refreshAllChatsFromResumed(0);
                                                 }*/
 
-                                                Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(publication.id, listeUser[index].id);
+                                                /*Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(publication.id, listeUser[index].id);
                                                 if(widget.streamclient.wsConnectionStatus == ConnectionStatus.connected) {
                                                   final channel = widget.streamclient.channel(
                                                       'messaging', id: souscription.streamchannelid);
                                                   channel.watch();
                                                   openStramChat(widget.streamclient, channel);
+                                                }*/
+
+                                                if(!signalerLivraison) {
+                                                  Souscription souscription = await outil
+                                                      .getSouscriptionByIdpubAndIduser(
+                                                      publication.id,
+                                                      listeUser[index].id);
+                                                  suscriberSouscription =
+                                                      souscription;
+                                                  if (souscription.statut ==
+                                                      0) {
+                                                    setState(() {
+                                                      iduser =
+                                                          listeUser[index].id;
+                                                      indexSouscripteur = index;
+                                                      signalerLivraison = true;
+                                                    });
+                                                  }
+                                                  else {
+                                                    displayFloat(
+                                                        'Livraison déjà effectuée');
+                                                  }
                                                 }
+                                                else{
+                                                  setState(() {
+                                                    signalerLivraison = false;
+                                                  });
+                                                }
+
                                               },
                                               child: Container(
                                                 //margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
