@@ -72,6 +72,7 @@ class _NewAuth extends State<AuthentificationEcran> {
   //
   String? getToken = "";
   bool user_Company = false;
+  bool passwordVisible=false;
 
 
 
@@ -81,6 +82,7 @@ class _NewAuth extends State<AuthentificationEcran> {
     super.initState();
 
     //client = widget.client!;
+    passwordVisible=true;
   }
 
 
@@ -109,8 +111,8 @@ class _NewAuth extends State<AuthentificationEcran> {
           url,
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({
-            "mail": emailController.text,
-            "pwd": pwdController.text,
+            "mail": emailController.text.trim(),
+            "pwd": pwdController.text.trim(),
             "fcmtoken": getToken,
             "smartphonetype": defaultTargetPlatform == TargetPlatform.android
                 ? 1
@@ -245,7 +247,9 @@ class _NewAuth extends State<AuthentificationEcran> {
         );
       }
     }
-    catch (e) {}
+    catch (e) {
+      //print('Erreur : ${e.toString()}');
+    }
     finally{
       // Notify :
       flagSendData = false;
@@ -299,11 +303,29 @@ class _NewAuth extends State<AuthentificationEcran> {
                 Container(
                   padding: const EdgeInsets.all(10.0),
                   child: TextField(
+                    obscureText: passwordVisible,
                     controller: pwdController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       border: OutlineInputBorder(),
+                      hintText: 'Mot de passe...',
                       labelText: 'Mot de passe...',
+                      suffixIcon: IconButton(
+                        icon: Icon(passwordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off),
+                        onPressed: () {
+                          setState(
+                                () {
+                              passwordVisible = !passwordVisible;
+                            },
+                          );
+                        },
+                      ),
+                      alignLabelWithHint: false,
+                      filled: true,
                     ),
+                    keyboardType: TextInputType.visiblePassword,
+                    textInputAction: TextInputAction.done,
                   ),
                 ),
                 Container(

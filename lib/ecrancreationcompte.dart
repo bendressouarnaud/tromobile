@@ -138,6 +138,8 @@ class _NewCreationState extends State<EcranCreationCompte> {
   void checkUserPresence() async{
     User? usr = widget.gUser;
     if(usr != null){
+      // Pick CODE PARRAINAGE :
+      codeParrainageController = TextEditingController(text: usr.codeinvitation );
       nomController = TextEditingController(text: usr.nom );
       prenomController = TextEditingController(text: usr.prenom );
       emailController = TextEditingController(text: usr.email );
@@ -152,8 +154,6 @@ class _NewCreationState extends State<EcranCreationCompte> {
       villeResidence = listeVille.where((ville) => ville.id == usr.villeresidence).first;
       // PIECE IDENTITE :
       dropdownvalueTitre = usr.typepieceidentite;
-      // Pick CODE PARRAINAGE :
-      codeParrainageController = TextEditingController(text: usr.codeinvitation );
     }
   }
 
@@ -191,8 +191,8 @@ class _NewCreationState extends State<EcranCreationCompte> {
 
   // Process :
   bool checkField(){
-    if(nomController.text.isEmpty || prenomController.text.isEmpty || emailController.text.isEmpty
-        || numeroController.text.isEmpty || adresseController.text.isEmpty || pieceController.text.isEmpty){
+    if(nomController.text.isEmpty || prenomController.text.isEmpty || emailController.text.isEmpty ||
+        codeParrainageController.text.isEmpty){
       return true;
     }
     return false;
@@ -222,10 +222,10 @@ class _NewCreationState extends State<EcranCreationCompte> {
             "nom": nomController.text,
             "prenom": prenomController.text,
             "email": emailController.text,
-            "contact": numeroController.text,
-            "adresse": adresseController.text,
+            "contact": '***',//numeroController.text,
+            "adresse": '***',//adresseController.text,
             "codeinvitation": codeParrainageController.text, // Set default :
-            "numeropieceidentite": pieceController.text,
+            "numeropieceidentite": '***',// // pieceController.text
             "idpays": paysDepartMenu!.id,
             "pays": pays,
             "abreviationpays": abrevPays,
@@ -282,17 +282,14 @@ class _NewCreationState extends State<EcranCreationCompte> {
       }
       else if(response.statusCode == 500){
         // Set FLAG :
-        flagSendData = false;
         displayToast("Cette adresse est déjà utilisée !");
       }
       else if(response.statusCode == 501){
         // Set FLAG :
-        flagSendData = false;
         displayToast("Code parrainage inexistant !");
       }
       else {
         // Set FLAG :
-        flagSendData = false;
         displayToast("Erreur apparue");
       }
       // Can close WINDOW :
@@ -412,7 +409,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
                       }).toList()
                   )
               ),
-              Row(
+              /*Row(
                 //mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   Expanded(
@@ -449,7 +446,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
                     ),
                   ),
                 ],
-              ),
+              ),*/
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
@@ -495,7 +492,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
                   textInputAction: TextInputAction.next,
                 ),
               )              ,
-              Row(
+              /*Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   Flexible(
@@ -526,7 +523,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
                     ),
                   ),
                 ],
-              ),
+              ),*/
               Container(
                 padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
                 child: TextField(
@@ -581,7 +578,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
                                     Fluttertoast.showToast(
                                         msg: "Veuillez renseigner tous les champs !",
                                         toastLength: Toast.LENGTH_LONG,
-                                        gravity: ToastGravity.CENTER,
+                                        gravity: ToastGravity.BOTTOM,
                                         timeInSecForIosWeb: 3,
                                         backgroundColor: Colors.red,
                                         textColor: Colors.white,

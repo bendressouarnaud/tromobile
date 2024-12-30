@@ -101,6 +101,12 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     );
   }
 
+  String processTime(String time) {
+    return userOrSuscriber == 0 ?
+    '${time.substring(0,5)} GMT' :
+    time.substring(0,5);
+  }
+
   String formatPrice(int price){
     if(price > 0) {
       MoneyFormatter fmf = MoneyFormatter(
@@ -381,7 +387,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
         child: Column(
           children: [
             Visibility(
-              visible: !historique,
+              visible: (!historique && (publication.active < 2)),
               child: ElevatedButton.icon(
                 style: ButtonStyle(
                     backgroundColor: MaterialStateColor.resolveWith((states) => const Color(
@@ -654,7 +660,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
           datepublication: publication.datepublication,
           reserve: publication.reserve,
           active: 3,
-          reservereelle: publication.reserve,
+          reservereelle: publication.reservereelle,
           souscripteur: publication.souscripteur, // Use OWNER Id
           milliseconds: publication.milliseconds,
           identifiant: publication.identifiant,
@@ -967,7 +973,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                         )
                                     ),
                                     Text(
-                                      'Heure : ${publication.datevoyage.split("T")[1]}',
+                                      'Heure : ${processTime(publication.datevoyage.split("T")[1])}',
                                       style: const TextStyle(
                                           fontSize: 17
                                       ),
@@ -1008,7 +1014,9 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                           children: [
                                             Text(userOrSuscriber == 0 ? 'Réservé : ' : 'Reste : '),
                                             Text(userOrSuscriber == 0 ?
-                                            '${ controller.publicationData.where((pub) => pub.id == publication.id).first.reservereelle} Kg' :
+                                            (
+                                              '${ controller.publicationData.where((pub) => pub.id == publication.id).first.reservereelle} Kg'
+                                            ) :
                                             '${updateReserveBagage(controller.publicationData)} Kg',
                                                 style: const TextStyle(
                                                     fontWeight: FontWeight.bold,
@@ -1069,7 +1077,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                 ),
                               ),
                               userOrSuscriber == 0 ?
-                              (publication.active == 2 ?
+                              ((publication.active == 2 || publication.active == 3)?
                                   Container(
                                     margin: const EdgeInsets.only(left: 10, top: 20, right: 10),
                                     child: const Column(

@@ -69,8 +69,21 @@ class NewAccountCreationHome extends StatelessWidget {
       }*/
 
       //
-      displayDisplay();
+      //displayDisplay();
+      openApp();
     }
+  }
+
+  // Open MAIN app :
+  void openApp() {
+    Navigator
+        .push(
+        contextG,
+        MaterialPageRoute(builder:
+            (context) =>
+            MyApp(client: client, streamclient: streamClient)
+        )
+    );
   }
 
   void displayDisplay() {
@@ -79,32 +92,30 @@ class NewAccountCreationHome extends StatelessWidget {
         context: contextG,
         builder: (BuildContext context) {
           dialogContext = context;
-          return WillPopScope(
-              onWillPop: () async => false,
-              child: AlertDialog(
-                  title: const Text('Information'),
-                  content: const SizedBox(
-                      height: 70,
-                      child: Column(
-                        children: [
-                          Text("L'application va redémarrer ou relancez la sinon !"),
-                          SizedBox(
-                            height: 20,
-                          )
-                        ],
+          return AlertDialog(
+              title: const Text('Information'),
+              content: const SizedBox(
+                  height: 70,
+                  child: Column(
+                    children: [
+                      Text("L'application va redémarrer ou relancez la sinon !"),
+                      SizedBox(
+                        height: 20,
                       )
-                  ),
-                  actions: <Widget>[
-                    TextButton(
-                      onPressed: () {
-                        /*Navigator.pop(context);
+                    ],
+                  )
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    /*Navigator.pop(context);
                         Navigator.pop(context);*/
-                        Restart.restartApp();
-                      },
-                      child: const Text('OK'),
-                    ),
-                  ]
-              ) );
+                    Restart.restartApp();
+                  },
+                  child: const Text('OK'),
+                ),
+              ]
+          );
         }
     );
   }

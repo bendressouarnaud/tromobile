@@ -146,6 +146,17 @@ class _SConfirmerMail extends State<ConfirmerMail> {
     );
   }
 
+  // Open MAIN app :
+  void openApp() {
+    Navigator
+        .push(
+        contextG,
+        MaterialPageRoute(builder:
+            (context) =>
+            MyApp(client: client, streamclient: streamClient)
+        )
+    );
+  }
 
   void displayDisplay() {
     showDialog(
@@ -313,7 +324,8 @@ class _SConfirmerMail extends State<ConfirmerMail> {
                                   // Kill ACTIVITY :
                                   if(!flagSendData) {
                                     //widget.tache == 1 ? displayDisplay() : Navigator.pop(context);
-                                    displayDisplay();
+                                    //displayDisplay();
+                                    openApp();
                                   }
                                   else{
                                     displayToast("Veuillez réessayer la validation !");
