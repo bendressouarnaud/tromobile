@@ -148,6 +148,10 @@ class _SConfirmerMail extends State<ConfirmerMail> {
 
   // Open MAIN app :
   void openApp() {
+
+    // Close WINDOW :
+    Navigator.pop(contextG);
+
     Navigator
         .push(
         contextG,
