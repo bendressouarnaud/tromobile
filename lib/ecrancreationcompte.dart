@@ -527,7 +527,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
               Container(
                 padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
                 child: TextField(
-                  readOnly: codeParrainageController.text.isNotEmpty ? true : false,
+                  readOnly: codeParrainageController.text.isNotEmpty && widget.gUser != null ? true : false,
                   keyboardType: TextInputType.text,
                   controller: codeParrainageController,
                   decoration: const InputDecoration(

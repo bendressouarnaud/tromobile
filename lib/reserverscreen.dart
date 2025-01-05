@@ -396,13 +396,7 @@ class _ReservePaiement extends State<ReservePaiement> {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
-      title: 'CinetPay Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: Scaffold(
+    return Scaffold(
         //backgroundColor: Colors.white,
         appBar: AppBar(
           //backgroundColor: Colors.white,
@@ -541,7 +535,6 @@ class _ReservePaiement extends State<ReservePaiement> {
             ],
           ),
         ),
-      )
-    );
+      );
   }
 }

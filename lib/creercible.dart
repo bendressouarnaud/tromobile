@@ -199,7 +199,7 @@ class _creerCible extends State<CreerCible> {
             datepublication: publication.datepublication,
             reserve: publication.reserve,
             active: 1,
-            reservereelle: publication.reserve,
+            reservereelle: publication.reservereelle,
             souscripteur: publication.souscripteur, // Use OWNER Id
             milliseconds: dateVoyageFinal.millisecondsSinceEpoch, // publication.milliseconds,
             identifiant: publication.identifiant,
