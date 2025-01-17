@@ -185,6 +185,9 @@ class _ReservePaiement extends State<ReservePaiement> {
           hitServerAfterUrlPayment = true;
         }
       }
+      else if(hubWaveResponse.reserve > 0){
+        displayMessage('Impossible de réserver plus ${hubWaveResponse.reserve} Kg', 5);
+      }
     }
     else{
       displayMessage('Une erreur est survenue', 3);

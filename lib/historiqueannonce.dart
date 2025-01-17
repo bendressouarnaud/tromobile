@@ -1140,9 +1140,16 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                                     style: TextStyle(
                                                         color: Colors.white
                                                     )),
-                                                onPressed: () {
-                                                  // Delete the 'PUBLICATION' :
-                                                  dialogForPublicationDeletion(context);
+                                                onPressed: () async {
+                                                  // Check if a DELIVRY has been already done for ONE SUBSCRIPTION :
+                                                  List<Souscription> lesSous = await outil.getAllSouscriptionByIdpub(publication.id);
+                                                  if(lesSous.where((souscription) => souscription.statut ==1).toList().length > 0){
+                                                    displayFloat('Suppression impossible, un client a déjà reçu le colis', choix : 1);
+                                                  }
+                                                  else{
+                                                    // Delete the 'PUBLICATION' :
+                                                    dialogForPublicationDeletion(context);
+                                                  }
                                                 },
                                                 icon: const Icon(
                                                   Icons.cancel,

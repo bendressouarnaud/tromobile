@@ -76,6 +76,9 @@ class NewAccountCreationHome extends StatelessWidget {
 
   // Open MAIN app :
   void openApp() {
+
+    Navigator.pop(contextG);
+
     Navigator
         .push(
         contextG,
