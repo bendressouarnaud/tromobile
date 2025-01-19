@@ -16,6 +16,7 @@ import 'package:tro/repositories/pays_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
 import 'authentification.dart';
+import 'confidentialite.dart';
 import 'constants.dart';
 import 'package:http/http.dart';
 import 'package:http/http.dart' as https;
@@ -371,7 +372,40 @@ class _NewEcranState extends State<EcranCompte> {
                         ),
                       ),
 
-
+                      Container(
+                          margin: const EdgeInsets.only(top: 10, left: 15, right: 15),
+                          child: const Divider(
+                            height: 2,
+                            color: Colors.black,
+                          )
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(top: 10, left: 7),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.arrow_right_sharp,
+                              color: Colors.black,
+                              size: 30,
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                // Display DIALOG
+                                Navigator.push(context,
+                                    MaterialPageRoute(builder: (context) {
+                                      return PolitiqueConfidentialite.setAction(1);
+                                    }));
+                              },
+                              child: const Text('Politique de confidentialité',
+                                style: TextStyle(
+                                    fontSize: 18
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                      )
                     ],
                   );
                 }

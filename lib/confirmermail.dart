@@ -21,6 +21,7 @@ import 'package:tro/repositories/pays_repository.dart';
 import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
 
+import 'confidentialite.dart';
 import 'constants.dart';
 import 'getxcontroller/getparamscontroller.dart';
 import 'httpbeans/cibleresponse.dart';
@@ -83,7 +84,8 @@ class _SConfirmerMail extends State<ConfirmerMail> {
             epochdebut: prms.epochdebut,
             epochfin: prms.epochfin,
             comptevalide: 1,
-            deviceregistered: 0
+            deviceregistered: 0,
+            privacypolicy: prms.privacypolicy
         );
         await _parametersController.updateData(prms);
 
@@ -157,7 +159,7 @@ class _SConfirmerMail extends State<ConfirmerMail> {
         contextG,
         MaterialPageRoute(builder:
             (context) =>
-            MyApp(client: client, streamclient: streamClient)
+            PolitiqueConfidentialite.setStream(streamClient, 0)
         )
     );
   }

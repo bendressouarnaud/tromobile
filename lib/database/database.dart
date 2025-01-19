@@ -99,7 +99,7 @@ class DatabaseHelper {
     await db.execute(
         'CREATE TABLE parameters (id INTEGER PRIMARY KEY,state TEXT,travellocal INTEGER,'
             'travelabroad INTEGER, notification INTEGER, epochdebut INTEGER, epochfin INTEGER, comptevalide INTEGER'
-            ', deviceregistered INTEGER)');
+            ', deviceregistered INTEGER, privacypolicy INTEGER)');
 
     await db.execute(
         'CREATE TABLE filiation (id INTEGER PRIMARY KEY,code TEXT,bonus REAL)');
@@ -127,7 +127,8 @@ class DatabaseHelper {
     await database.insert('ville', Ville(id: 10, name: 'Gagnoa', paysid: 2).toDatabaseJson());
     // Add parameters :
     await database.insert('parameters', Parameters(id: 1, state: 'resumed', travellocal: 500, travelabroad: 5000
-        , notification: 0, epochdebut: 0, epochfin: 0, comptevalide: 0, deviceregistered: 0).toDatabaseJson());
+        , notification: 0, epochdebut: 0, epochfin: 0, comptevalide: 0, deviceregistered: 0,
+        privacypolicy: 0).toDatabaseJson());
 
     await database.insert('ville', Ville(id: 11, name: 'Korhogo', paysid: 2).toDatabaseJson());
     await database.insert('ville', Ville(id: 12, name: 'San-Pédro', paysid: 2).toDatabaseJson());

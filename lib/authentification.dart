@@ -134,6 +134,7 @@ class _NewAuth extends State<AuthentificationEcran> {
           epochfin: parameters.epochfin,
           deviceregistered: parameters.deviceregistered,
           comptevalide: 1,
+          privacypolicy: parameters.privacypolicy
         );
         await _repository.update(updateParam);
 
@@ -152,7 +153,7 @@ class _NewAuth extends State<AuthentificationEcran> {
             adresse: bn.adresse,
             fcmtoken: getToken!,
             pwd: "",
-            codeinvitation: "",
+            codeinvitation: bn.codeinvitation,
             villeresidence: bn.villeresidence, streamtoken: bn.streamtoken,
             streamid: bn.streamchatid);
         // Save :

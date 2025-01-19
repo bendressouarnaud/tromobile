@@ -184,6 +184,7 @@ class _ManageNotificationState extends State<ManageNotification> {
         epochdebut: millisecondsDebut,
         epochfin: millisecondsFin, comptevalide: parameters!.comptevalide,
         deviceregistered: parameters!.deviceregistered,
+        privacypolicy: parameters!.privacypolicy
       );
       await _repository.update(updateParam);
       // Set FLAG :

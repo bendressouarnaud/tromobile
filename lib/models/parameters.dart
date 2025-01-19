@@ -10,11 +10,12 @@ class Parameters {
   final int epochfin;
   final int comptevalide;
   final int deviceregistered;
+  final int privacypolicy;
 
   // M e t h o d s  :
   Parameters({required this.id, required this.state, required this.travellocal, required this.travelabroad
   , required this.notification, required this.epochdebut, required this.epochfin, required this.comptevalide
-    , required this.deviceregistered});
+    , required this.deviceregistered, required this.privacypolicy});
   factory Parameters.fromDatabaseJson(Map<String, dynamic> data) => Parameters(
     //This will be used to convert JSON objects that
     //are coming from querying the database and converting
@@ -27,7 +28,8 @@ class Parameters {
       epochdebut: data['epochdebut'],
       epochfin: data['epochfin'],
       comptevalide: data['comptevalide'],
-      deviceregistered: data['deviceregistered']
+      deviceregistered: data['deviceregistered'],
+      privacypolicy: data['privacypolicy']
   );
 
   Map<String, dynamic> toDatabaseJson() => {
@@ -39,6 +41,7 @@ class Parameters {
     "epochdebut": epochdebut,
     "epochfin": epochfin,
     "comptevalide": comptevalide,
-    "deviceregistered": deviceregistered
+    "deviceregistered": deviceregistered,
+    "privacypolicy": privacypolicy
   };
 }

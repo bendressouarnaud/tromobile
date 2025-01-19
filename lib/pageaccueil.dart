@@ -257,7 +257,8 @@ class _WelcomePageState extends State<WelcomePage> {
               epochdebut: prms.epochdebut,
               epochfin: prms.epochfin,
               comptevalide: prms.comptevalide,
-              deviceregistered: 1
+              deviceregistered: 1,
+              privacypolicy: prms.privacypolicy
           );
           await _parametersController.updateData(prms);
         }
@@ -294,8 +295,9 @@ class _WelcomePageState extends State<WelcomePage> {
         notification: prms != null ? prms.notification : 0,
         epochdebut: prms != null ? prms.epochdebut : 0,
         epochfin: prms != null ? prms.epochfin : 0,
-      comptevalide: prms!.comptevalide,
-      deviceregistered: prms!.deviceregistered,
+      comptevalide: prms != null ? prms.comptevalide : 1,
+      deviceregistered: prms != null ? prms.deviceregistered : 1,
+        privacypolicy: prms != null ? prms.privacypolicy : 1
     );
     await _parametersController.updateData(prms);
   }

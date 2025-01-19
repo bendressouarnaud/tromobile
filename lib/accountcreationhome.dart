@@ -8,6 +8,7 @@ import 'package:tro/repositories/user_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
 
 import 'authentification.dart';
+import 'confidentialite.dart';
 import 'confirmermail.dart';
 import 'ecrancreationcompte.dart';
 import 'main.dart';
@@ -84,7 +85,8 @@ class NewAccountCreationHome extends StatelessWidget {
         contextG,
         MaterialPageRoute(builder:
             (context) =>
-            MyApp(client: client, streamclient: streamClient)
+                PolitiqueConfidentialite.setStream(streamClient,
+                    0)
         )
     );
   }
