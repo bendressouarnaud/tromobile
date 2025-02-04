@@ -567,9 +567,14 @@ class _WelcomePageState extends State<WelcomePage> {
   void callForCountry(List<Pays> liste){ // BuildContext context
 
     // Init :
+    bool? isChecked = true;
+
+    // Sort LIST :
+    liste.sort((a,b) =>
+        a.name.compareTo(b.name));
+    // Set First contry for DEPARTURE and ARRIVAL :
     paysDestination = liste.first;
     paysDepart = liste.first;
-    bool? isChecked = true;
 
     showDialog(
         barrierDismissible: false,

@@ -367,7 +367,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
                       hintText: "Sélectionner le pays",
                       requestFocusOnTap: false,
                       enableFilter: false,
-                      label: const Text('Nationalité'),
+                      label: const Text('Pays de résidence'),
                       // Initial Value
                       onSelected: (Pays? value) {
                         paysDepartMenu = value!;
