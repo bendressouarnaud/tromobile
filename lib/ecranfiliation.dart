@@ -88,7 +88,7 @@ class _GestionFiliation extends State<GestionFiliation> {
                       child: Column(
                         children: [
                           Container(
-                            width: 180,
+                            width: MediaQuery.of(context).size.width,
                             child: TextField(
                               keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
@@ -96,7 +96,7 @@ class _GestionFiliation extends State<GestionFiliation> {
                                 labelText: 'Montant',
                               ),
                               style: const TextStyle(
-                                  height: 0.8
+                                  height: 1.0
                               ),
                               textAlignVertical: TextAlignVertical.bottom,
                               textAlign: TextAlign.center,
