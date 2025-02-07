@@ -78,161 +78,241 @@ class _PolitiqueConfidentialite extends State<PolitiqueConfidentialite> {
           )
         ),
       ),
-      body: SingleChildScrollView(
-          scrollDirection: Axis.vertical,
-          physics: const ScrollPhysics(),
-          child: Column(
-            children: [
-              Container(
-                alignment: Alignment.topLeft,
-                margin: EdgeInsets.only(top: 10, left: 10, right: 10),
-                child: Text('Cobagage est éditée par ANKK.'),
-              ),
-              Container(
-                alignment: Alignment.topLeft,
-                margin: EdgeInsets.only(top: 10, left: 10, right: 10),
-                child: Text('Le terme Application s\'applique à l\'application pour mobile nommée « Cobagage ».'),
-              ),
-              Container(
-                alignment: Alignment.topLeft,
-                margin: EdgeInsets.only(top: 20, left: 10, right: 10),
-                child: Text('Données personnelles',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Container(
-                alignment: Alignment.topLeft,
-                margin: EdgeInsets.only(left: 10, right: 10),
-                child: Text('Depuis notre Application, nous ne collectons aucune donnée personnelle (par exemple: '
-                    'les noms, les adresses, les numéros de téléphone, les adresses de courrier électronique ou '
-                    'les adresses IP complètes).'),
-              ),
-              Container(
-                alignment: Alignment.topLeft,
-                margin: EdgeInsets.only(top: 20, left: 10, right: 10),
-                child: Text('Contenu des marchandises',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    color: Colors.red
-                  ),
-                ),
-              ),
-              Container(
-                alignment: Alignment.topLeft,
-                margin: EdgeInsets.only(left: 10, right: 10),
-                child: Text.rich(
-                    TextSpan(
-                        text: 'Les marchandises ou colis transmis à un voyageur ne doivent en aucun cas contenir ',
-                        //style: TextStyle(fontWeight: FontWeight.bold),
-                        children: <TextSpan>[
-                          TextSpan(text: 'de substances illicites',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(text: ' telles que la ',
-                            style: TextStyle(fontWeight: FontWeight.normal),
-                          ),
-                          TextSpan(text: 'DROGUE',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(text: ' ou tout autre ',
-                            style: TextStyle(fontWeight: FontWeight.normal),
-                          ),
-                          TextSpan(text: 'objet proscrit',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(text: ' par les lois des pays par lesquels '
-                              'transiteront les marchandises.',
-                            style: TextStyle(fontWeight: FontWeight.normal),
-                          )
-                        ]
-                    ),
-                  )
-              ),
-              Container(
-                alignment: Alignment.topLeft,
-                margin: EdgeInsets.only(top: 20, left: 10, right: 10),
-                child: Text('Moyen de paiement',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold
-                  ),
-                ),
-              ),
-              Container(
-                  alignment: Alignment.topLeft,
-                  margin: EdgeInsets.only(left: 10, right: 10),
-                  child: Text.rich(
-                    TextSpan(
-                        text: 'Compte tenu du faible taux de bancarisation en  ',
-                        //style: TextStyle(fontWeight: FontWeight.bold),
-                        children: <TextSpan>[
-                          TextSpan(text: 'Afrique Subsaharienne',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(text: ', le principal moyen de paiement utilisé, sera ',
-                            style: TextStyle(fontWeight: FontWeight.normal),
-                          ),
-                          TextSpan(text: 'WAVE',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(text: '. Il faudra donc disposer d\'une application WAVE installée pour '
-                              'faciliter le ',
-                            style: TextStyle(fontWeight: FontWeight.normal),
-                          ),
-                          TextSpan(text: 'paiement des transactions',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(text: ' qui le nécessiteront.',
-                            style: TextStyle(fontWeight: FontWeight.normal),
-                          )
-                        ]
-                    ),
-                  )
-              ),
-              Visibility(
-                visible: widget.action == 0 ? true : false,
-                child: Container(
-                    alignment: Alignment.topRight,
-                    margin: EdgeInsets.only(top: 30, left: 10, right: 10),
-                    child: ElevatedButton.icon(
-                      style: ButtonStyle(
-                          backgroundColor: MaterialStateColor.resolveWith((states) => Colors.brown)
-                      ),
-                      label: const Text("Valider",
-                          style: TextStyle(
-                              color: Colors.white
-                          )
-                      ),
-                      onPressed: () async {
-                        // Persist DATA :
-                        Parameters? prms = await _parametersController.refreshData();
-                        prms = Parameters(id: prms!.id,
-                            state: prms.state,
-                            travellocal: prms.travellocal,
-                            travelabroad: prms.travelabroad,
-                            notification: prms.notification,
-                            epochdebut: prms.epochdebut,
-                            epochfin: prms.epochfin,
-                            comptevalide: prms.comptevalide,
-                            deviceregistered: prms.deviceregistered,
-                            privacypolicy: 1
-                        );
-                        await _parametersController.updateData(prms);
+      body: Stack(
+        children: [
+          Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 50,
+              child: Visibility(
+                  visible: widget.action == 0 ? true : false,
+                  child: Container(
+                    //color: Colors.amber,
+                      alignment: Alignment.topRight,
+                      padding: EdgeInsets.all(7),
+                      child: ElevatedButton.icon(
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateColor.resolveWith((states) => Colors.brown)
+                        ),
+                        label: const Text("Valider",
+                            style: TextStyle(
+                                color: Colors.white
+                            )
+                        ),
+                        onPressed: () async {
+                          // Persist DATA :
+                          Parameters? prms = await _parametersController.refreshData();
+                          prms = Parameters(id: prms!.id,
+                              state: prms.state,
+                              travellocal: prms.travellocal,
+                              travelabroad: prms.travelabroad,
+                              notification: prms.notification,
+                              epochdebut: prms.epochdebut,
+                              epochfin: prms.epochfin,
+                              comptevalide: prms.comptevalide,
+                              deviceregistered: prms.deviceregistered,
+                              privacypolicy: 1
+                          );
+                          await _parametersController.updateData(prms);
 
-                        // Open the MAIN INTERFACE :
-                        openApp();
-                      },
-                      icon: const Icon(
-                        Icons.check_circle_outline,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                    )
-                )
+                          // Open the MAIN INTERFACE :
+                          openApp();
+                        },
+                        icon: const Icon(
+                          Icons.check_circle_outline,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                      )
+                  )
               )
-            ],
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            left: 0,
+            bottom: 50,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              physics: const ScrollPhysics(),
+              child: Column(
+                children: [
+                  Container(
+                    alignment: Alignment.topLeft,
+                    margin: EdgeInsets.only(top: 10, left: 10, right: 10),
+                    child: Text('Cobagage est éditée par ANKK.'),
+                  ),
+                  Container(
+                    alignment: Alignment.topLeft,
+                    margin: EdgeInsets.only(top: 10, left: 10, right: 10),
+                    child: Text('Le terme Application s\'applique à l\'application pour mobile nommée « Cobagage ».'),
+                  ),
+                  Container(
+                    alignment: Alignment.topLeft,
+                    margin: EdgeInsets.only(top: 20, left: 10, right: 10),
+                    child: Text('Données personnelles',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    alignment: Alignment.topLeft,
+                    margin: EdgeInsets.only(left: 10, right: 10),
+                    child: Text('Depuis notre Application, nous ne collectons aucune donnée personnelle (par exemple: '
+                        'les noms, les adresses, les numéros de téléphone, les adresses de courrier électronique ou '
+                        'les adresses IP complètes).'),
+                  ),
+                  Container(
+                    alignment: Alignment.topLeft,
+                    margin: EdgeInsets.only(top: 20, left: 10, right: 10),
+                    child: Text('Contenu des marchandises',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red
+                      ),
+                    ),
+                  ),
+                  Container(
+                      alignment: Alignment.topLeft,
+                      margin: EdgeInsets.only(left: 10, right: 10),
+                      child: Text.rich(
+                        TextSpan(
+                            text: 'Les marchandises ou colis transmis à un voyageur ne doivent en aucun cas contenir ',
+                            //style: TextStyle(fontWeight: FontWeight.bold),
+                            children: <TextSpan>[
+                              TextSpan(text: 'de substances illicites',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextSpan(text: ' telles que la ',
+                                style: TextStyle(fontWeight: FontWeight.normal),
+                              ),
+                              TextSpan(text: 'DROGUE',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextSpan(text: ' ou tout autre ',
+                                style: TextStyle(fontWeight: FontWeight.normal),
+                              ),
+                              TextSpan(text: 'objet proscrit',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextSpan(text: ' par les lois des pays par lesquels '
+                                  'transiteront les marchandises.',
+                                style: TextStyle(fontWeight: FontWeight.normal),
+                              )
+                            ]
+                        ),
+                      )
+                  ),
+                  Container(
+                    alignment: Alignment.topLeft,
+                    margin: EdgeInsets.only(top: 20, left: 10, right: 10),
+                    child: Text('Moyen de paiement',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold
+                      ),
+                    ),
+                  ),
+                  Container(
+                      alignment: Alignment.topLeft,
+                      margin: EdgeInsets.only(left: 10, right: 10),
+                      child: Text.rich(
+                        TextSpan(
+                            text: 'Compte tenu du faible taux de bancarisation en  ',
+                            //style: TextStyle(fontWeight: FontWeight.bold),
+                            children: <TextSpan>[
+                              TextSpan(text: 'Afrique Subsaharienne',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextSpan(text: ', le principal moyen de paiement utilisé, sera ',
+                                style: TextStyle(fontWeight: FontWeight.normal),
+                              ),
+                              TextSpan(text: 'WAVE',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextSpan(text: '. Il faudra donc disposer d\'une application WAVE installée pour '
+                                  'faciliter le ',
+                                style: TextStyle(fontWeight: FontWeight.normal),
+                              ),
+                              TextSpan(text: 'paiement des transactions',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextSpan(text: ' qui le nécessiteront.',
+                                style: TextStyle(fontWeight: FontWeight.normal),
+                              )
+                            ]
+                        ),
+                      )
+                  ),
+                  Container(
+                    alignment: Alignment.topLeft,
+                    margin: EdgeInsets.only(top: 20, left: 10, right: 10),
+                    child: Text('Portefeuille électronique',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold
+                      ),
+                    ),
+                  ),
+                  Container(
+                      alignment: Alignment.topLeft,
+                      margin: EdgeInsets.only(left: 10, right: 10),
+                      child: Text.rich(
+                        TextSpan(
+                            text: 'Toute annonce payante donnera lieu à la génération de revenus. Lorsque le voyageur aura délivré le colis à la ressource désignée, '
+                                'ce dernier verra son portfeuille, être crédité sous 2 conditions listées ci-dessous : \n',
+                            children: <TextSpan>[
+                              TextSpan(text: '- L\'émetteur du colis valide la remise du colis dans un délai de 2 jours maximum ',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextSpan(text: 'suivant la '),
+                              TextSpan(text: 'réception d\'un mail',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextSpan(text: ' ou '),
+                              TextSpan(text: 'd\'une notification',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextSpan(text: ' l\'en informant ;\n'),
+                              TextSpan(text: '- Passé le délai de 2 jours, le portefeuille sera crédité automatiquement.',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              )
+                            ]
+                        ),
+                      )
+                  ),
+                  Container(
+                    alignment: Alignment.topLeft,
+                    margin: EdgeInsets.only(top: 20, left: 10, right: 10),
+                    child: Text('Perte d\'objets',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red
+                      ),
+                    ),
+                  ),
+                  Container(
+                      alignment: Alignment.topLeft,
+                      margin: EdgeInsets.only(left: 10, right: 10),
+                      child: Text.rich(
+                        TextSpan(
+                            text: 'ANKK ne pourra être imputée de toute perte de colis, étant donné que l\'application ne fait que ',
+                            //style: TextStyle(fontWeight: FontWeight.bold),
+                            children: <TextSpan>[
+                              TextSpan(text: 'la mise en relation',
+                                  style: TextStyle(fontWeight: FontWeight.bold)
+                              ),
+                              TextSpan(text: ' entre un voyageur et un particulier qui désire transmettre son colis.'
+                              )
+                            ]
+                        ),
+                      )
+                  ),
+                ],
+              )
           )
+          )
+        ],
       )
     );
   }

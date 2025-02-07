@@ -61,7 +61,7 @@ class _GestionFiliation extends State<GestionFiliation> {
   Future<Filiation?> getData() async{
     Filiation? tampon = await _filiationRepository.findById(1);
     codeParrainage = tampon!.code;
-    bonus = tampon!.bonus;
+    bonus = tampon.bonus;
     return tampon;
   }
 
@@ -70,6 +70,63 @@ class _GestionFiliation extends State<GestionFiliation> {
         amount: price
     );
     return fmf.output.withoutFractionDigits;
+  }
+
+
+  void dialogRequestSolde(BuildContext fContext) {
+    showDialog(
+        barrierDismissible: false,
+        context: fContext,
+        builder: (BuildContext context) {
+          dialogContext = context;
+          return PopScope(
+              canPop: false,
+              child: AlertDialog(
+                  title: const Text('Renseignez le montant'),
+                  content: SizedBox(
+                      height: 70,
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 180,
+                            child: TextField(
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'Montant',
+                              ),
+                              style: const TextStyle(
+                                  height: 0.8
+                              ),
+                              textAlignVertical: TextAlignVertical.bottom,
+                              textAlign: TextAlign.center,
+                              textInputAction: TextInputAction.next,
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          )
+                        ],
+                      )
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.pop(context, 'Cancel'),
+                      child: const Text('NON'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                        // Dispay new ALERTDIALOG
+                        //displayPublicationDeletion(fContext);
+                      },
+                      child: const Text('OUI'),
+                    ),
+                  ]
+              ) );
+        }
+    );
   }
 
 
@@ -299,13 +356,68 @@ class _GestionFiliation extends State<GestionFiliation> {
                     Container(
                         alignment: Alignment.topLeft,
                         margin: const EdgeInsets.only(right: 20, left: 20, top: 5),
-                        child: Text('${formatPrice(bonus)} FCFA',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFAD6004),
-                                fontSize: 18
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('${formatPrice(bonus)} FCFA',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFAD6004),
+                                    fontSize: 30
+                                )
+                            ),
+                            ElevatedButton.icon(
+                              style: ButtonStyle(
+                                  backgroundColor: MaterialStateColor.resolveWith((states) => greenAlertValidation)
+                              ),
+                              label: const Text("Transfert",
+                                  style: TextStyle(
+                                      color: Colors.white
+                                  )),
+                              onPressed: () {
+                                dialogRequestSolde(context);
+                              },
+                              icon: const Icon(
+                                Icons.monetization_on,
+                                size: 20,
+                                color: Colors.white,
+                              ),
                             )
+                          ],
                         )
+                        /**/
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(right: 20, left: 20, top: 15),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.black,
+                          width: 1
+                        ),
+                          color: cardviewsoldeminimum,
+                          borderRadius: BorderRadius.circular(16.0)
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            child: Icon(Icons.add_alert_sharp,
+                            color: Colors.orangeAccent,),
+                          ),
+                          Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(7),
+                                child: Text(
+                                  'Solde minimum à atteindre avant le prochain transfert : 500',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                    fontWeight: FontWeight.bold
+                                  ),
+                                ),
+                              )
+                          )
+                        ],
+                      ),
                     )
                   ],
                 );

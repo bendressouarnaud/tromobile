@@ -5,6 +5,7 @@ const Color greenGridViewtitle = Color(0xFF8BCC84);
 const Color greenAlertValidation = Color(0xFF148108);
 const Color grayColor = Color(0xFF8D8D8E);
 const Color cardviewsousproduit = Color(0xFFF4F3F2);
+const Color cardviewsoldeminimum = Color(0xFFF8F8F6);
 const Color butcardviewsousproduit = Color(0xFFDD570F);
 const Color entreprisename = Color(0xFF074CB1);
 const Color bottombararticle = Color(0xFFF7CCCC);

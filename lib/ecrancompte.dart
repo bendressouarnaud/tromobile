@@ -362,7 +362,7 @@ class _NewEcranState extends State<EcranCompte> {
                                 usr ??= await _userRepository.getConnectedUser();
                                 callFiliationInterface();
                               },
-                              child: const Text('Filiations',
+                              child: const Text('Filiations & Soldes',
                                 style: TextStyle(
                                     fontSize: 18
                                 ),
