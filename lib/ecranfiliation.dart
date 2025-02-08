@@ -43,11 +43,13 @@ class _GestionFiliation extends State<GestionFiliation> {
 
   // A T T R I B U T E S:
   final _filiationRepository = FiliationRepository();
+  TextEditingController montantController = TextEditingController();
   late BuildContext dialogContext;
   bool flagSendData = false;
   bool closeAlertDialog = false;
   late String codeParrainage;
   late double bonus;
+  final double redrawalAmount = 500;
 
 
 
@@ -73,7 +75,7 @@ class _GestionFiliation extends State<GestionFiliation> {
   }
 
 
-  void dialogRequestSolde(BuildContext fContext) {
+  void dialogRequestSolde(BuildContext fContext, double leBonus) {
     showDialog(
         barrierDismissible: false,
         context: fContext,
@@ -91,6 +93,7 @@ class _GestionFiliation extends State<GestionFiliation> {
                             width: MediaQuery.of(context).size.width,
                             child: TextField(
                               keyboardType: TextInputType.number,
+                              controller: montantController,
                               decoration: const InputDecoration(
                                 border: OutlineInputBorder(),
                                 labelText: 'Montant',
@@ -117,15 +120,82 @@ class _GestionFiliation extends State<GestionFiliation> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.pop(dialogContext);
-                        // Dispay new ALERTDIALOG
-                        //displayPublicationDeletion(fContext);
+                        try{
+                          int montant = int.parse(montantController.text);
+                          if(montant > leBonus){
+                            displayFloat("Le montant est supérieur au solde !", choix: 0);
+                          }
+                          else{
+                            Navigator.pop(dialogContext);
+                            displayLoadingPaymentRequest(context, montant);
+                          }
+                        }
+                        catch (e){
+                          displayFloat("Le montant est incorrect !", choix: 0);
+                        }
                       },
                       child: const Text('OUI'),
                     ),
                   ]
               ) );
         }
+    );
+  }
+
+
+  void displayLoadingPaymentRequest(BuildContext dContext, int montant) {
+    // Display SYNCHRO :
+    showDialog(
+        barrierDismissible: false,
+        context: dContext,
+        builder: (BuildContext context) {
+          dialogContext = context;
+          return AlertDialog(
+              title: const Text('Information'),
+              content: Container(
+                  height: 100,
+                  child: const Column(
+                    children: [
+                      Text("Synchonisation ..."),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      SizedBox(
+                          height: 30.0,
+                          width: 30.0,
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                            strokeWidth: 3.0, // Width of the circular line
+                          )
+                      )
+                    ],
+                  )
+              )
+          );
+        }
+    );
+
+    flagSendData = true;
+    closeAlertDialog = true;
+    sendPaymentRequest(montant);
+    int waitForTimeout = 0;
+
+    // Run TIMER :
+    Timer.periodic(
+      const Duration(milliseconds: 1000),
+          (timer) {
+        waitForTimeout++;
+        // Update user about remaining time
+        if(!closeAlertDialog || (waitForTimeout <= timeOutValue)){
+          Navigator.pop(dialogContext);
+          timer.cancel();
+          if(!flagSendData){
+            // Data sent :
+            setState(() {
+            });
+          }
+        }
+      },
     );
   }
 
@@ -193,8 +263,8 @@ class _GestionFiliation extends State<GestionFiliation> {
     // Checks :
     if(response.statusCode.toString().startsWith('2')){
       FiliationRefresh frh =  FiliationRefresh.fromJson(json.decode(response.body));
-      // From there, Hit NEW FILIATION :
-      Filiation filiation = Filiation(id: 1, code: frh.parrainage, bonus: frh.bonus);
+      // From there, Hit NEW FILIATION while keeping current BONUS :
+      Filiation filiation = Filiation(id: 1, code: frh.parrainage, bonus: bonus);
       await _filiationRepository.update(filiation);
 
       // Set FLAG :
@@ -210,6 +280,38 @@ class _GestionFiliation extends State<GestionFiliation> {
     }
     flagSendData = false;
   }
+
+
+  // Send Account DATA :
+  Future<void> sendPaymentRequest(int montant) async {
+    try{
+      final url = Uri.parse('${dotenv.env['URL']}requestpayment');
+      var response = await widget.client.post(url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "iduser": widget.userId,
+            "amount": montant
+          })).timeout(const Duration(seconds: timeOutValue));
+
+      // Checks :
+      if(response.statusCode.toString().startsWith('2')){
+        // From there, Hit NEW FILIATION :
+        double newAmount = bonus - montant;
+        Filiation filiation = Filiation(id: 1, code: codeParrainage, bonus: newAmount);
+        await _filiationRepository.update(filiation);
+
+        // Set FLAG :
+        flagSendData = false;
+        bonus = newAmount;
+      }
+      else {
+        displayFloat("Requête de paiment non traitée !", choix: 1);
+      }
+    }
+    catch (e){}
+    closeAlertDialog = false;
+  }
+
 
   void displayFloat(String message, { int choix = 0}){
     switch(choix){
@@ -363,70 +465,76 @@ class _GestionFiliation extends State<GestionFiliation> {
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFFAD6004),
-                                    fontSize: 30
+                                    fontSize: 25
                                 )
                             ),
-                            ElevatedButton.icon(
-                              style: ButtonStyle(
-                                  backgroundColor: MaterialStateColor.resolveWith((states) => greenAlertValidation)
-                              ),
-                              label: const Text("Transfert",
-                                  style: TextStyle(
-                                      color: Colors.white
-                                  )),
-                              onPressed: () {
-                                dialogRequestSolde(context);
-                              },
-                              icon: const Icon(
-                                Icons.monetization_on,
-                                size: 20,
-                                color: Colors.white,
-                              ),
+                            Visibility(
+                                visible: bonus >= redrawalAmount,
+                                child: ElevatedButton.icon(
+                                  style: ButtonStyle(
+                                      backgroundColor: MaterialStateColor.resolveWith((states) => greenAlertValidation)
+                                  ),
+                                  label: const Text("Transfert",
+                                      style: TextStyle(
+                                          color: Colors.white
+                                      )),
+                                  onPressed: () {
+                                    dialogRequestSolde(context, bonus);
+                                  },
+                                  icon: const Icon(
+                                    Icons.monetization_on,
+                                    size: 20,
+                                    color: Colors.white,
+                                  ),
+                                )
                             )
                           ],
                         )
                         /**/
                     ),
-                    Container(
-                      margin: const EdgeInsets.only(right: 20, left: 20, top: 15),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.black,
-                          width: 1
-                        ),
-                          color: cardviewsoldeminimum,
-                          borderRadius: BorderRadius.circular(16.0)
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(7),
-                            child: Icon(Icons.add_alert_sharp,
-                            color: Colors.orangeAccent,),
+                    Visibility(
+                      visible: bonus < redrawalAmount,
+                      child: Container(
+                          margin: const EdgeInsets.only(right: 20, left: 20, top: 15),
+                          decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: Colors.black,
+                                  width: 1
+                              ),
+                              color: cardviewsoldeminimum,
+                              borderRadius: BorderRadius.circular(16.0)
                           ),
-                          Expanded(
-                              child: Container(
+                          child: Row(
+                            children: [
+                              Container(
                                 padding: const EdgeInsets.all(7),
-                                child: Text(
-                                  'Solde minimum à atteindre avant le prochain transfert : 500',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                    fontWeight: FontWeight.bold
-                                  ),
-                                ),
+                                child: Icon(Icons.add_alert_sharp,
+                                  color: Colors.orangeAccent,),
+                              ),
+                              Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(7),
+                                    child: Text(
+                                      'Solde minimum à atteindre avant le prochain transfert : 500',
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold
+                                      ),
+                                    ),
+                                  )
                               )
-                          )
-                        ],
-                      ),
+                            ],
+                          ),
+                        )
                     )
                   ],
                 );
               }
-              else return Container(
-                child: Center(
+              else {
+                return Center(
                   child: Text('Chargement ...'),
-                ),
-              );
+                );
+              }
             }
         )
     );

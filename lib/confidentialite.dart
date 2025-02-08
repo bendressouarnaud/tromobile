@@ -84,55 +84,56 @@ class _PolitiqueConfidentialite extends State<PolitiqueConfidentialite> {
               bottom: 0,
               left: 0,
               right: 0,
-              height: 50,
-              child: Visibility(
-                  visible: widget.action == 0 ? true : false,
-                  child: Container(
-                    //color: Colors.amber,
-                      alignment: Alignment.topRight,
-                      padding: EdgeInsets.all(7),
-                      child: ElevatedButton.icon(
-                        style: ButtonStyle(
-                            backgroundColor: MaterialStateColor.resolveWith((states) => Colors.brown)
-                        ),
-                        label: const Text("Valider",
-                            style: TextStyle(
-                                color: Colors.white
-                            )
-                        ),
-                        onPressed: () async {
-                          // Persist DATA :
-                          Parameters? prms = await _parametersController.refreshData();
-                          prms = Parameters(id: prms!.id,
-                              state: prms.state,
-                              travellocal: prms.travellocal,
-                              travelabroad: prms.travelabroad,
-                              notification: prms.notification,
-                              epochdebut: prms.epochdebut,
-                              epochfin: prms.epochfin,
-                              comptevalide: prms.comptevalide,
-                              deviceregistered: prms.deviceregistered,
-                              privacypolicy: 1
-                          );
-                          await _parametersController.updateData(prms);
+              height: 60,
+              child: SafeArea(
+                  child: Visibility(
+                      visible: widget.action == 0 ? true : false,
+                      child: Container(
+                          alignment: Alignment.centerRight,
+                          padding: EdgeInsets.only(right: 10),
+                          child: ElevatedButton.icon(
+                            style: ButtonStyle(
+                                backgroundColor: MaterialStateColor.resolveWith((states) => Colors.brown)
+                            ),
+                            label: const Text("Valider",
+                                style: TextStyle(
+                                    color: Colors.white
+                                )
+                            ),
+                            onPressed: () async {
+                              // Persist DATA :
+                              Parameters? prms = await _parametersController.refreshData();
+                              prms = Parameters(id: prms!.id,
+                                  state: prms.state,
+                                  travellocal: prms.travellocal,
+                                  travelabroad: prms.travelabroad,
+                                  notification: prms.notification,
+                                  epochdebut: prms.epochdebut,
+                                  epochfin: prms.epochfin,
+                                  comptevalide: prms.comptevalide,
+                                  deviceregistered: prms.deviceregistered,
+                                  privacypolicy: 1
+                              );
+                              await _parametersController.updateData(prms);
 
-                          // Open the MAIN INTERFACE :
-                          openApp();
-                        },
-                        icon: const Icon(
-                          Icons.check_circle_outline,
-                          size: 20,
-                          color: Colors.white,
-                        ),
+                              // Open the MAIN INTERFACE :
+                              openApp();
+                            },
+                            icon: const Icon(
+                              Icons.check_circle_outline,
+                              size: 20,
+                              color: Colors.white,
+                            ),
+                          )
                       )
                   )
-              )
+            )
           ),
           Positioned(
             top: 0,
             right: 0,
             left: 0,
-            bottom: 50,
+            bottom: 60,
             child: SingleChildScrollView(
               scrollDirection: Axis.vertical,
               physics: const ScrollPhysics(),

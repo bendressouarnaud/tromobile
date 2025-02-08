@@ -14,8 +14,12 @@ class ReserverGetController extends GetxController {
   }
 
   void addData(String reserve){
-    //
-    data.add(reserve);
+    if(data.length == 0){
+      data.add(reserve);
+    }
+    else{
+      data[0] = reserve;
+    }
     //
     update();
   }

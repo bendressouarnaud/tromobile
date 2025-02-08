@@ -117,7 +117,7 @@ class _ReservePaiement extends State<ReservePaiement> {
       }
     }
 
-    String tampon = controller.data.isNotEmpty ? controller.data[controller.data.length - 1] : '0';
+    String tampon = controller.data.isNotEmpty ? controller.data[0] : '0';
     int res = 0;
     // Convert
     try {
@@ -134,7 +134,7 @@ class _ReservePaiement extends State<ReservePaiement> {
     else{
       int price = publication.prix * res;
       montantFinal = price.toString();
-      return formatPrice(price);
+      return price > 0 ? formatPrice(price) : '0';
     }
   }
 
@@ -399,6 +399,11 @@ class _ReservePaiement extends State<ReservePaiement> {
 
   @override
   Widget build(BuildContext context) {
+
+    // Init values because of the 'CONTROLLER' that tracks the DATA :
+    _reserveController.addData('1');
+    processData(_reserveController);
+
     return Scaffold(
         //backgroundColor: Colors.white,
         appBar: AppBar(
