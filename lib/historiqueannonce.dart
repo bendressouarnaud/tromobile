@@ -1301,27 +1301,38 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
 
                                               },
                                               child: Container(
-                                                //margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
-                                                  width: MediaQuery.of(context).size.width,
-                                                  //color: Colors.brown[100],   0xFFE0DDDC
-                                                  child: Card(
-                                                    color: (signalerLivraison && (indexSouscripteur==index)) ?
-                                                    const Color(0xFFD1EAD7) :
-                                                    const Color(0xFFEFEFEB),
-                                                    child: ListTile(
-                                                      leading: ElevatedButton(
-                                                          onPressed: (){},
-                                                          style: ElevatedButton.styleFrom(
-                                                              shape: const CircleBorder(),
-                                                              backgroundColor: Colors.blue[50]
-                                                          ),
-                                                          child: Text('${lesSouscriptions.where((souscript) => souscript.iduser == listeUser[index].id).first.reserve} k')
-                                                      ),
-                                                      title: Text('${listeUser[index].nom} ${listeUser[index].prenom}'),
-                                                      subtitle: Text(listeUser[index].adresse),
-                                                      trailing: const Icon(Icons.arrow_circle_right_outlined),
+                                                margin: const EdgeInsets.only(right: 20, left: 20, top: 15),
+                                                decoration: BoxDecoration(
+                                                    border: Border.all(
+                                                        color: Colors.black,
+                                                        width: 1
                                                     ),
-                                                  )
+                                                    color: cardviewsoldeminimum,
+                                                    borderRadius: BorderRadius.circular(16.0)
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Container(
+                                                      padding: const EdgeInsets.all(7),
+                                                      child: Text('${lesSouscriptions.where((souscript) => souscript.iduser == listeUser[index].id).first.reserve} k'),
+                                                    ),
+                                                    Expanded(
+                                                        child: Column(
+                                                          children: [
+                                                            Text('${listeUser[index].nom} ${listeUser[index].prenom}'),
+                                                            Container(
+                                                              margin: const EdgeInsets.only(left: 10, top: 3, right: 10),
+                                                              child: const Divider(
+                                                                color: Colors.black,
+                                                                height: 5,
+                                                              ),
+                                                            ),
+                                                            Text('En cours...')
+                                                          ],
+                                                        )
+                                                    )
+                                                  ],
+                                                ),
                                               ),
                                             );
                                           }
