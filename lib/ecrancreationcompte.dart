@@ -242,7 +242,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
       // Checks :
       if(response.statusCode == 200){
         UserCreationResponse ur =  UserCreationResponse.fromJson(json.decode(response.body));
-        displayToast("Votre compte a été créé !");
+        displayToast(_userController.userData.isEmpty ? "Votre compte a été créé !" : "Votre compte a été modifié");
         // Update or create user :
         if(_userController.userData.isEmpty){
           // Create new :
@@ -278,6 +278,25 @@ class _NewCreationState extends State<EcranCreationCompte> {
             Filiation filiation = Filiation(id: 1, code: ur.codeparrainage, bonus: 0);
             await _filiationRepository.insert(filiation);
           }
+        }
+        else{
+          User user = User(nationnalite: abrevPays,
+              id: ur.userid,
+              typepieceidentite: dropdownvalueTitre,
+              numeropieceidentite: pieceController.text,
+              nom: nomController.text,
+              prenom: prenomController.text,
+              email: emailController.text,
+              numero: numeroController.text,
+              adresse: adresseController.text,
+              fcmtoken: getToken!,
+              pwd: "",
+              codeinvitation: codeParrainageController.text,
+              villeresidence: villeResidence!.id,
+              streamtoken: ur.streamchatoken,
+              streamid: ur.streamchatid);
+          // Save :
+          _userController.updateUser(user);
         }
 
         // Set FLAG :

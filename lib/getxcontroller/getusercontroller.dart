@@ -39,6 +39,11 @@ class UserGetController extends GetxController {
     update();
   }
 
+  void updateUser(User user) async {
+    await _userRepository.updateUser(user);
+    update();
+  }
+
   void refreshMainInterface(){
     update();
   }
