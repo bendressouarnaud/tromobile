@@ -252,31 +252,35 @@ class _GestionFiliation extends State<GestionFiliation> {
 
   // Send Account DATA :
   Future<void> sendFiliationRequest() async {
-    final url = Uri.parse('${dotenv.env['URL']}refreshfiliation');
-    var response = await widget.client.post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "iduser": widget.userId,
-          "choix": 0
-        })).timeout(const Duration(seconds: timeOutValue));
+    try{
+      final url = Uri.parse('${dotenv.env['URL']}refreshfiliation');
+      var response = await widget.client.post(url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "iduser": widget.userId,
+            "choix": 0
+          })).timeout(const Duration(seconds: timeOutValue));
 
-    // Checks :
-    if(response.statusCode.toString().startsWith('2')){
-      FiliationRefresh frh =  FiliationRefresh.fromJson(json.decode(response.body));
-      // From there, Hit NEW FILIATION while keeping current BONUS :
-      Filiation filiation = Filiation(id: 1, code: frh.parrainage, bonus: bonus);
-      await _filiationRepository.update(filiation);
+      // Checks :
+      if(response.statusCode.toString().startsWith('2')){
+        FiliationRefresh frh =  FiliationRefresh.fromJson(json.decode(response.body));
+        // From there, Hit NEW FILIATION while keeping current BONUS :
+        Filiation filiation = Filiation(id: 1, code: frh.parrainage, bonus: bonus);
+        await _filiationRepository.update(filiation);
 
-      // Set FLAG :
-      closeAlertDialog = false;
+        // Set FLAG :
+        closeAlertDialog = false;
 
-      setState(() {
-        codeParrainage = frh.parrainage;
-        bonus = frh.bonus;
-      });
+        setState(() {
+          codeParrainage = frh.parrainage;
+          bonus = frh.bonus;
+        });
+      }
+      else {
+        displayFloat("Erreur de traitement !", choix: 1);
+      }
     }
-    else {
-      displayFloat("Erreur de traitement !", choix: 1);
+    catch(e){
     }
     flagSendData = false;
   }

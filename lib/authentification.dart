@@ -134,7 +134,8 @@ class _NewAuth extends State<AuthentificationEcran> {
           epochfin: parameters.epochfin,
           deviceregistered: parameters.deviceregistered,
           comptevalide: 1,
-          privacypolicy: parameters.privacypolicy
+          privacypolicy: parameters.privacypolicy,
+            appmigration: parameters.appmigration
         );
         await _repository.update(updateParam);
 

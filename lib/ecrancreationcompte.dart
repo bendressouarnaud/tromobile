@@ -101,6 +101,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
     paysDepartMenu = listeCountry.first;
     listeVille = widget.listeVille.where((ville) => ville.paysid == paysDepartMenu!.id).toList();
     villeResidence = listeVille.first;
+    villeResidenceController.text = villeResidence!.name;
     // Order LIST :
     listeVille.sort((a,b) => a.name.compareTo(b.name));
 
@@ -131,6 +132,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
       listeVille = villes;
       listeVille.sort((a,b) => a.name.compareTo(b.name));
       villeResidence = listeVille.first;
+      villeResidenceController.text = villeResidence!.name;
     }
     );
   }
@@ -152,6 +154,7 @@ class _NewCreationState extends State<EcranCreationCompte> {
       listeVille = await _villeRepository.findAllByPaysId(paysDepartMenu!.id);
       // Ville residence , From CIBLE :
       villeResidence = listeVille.where((ville) => ville.id == usr.villeresidence).first;
+      villeResidenceController.text = villeResidence!.name;
       // PIECE IDENTITE :
       dropdownvalueTitre = usr.typepieceidentite;
     }
@@ -292,9 +295,10 @@ class _NewCreationState extends State<EcranCreationCompte> {
         // Set FLAG :
         displayToast("Erreur apparue");
       }
-      // Can close WINDOW :
-      flagServerResponse = false;
-    } on TimeoutException {
+
+    }
+    catch(e){}
+    finally{
       // Can close WINDOW :
       flagServerResponse = false;
     }
@@ -393,7 +397,8 @@ class _NewCreationState extends State<EcranCreationCompte> {
                       initialSelection: villeResidence,
                       controller: villeResidenceController,
                       hintText: "Ville de résidence",
-                      requestFocusOnTap: false,
+                      requestFocusOnTap: true,
+                      enableSearch: true,
                       enableFilter: false,
                       label: const Text('Ville résidence'),
                       // Initial Value
@@ -573,6 +578,12 @@ class _NewCreationState extends State<EcranCreationCompte> {
                                   )
                               ),
                               onPressed: () async {
+
+                                if(villeResidenceController.text != villeResidence!.name){
+                                  displaySnack('Ville de résidence incorrecte !');
+                                  return;
+                                }
+
                                 outil.setCheckNetworkConnected(true); // We force this :
                                 if(outil.getCheckNetworkConnected()) {
                                   if(checkField()){

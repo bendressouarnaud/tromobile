@@ -85,7 +85,7 @@ class _SConfirmerMail extends State<ConfirmerMail> {
             epochfin: prms.epochfin,
             comptevalide: 1,
             deviceregistered: 0,
-            privacypolicy: prms.privacypolicy
+            privacypolicy: prms.privacypolicy, appmigration: prms.appmigration
         );
         await _parametersController.updateData(prms);
 

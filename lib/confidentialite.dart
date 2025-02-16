@@ -112,7 +112,7 @@ class _PolitiqueConfidentialite extends State<PolitiqueConfidentialite> {
                                   epochfin: prms.epochfin,
                                   comptevalide: prms.comptevalide,
                                   deviceregistered: prms.deviceregistered,
-                                  privacypolicy: 1
+                                  privacypolicy: 1, appmigration: prms.appmigration
                               );
                               await _parametersController.updateData(prms);
 

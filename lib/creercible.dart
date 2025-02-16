@@ -93,7 +93,7 @@ class _creerCible extends State<CreerCible> {
     //getData();
   }
 
-  Future<int>  getData() async{
+  Future<int> getData() async{
     if(init ==0) {
       mUser = (await _userRepository.getConnectedUser())!;
       listePays = await _paysRepository.findAll();
@@ -105,7 +105,9 @@ class _creerCible extends State<CreerCible> {
       listeVilleDestination = await _villeRepository.findAllByPaysId(paysDestination!.id);
       listeVilleDestination.sort((a,b) => a.name.compareTo(b.name));
       villeDepart = idvilledep != 0 ? listeVille.where((ville) => ville.id == idvilledep).first : listeVille.first;
+      villeDepartController.text = villeDepart!.name;
       villeDestination = idvilledest != 0 ? listeVilleDestination.where((ville) => ville.id == idvilledest).first : listeVilleDestination.first;
+      villeDestinationController.text = villeDestination!.name;
     }
 
     return 0;
@@ -119,11 +121,13 @@ class _creerCible extends State<CreerCible> {
         listeVille = villes;
         listeVille.sort((a,b) => a.name.compareTo(b.name));
         villeDepart = listeVille.first;
+        villeDepartController.text = villeDepart!.name;
       }
       else{
         listeVilleDestination = villes;
         listeVilleDestination.sort((a,b) => a.name.compareTo(b.name));
         villeDestination = listeVilleDestination.first;
+        villeDestinationController.text = villeDestination!.name;
       }
     }
     );
@@ -148,76 +152,82 @@ class _creerCible extends State<CreerCible> {
 
   // Send Account DATA :
   Future<void> sendCibleRequest() async {
-    final url = Uri.parse('${dotenv.env['URL']}managecible');
-    var response = await widget.client.post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "id": idCible,
-          "iduser": mUser.id,
-          "idpaysdep": paysDepart!.id,
-          "paysdeplib": paysDepart!.name,
-          "paysdepabrev": paysDepart!.iso2,
-          "idvilledep": villeDepart!.id,
-          "villedeplib": villeDepart!.name,
-          "idpaysdest": paysDestination!.id,
-          "paysdestlib": paysDestination!.name,
-          "paysdestabrev": paysDestination!.iso2,
-          "idvilledest": villeDestination!.id,
-          "villedestlib": villeDestination!.name,
-          "topic": topic,
-        })).timeout(const Duration(seconds: timeOutValue));
+    try{
+      final url = Uri.parse('${dotenv.env['URL']}managecible');
+      var response = await widget.client.post(url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "id": idCible,
+            "iduser": mUser.id,
+            "idpaysdep": paysDepart!.id,
+            "paysdeplib": paysDepart!.name,
+            "paysdepabrev": paysDepart!.iso2,
+            "idvilledep": villeDepart!.id,
+            "villedeplib": villeDepart!.name,
+            "idpaysdest": paysDestination!.id,
+            "paysdestlib": paysDestination!.name,
+            "paysdestabrev": paysDestination!.iso2,
+            "idvilledest": villeDestination!.id,
+            "villedestlib": villeDestination!.name,
+            "topic": topic,
+          })).timeout(const Duration(seconds: timeOutValue));
 
-    // Checks :
-    if(response.statusCode == 200){
-      // Add default CIBLE :
-      CibleResponse ce =  CibleResponse.fromJson(json.decode(response.body));
+      // Checks :
+      if(response.statusCode == 200){
+        // Add default CIBLE :
+        CibleResponse ce =  CibleResponse.fromJson(json.decode(response.body));
 
-      Cible cible = Cible(
-          id: ce.idcible,
-          villedepartid: villeDepart!.id,
-          paysdepartid: paysDepart!.id, villedestid: villeDestination!.id, paysdestid: paysDestination!.id, topic: topic);
-      if(idCible == 0){
-        // INSERT :
-        _cibleController.addData(cible);
+        Cible cible = Cible(
+            id: ce.idcible,
+            villedepartid: villeDepart!.id,
+            paysdepartid: paysDepart!.id, villedestid: villeDestination!.id, paysdestid: paysDestination!.id, topic: topic);
+        if(idCible == 0){
+          // INSERT :
+          _cibleController.addData(cible);
+        }
+        else{
+          // UPDATE :
+          _cibleController.updateData(cible);
+        }
+
+        // Persist PUBLICATION
+        for(Publication publication in ce.publications){
+          // First SPLIT :
+          List<String> tamponDateTime = publication.datevoyage.split("T");
+          var dateVoyageFinal = DateTime.parse('${tamponDateTime[0]} ${tamponDateTime[1]}Z');
+          Publication pub = Publication(
+              id: publication.id,
+              userid: publication.userid,
+              villedepart: publication.villedepart,
+              villedestination: publication.villedestination,
+              datevoyage: publication.datevoyage,
+              datepublication: publication.datepublication,
+              reserve: publication.reserve,
+              active: 1,
+              reservereelle: publication.reservereelle,
+              souscripteur: publication.souscripteur, // Use OWNER Id
+              milliseconds: dateVoyageFinal.millisecondsSinceEpoch, // publication.milliseconds,
+              identifiant: publication.identifiant,
+              devise: publication.devise,
+              prix: publication.prix,
+              read: 1,
+              streamchannelid: publication.streamchannelid
+          );
+          outil.addPublication(pub);
+        }
+
+        // Set FLAG :
+        closeAlertDialog = false;
       }
-      else{
-        // UPDATE :
-        _cibleController.updateData(cible);
+      else {
+        displayToast("Erreur apparue");
       }
-
-      // Persist PUBLICATION
-      for(Publication publication in ce.publications){
-        // First SPLIT :
-        List<String> tamponDateTime = publication.datevoyage.split("T");
-        var dateVoyageFinal = DateTime.parse('${tamponDateTime[0]} ${tamponDateTime[1]}Z');
-        Publication pub = Publication(
-            id: publication.id,
-            userid: publication.userid,
-            villedepart: publication.villedepart,
-            villedestination: publication.villedestination,
-            datevoyage: publication.datevoyage,
-            datepublication: publication.datepublication,
-            reserve: publication.reserve,
-            active: 1,
-            reservereelle: publication.reservereelle,
-            souscripteur: publication.souscripteur, // Use OWNER Id
-            milliseconds: dateVoyageFinal.millisecondsSinceEpoch, // publication.milliseconds,
-            identifiant: publication.identifiant,
-            devise: publication.devise,
-            prix: publication.prix,
-            read: 1,
-            streamchannelid: publication.streamchannelid
-        );
-        outil.addPublication(pub);
-      }
-
-      // Set FLAG :
-      closeAlertDialog = false;
     }
-    else {
-      displayToast("Erreur apparue");
+    catch(e){
     }
-    flagSendData = false;
+    finally{
+      flagSendData = false;
+    }
   }
 
   // Our TOAST :
@@ -314,7 +324,8 @@ class _creerCible extends State<CreerCible> {
                             initialSelection: villeDepart,
                             controller: villeDepartController,
                             hintText: "Ville de départ",
-                            requestFocusOnTap: false,
+                            requestFocusOnTap: true,
+                            enableSearch: true,
                             enableFilter: false,
                             label: const Text('Sélectionner la ville de départ'),
                             // Initial Value
@@ -387,7 +398,8 @@ class _creerCible extends State<CreerCible> {
                             initialSelection: villeDestination,
                             controller: villeDestinationController,
                             hintText: "Ville de destination",
-                            requestFocusOnTap: false,
+                            requestFocusOnTap: true,
+                            enableSearch: true,
                             enableFilter: false,
                             label: const Text('Sélectionner la ville de destination'),
                             // Initial Value
@@ -417,14 +429,41 @@ class _creerCible extends State<CreerCible> {
                         ),
                         onPressed: () {
 
+                          if(villeDepartController.text != villeDepart!.name){
+                            displayToast('Ville de départ incorrecte !');
+                            return;
+                          }
+                          else if(villeDestinationController.text != villeDestination!.name){
+                            displayToast('Ville de destination incorrecte !');
+                            return;
+                          }
+
                           showDialog(
                               barrierDismissible: false,
                               context: context,
                               builder: (BuildContext context) {
                                 dialogContext = context;
                                 return const AlertDialog(
-                                  title: Text('Information'),
-                                  content: Text("Veuillez patienter ..."),
+                                    title: Text('Information'),
+                                    content: SizedBox(
+                                        height: 100,
+                                        child: Column(
+                                          children: [
+                                            Text("Veuillez patienter ..."),
+                                            SizedBox(
+                                              height: 20,
+                                            ),
+                                            SizedBox(
+                                                height: 30.0,
+                                                width: 30.0,
+                                                child: CircularProgressIndicator(
+                                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                                  strokeWidth: 3.0, // Width of the circular line
+                                                )
+                                            )
+                                          ],
+                                        )
+                                    )
                                 );
                               }
                           );

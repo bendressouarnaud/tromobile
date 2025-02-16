@@ -152,8 +152,10 @@ class _ManageNotificationState extends State<ManageNotification> {
           Navigator.pop(dialogContext);
           timer.cancel();
 
-          // Kill ACTIVITY :
-          displayFloat("Paramètre modifié", 1);
+          if(!closeAlertDialog){
+            // Kill ACTIVITY :
+            displayFloat("Paramètre modifié", 1);
+          }
         }
       },
     );
@@ -162,38 +164,44 @@ class _ManageNotificationState extends State<ManageNotification> {
 
   // Send Account DATA :
   Future<void> sendNotificationRequest() async {
-    final url = Uri.parse('${dotenv.env['URL']}managenotification');
-    var response = await widget.client.post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "iduser": localuser!.id,
-          "choix": _notification == ChoixNotification.perpetuelle ? 0 : 1, // CHANGE THAT :
-          "startdatetime": millisecondsDebut,
-          "enddatetime": millisecondsFin
-        })).timeout(const Duration(seconds: timeOutValue));
+    try{
+      final url = Uri.parse('${dotenv.env['URL']}managenotification');
+      var response = await widget.client.post(url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "iduser": localuser!.id,
+            "choix": _notification == ChoixNotification.perpetuelle ? 0 : 1, // CHANGE THAT :
+            "startdatetime": millisecondsDebut,
+            "enddatetime": millisecondsFin
+          })).timeout(const Duration(seconds: timeOutValue));
 
-    // Checks :
-    if(response.statusCode.toString().startsWith('2')){
-      // Update DATA :
-      Parameters updateParam = Parameters(
-        id: parameters!.id,
-        state: parameters!.state,
-        travellocal: parameters!.travellocal,
-        travelabroad: parameters!.travelabroad,
-        notification: _notification == ChoixNotification.perpetuelle ? 0 : 1,
-        epochdebut: millisecondsDebut,
-        epochfin: millisecondsFin, comptevalide: parameters!.comptevalide,
-        deviceregistered: parameters!.deviceregistered,
-        privacypolicy: parameters!.privacypolicy
-      );
-      await _repository.update(updateParam);
-      // Set FLAG :
-      closeAlertDialog = false;
+      // Checks :
+      if(response.statusCode.toString().startsWith('2')){
+        // Update DATA :
+        Parameters updateParam = Parameters(
+            id: parameters!.id,
+            state: parameters!.state,
+            travellocal: parameters!.travellocal,
+            travelabroad: parameters!.travelabroad,
+            notification: _notification == ChoixNotification.perpetuelle ? 0 : 1,
+            epochdebut: millisecondsDebut,
+            epochfin: millisecondsFin, comptevalide: parameters!.comptevalide,
+            deviceregistered: parameters!.deviceregistered,
+            privacypolicy: parameters!.privacypolicy, appmigration: parameters!.appmigration
+        );
+        await _repository.update(updateParam);
+        // Set FLAG :
+        closeAlertDialog = false;
+      }
+      else {
+        displayFloat("Erreur de traitement : ${response.statusCode}", 0);
+      }
     }
-    else {
-      displayFloat("Erreur de traitement : ${response.statusCode}", 0);
+    catch(e){
     }
-    flagSendData = false;
+    finally{
+      flagSendData = false;
+    }
   }
 
   void displayFloat(String message, int choix){

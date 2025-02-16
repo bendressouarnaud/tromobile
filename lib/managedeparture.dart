@@ -242,12 +242,16 @@ class _ManageDepartureState extends State<ManageDeparture> {
         a.name.compareTo(b.name));
     if(idpub == 0) {
       villeDepartMenu = listeVilleDepart.first;
+      menuDepartController.text = villeDepartMenu!.name;
       villeDestinationMenu = listeVilleDestination.first;
+      menuDestinationController.text = villeDestinationMenu!.name;
       devises = lesDevises.first;
     }
     else{
       villeDepartMenu = listeVilleDepart.where((ville) => ville.id == publication.villedepart).first;
+      menuDepartController.text = villeDepartMenu!.name;
       villeDestinationMenu = listeVilleDestination.where((ville) => ville.id == publication.villedestination).first;
+      menuDestinationController.text = villeDestinationMenu!.name;
       // Date
       dateDepartController = TextEditingController(text: publication.datevoyage.split("T")[0] );
       heureDepartController = TextEditingController(text: publication.datevoyage.split("T")[1] );
@@ -619,12 +623,13 @@ class _ManageDepartureState extends State<ManageDeparture> {
                                 initialSelection: villeDepartMenu,
                                 controller: menuDepartController,
                                 hintText: "Ville de départ",
-                                requestFocusOnTap: false,
+                                requestFocusOnTap: true,
+                                enableSearch: true,
                                 enableFilter: false,
                                 label: const Text('Ville de départ'),
                                 // Initial Value
                                 onSelected: (Ville? value) {
-                                  villeDepartMenu = value!;
+                                  villeDepartMenu = value;
                                 },
                                 dropdownMenuEntries:
                                 listeVilleDepart.map<DropdownMenuEntry<Ville>>((Ville menu) {
@@ -640,7 +645,8 @@ class _ManageDepartureState extends State<ManageDeparture> {
                                 initialSelection: villeDestinationMenu,
                                 controller: menuDestinationController,
                                 hintText: "Ville de destination",
-                                requestFocusOnTap: false,
+                                requestFocusOnTap: true,
+                                enableSearch: true,
                                 enableFilter: false,
                                 label: const Text('Ville de destination'),
                                 // Initial Value
@@ -875,6 +881,16 @@ class _ManageDepartureState extends State<ManageDeparture> {
                                 )
                             ),
                             onPressed: () async {
+                              // check on ville :
+                              if(menuDepartController.text != villeDepartMenu!.name){
+                                displaySnack('Ville de départ incorrecte !');
+                                return;
+                              }
+                              else if(menuDestinationController.text != villeDestinationMenu!.name){
+                                displaySnack('Ville de destination incorrecte !');
+                                return;
+                              }
+
                               if(outil.getCheckNetworkConnected()) {
                                 if (!checkField(context)) {
                                   var checkAmountValidation = await checkSuscription();

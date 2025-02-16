@@ -79,6 +79,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
   late BuildContext dialogContext;
   late int iduser;
   late bool flagSendData;
+  late bool closeAlertDialog;
   late bool flagDeletionData;
   late bool publicationDeletionDone;
   late bool historique;
@@ -535,35 +536,43 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
 
   // Send Account DATA :
   Future<void> sendLivraisonFalag() async {
-    final url = Uri.parse('${dotenv.env['URL']}markdelivery');
-    var response = await widget.client.post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "idpub": publication.id,
-          "iduser": iduser
-        }));
+    try{
+      final url = Uri.parse('${dotenv.env['URL']}markdelivery');
+      var response = await widget.client.post(url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "idpub": publication.id,
+            "iduser": iduser
+          }));
 
-    // Checks :
-    if(response.statusCode.toString().startsWith('2')){
-      Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(publication.id, iduser);
-      // Update it :
-      Souscription souscriptionUpdate = Souscription(
-          id: souscription.id,
-          idpub: publication.id,
-          iduser: iduser,
-          millisecondes: souscription.millisecondes,
-          reserve: souscription.reserve,
-          statut: 1,
-          streamchannelid: souscription.streamchannelid
-      );
-      await outil.updateSouscription(souscriptionUpdate);
+      // Checks :
+      if(response.statusCode.toString().startsWith('2')){
+        Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(publication.id, iduser);
+        // Update it :
+        Souscription souscriptionUpdate = Souscription(
+            id: souscription.id,
+            idpub: publication.id,
+            iduser: iduser,
+            millisecondes: souscription.millisecondes,
+            reserve: souscription.reserve,
+            statut: 1,
+            streamchannelid: souscription.streamchannelid
+        );
+        await outil.updateSouscription(souscriptionUpdate);
 
-      // Set FLAG :
-      flagSendData = false;
+        // Set FLAG :
+        flagSendData = false;
+      }
+      else {
+        displayFloat("Impossible de traiter la demande !");
+      }
     }
-    else {
-      displayFloat("Impossible de traiter la demande !");
+    catch(e){
     }
+    finally{
+      closeAlertDialog = false;
+    }
+
   }
 
   // Subscription DELETION :
@@ -640,43 +649,46 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
 
   // Send Account DATA :
   Future<void> sendReceptionFlag() async {
-    final url = Uri.parse('${dotenv.env['URL']}markreceipt');
-    var response = await widget.client.post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "idpub": publication.id,
-          "iduser": iduser
-        }));
+    try{
+      final url = Uri.parse('${dotenv.env['URL']}markreceipt');
+      var response = await widget.client.post(url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "idpub": publication.id,
+            "iduser": iduser
+          }));
 
-    // Checks :
-    if(response.statusCode.toString().startsWith('2')){
-      // Update the 'PUBLICATION' :
-      Publication pub = Publication(
-          id: publication.id,
-          userid: publication.userid,
-          villedepart: publication.villedepart,
-          villedestination: publication.villedestination,
-          datevoyage: publication.datevoyage,
-          datepublication: publication.datepublication,
-          reserve: publication.reserve,
-          active: 3,
-          reservereelle: publication.reservereelle,
-          souscripteur: publication.souscripteur, // Use OWNER Id
-          milliseconds: publication.milliseconds,
-          identifiant: publication.identifiant,
-          devise: publication.devise,
-          prix: publication.prix,
-          read: 1,
-          streamchannelid: publication.streamchannelid
-      );
-      await outil.updatePublicationWithoutFurtherActions(pub);
+      // Checks :
+      if(response.statusCode.toString().startsWith('2')){
+        // Update the 'PUBLICATION' :
+        Publication pub = Publication(
+            id: publication.id,
+            userid: publication.userid,
+            villedepart: publication.villedepart,
+            villedestination: publication.villedestination,
+            datevoyage: publication.datevoyage,
+            datepublication: publication.datepublication,
+            reserve: publication.reserve,
+            active: 3,
+            reservereelle: publication.reservereelle,
+            souscripteur: publication.souscripteur, // Use OWNER Id
+            milliseconds: publication.milliseconds,
+            identifiant: publication.identifiant,
+            devise: publication.devise,
+            prix: publication.prix,
+            read: 1,
+            streamchannelid: publication.streamchannelid
+        );
+        await outil.updatePublicationWithoutFurtherActions(pub);
 
-      // Set FLAG :
-      flagSendData = false;
+        // Set FLAG :
+        flagSendData = false;
+      }
     }
-    else {
-      flagSendData = false;
-      displayFloat("Impossible de traiter la demande !");
+    catch(e){
+    }
+    finally{
+      closeAlertDialog = false;
     }
   }
 
@@ -848,6 +860,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     );
 
     flagSendData = true;
+    closeAlertDialog = true;
     if(signalerLivraison){
       sendLivraisonFalag();
     }
@@ -860,21 +873,26 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
       const Duration(milliseconds: 1500),
           (timer) {
         // Update user about remaining time
-        if(!flagSendData){
+        if(!closeAlertDialog){
           Navigator.pop(dialogContext);
           timer.cancel();
 
-          // Display message :
-          displayFloat('Opération effectuée !');
+          if(!flagSendData){
+            // Display message :
+            displayFloat('Opération effectuée !');
 
-          // Leave SCREEN :
-          if(signalerReception){
-            Navigator.pop(context);
+            // Leave SCREEN :
+            if(signalerReception){
+              Navigator.pop(context);
+            }
+            else{
+              setState(() {
+                signalerLivraison = false;
+              });
+            }
           }
           else{
-            setState(() {
-              signalerLivraison = false;
-            });
+            displayFloat('Impossible de traiter l\'opération !');
           }
         }
       },
@@ -1218,6 +1236,11 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                           shrinkWrap: true,
                                           itemCount: listeUser.length,
                                           itemBuilder: (BuildContext context, int index) {
+
+                                            // Drop LOGIC there :
+                                            Souscription tSous = lesSouscriptions.where((souscript) => souscript.iduser == listeUser[index].id).
+                                            first;
+
                                             return GestureDetector(
                                               onLongPress: () async{
                                                 if(!signalerLivraison) {
@@ -1301,25 +1324,37 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
 
                                               },
                                               child: Container(
-                                                margin: const EdgeInsets.only(right: 20, left: 20, top: 15),
+                                                margin: const EdgeInsets.only(right: 10, left: 10, top: 15),
                                                 decoration: BoxDecoration(
                                                     border: Border.all(
                                                         color: Colors.black,
                                                         width: 1
                                                     ),
-                                                    color: cardviewsoldeminimum,
+                                                    color: (signalerLivraison && (indexSouscripteur==index)) ?
+                                                      const Color(0xFFD1EAD7) :
+                                                      const Color(0xFFEFEFEB),
                                                     borderRadius: BorderRadius.circular(16.0)
                                                 ),
                                                 child: Row(
                                                   children: [
                                                     Container(
                                                       padding: const EdgeInsets.all(7),
-                                                      child: Text('${lesSouscriptions.where((souscript) => souscript.iduser == listeUser[index].id).first.reserve} k'),
+                                                      child: Text('${lesSouscriptions.where((souscript) => souscript.iduser == listeUser[index].id).first.reserve} kg',
+                                                      style: TextStyle(
+                                                        fontWeight: FontWeight.bold
+                                                      ),),
                                                     ),
                                                     Expanded(
                                                         child: Column(
                                                           children: [
-                                                            Text('${listeUser[index].nom} ${listeUser[index].prenom}'),
+                                                            Container(
+                                                              margin: const EdgeInsets.only(left: 10, right: 10),
+                                                              alignment: Alignment.centerLeft,
+                                                              child: Text('${listeUser[index].nom} ${listeUser[index].prenom}',
+                                                                  style: TextStyle(
+                                                                      fontWeight: FontWeight.bold
+                                                                  ))
+                                                            ),
                                                             Container(
                                                               margin: const EdgeInsets.only(left: 10, top: 3, right: 10),
                                                               child: const Divider(
@@ -1327,7 +1362,16 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                                                 height: 5,
                                                               ),
                                                             ),
-                                                            Text('En cours...')
+                                                            Container(
+                                                                margin: const EdgeInsets.only(left: 10, right: 10),
+                                                                alignment: Alignment.centerLeft,
+                                                                child: Text(tSous.statut == 0 ? 'Non livré' : 'Livraison effectuée',
+                                                                  style: TextStyle(
+                                                                    fontWeight: FontWeight.bold,
+                                                                    color: tSous.statut == 0 ? Colors.redAccent : Colors.green
+                                                                  ),
+                                                                )
+                                                            )
                                                           ],
                                                         )
                                                     )

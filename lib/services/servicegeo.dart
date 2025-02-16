@@ -11,6 +11,7 @@ import 'package:tro/models/filiation.dart';
 import '../constants.dart';
 import '../httpbeans/countrydata.dart';
 import '../models/chat.dart';
+import '../models/parameters.dart';
 import '../models/publication.dart';
 import '../models/souscription.dart';
 import '../models/user.dart';
@@ -328,6 +329,24 @@ class Servicegeo {
       // Update  :
       await outil.updatePublicationWithoutFurtherActions(newPub);
     }
+  }
+
+  // Set FLAG to ALERT User about NEW UPDATE :
+  void alertUserAboutUpdate(RemoteMessage message) async {
+    Parameters? prms = await outil.getParameter();
+    prms = Parameters(id: prms!.id,
+        state: prms.state,
+        travellocal: prms.travellocal,
+        travelabroad: prms.travelabroad,
+        notification: prms.notification,
+        epochdebut: prms.epochdebut,
+        epochfin: prms.epochfin,
+        comptevalide: prms.comptevalide,
+        deviceregistered: prms.deviceregistered,
+        privacypolicy: prms.privacypolicy,
+        appmigration: 1
+    );
+    await outil.updateParameter(prms);
   }
 
 

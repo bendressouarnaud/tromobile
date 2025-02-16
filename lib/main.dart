@@ -401,6 +401,23 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         }
         catch (e){}
         break;
+
+      case 12:
+        Parameters? prms = await outil.getParameter();
+        prms = Parameters(id: prms!.id,
+            state: prms.state,
+            travellocal: prms.travellocal,
+            travelabroad: prms.travelabroad,
+            notification: prms.notification,
+            epochdebut: prms.epochdebut,
+            epochfin: prms.epochfin,
+            comptevalide: prms.comptevalide,
+            deviceregistered: prms.deviceregistered,
+            privacypolicy: prms.privacypolicy,
+            appmigration: 1
+        );
+        await outil.updateParameter(prms);
+        break;
     }
   }
 }

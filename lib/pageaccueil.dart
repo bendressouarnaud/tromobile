@@ -171,6 +171,60 @@ class _WelcomePageState extends State<WelcomePage> {
     });
   }
 
+
+  //
+  void checkNewUpdatePresence() async{
+    Parameters? prms = await outil.getParameter();
+    if(prms!.appmigration == 1){
+      displayAlertToUpdateApp();
+    }
+  }
+
+  // Display ALERT
+  void displayAlertToUpdateApp() {
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (BuildContext sContext) {
+          dialogContext = sContext;
+          return  AlertDialog(
+              title: Text('Nouvelle version'),
+              content: Container(
+                  margin: EdgeInsets.only(left: 10, right: 10, top: 5),
+                  height: 30,
+                  child: Text('Veuillez la télécharger !')
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () async {
+                    Navigator.pop(sContext);
+                    Parameters? prms = await outil.getParameter();
+                    prms = Parameters(id: prms!.id,
+                        state: prms.state,
+                        travellocal: prms.travellocal,
+                        travelabroad: prms.travelabroad,
+                        notification: prms.notification,
+                        epochdebut: prms.epochdebut,
+                        epochfin: prms.epochfin,
+                        comptevalide: prms.comptevalide,
+                        deviceregistered: prms.deviceregistered,
+                        privacypolicy: prms.privacypolicy,
+                        appmigration: 0
+                    );
+                    await outil.updateParameter(prms);
+                  },
+                  child: const Text('OK',
+                    style: TextStyle(
+                        color: Colors.brown
+                    ),),
+                )
+              ]
+          );
+        }
+    );
+  }
+
+
   // Listen to the app lifecycle state changes
   void _onStateChanged(AppLifecycleState state) {
     switch (state) {
@@ -258,7 +312,8 @@ class _WelcomePageState extends State<WelcomePage> {
               epochfin: prms.epochfin,
               comptevalide: prms.comptevalide,
               deviceregistered: 1,
-              privacypolicy: prms.privacypolicy
+              privacypolicy: prms.privacypolicy,
+              appmigration: prms.appmigration
           );
           await _parametersController.updateData(prms);
         }
@@ -297,7 +352,8 @@ class _WelcomePageState extends State<WelcomePage> {
         epochfin: prms != null ? prms.epochfin : 0,
       comptevalide: prms != null ? prms.comptevalide : 1,
       deviceregistered: prms != null ? prms.deviceregistered : 1,
-        privacypolicy: prms != null ? prms.privacypolicy : 1
+        privacypolicy: prms != null ? prms.privacypolicy : 1,
+        appmigration: prms != null ? prms.appmigration : 0
     );
     await _parametersController.updateData(prms);
   }
@@ -317,7 +373,7 @@ class _WelcomePageState extends State<WelcomePage> {
       //print('DéConnexion effectuée');
     }
     catch (e){
-      print('Opératio déConnexion : $e');
+      //print('Opératio déConnexion : $e');
     }
     //_publicationController.dispose();
     super.dispose();
@@ -467,6 +523,10 @@ class _WelcomePageState extends State<WelcomePage> {
 
         case 11:
           Servicegeo().updatePublicationChannelID(message);
+          break;
+
+        case 12:
+          Servicegeo().alertUserAboutUpdate(message);
           break;
       }
     }
@@ -747,6 +807,7 @@ class _WelcomePageState extends State<WelcomePage> {
   @override
   Widget build(BuildContext context) {
     //checkPublicationNotRead();
+    checkNewUpdatePresence();
     return Scaffold(
         bottomNavigationBar: NavigationBar(
           indicatorShape: const RoundedRectangleBorder(

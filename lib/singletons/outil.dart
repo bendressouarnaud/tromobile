@@ -305,6 +305,10 @@ class Outil {
     return await _parametersController.refreshData();
   }
 
+  Future<void> updateParameter(Parameters params) async {
+    await _parametersController.updateData(params);
+  }
+
   // V I L L E
   Future<Ville> getVilleById(int id) async{
     return await _villeRepository.findById(id);

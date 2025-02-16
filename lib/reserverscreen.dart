@@ -157,40 +157,46 @@ class _ReservePaiement extends State<ReservePaiement> {
   }
 
   Future<void> callWaveApi() async {
-    final url = Uri.parse('${dotenv.env['URL']}generatewaveid');
-    var response = await widget.client.post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "amount": montantFinal,
-          "currency": 'XOF',
-          "error_url": 'https://example.com/error',
-          "success_url": 'https://example.com/success',
-          "idpub": publication.id,
-          "iduser": localuser.id,
-          "reserve": reserveController.text
-        })).timeout(const Duration(seconds: timeOutValue));;
+    try{
+      final url = Uri.parse('${dotenv.env['URL']}generatewaveid');
+      var response = await widget.client.post(url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "amount": montantFinal,
+            "currency": 'XOF',
+            "error_url": 'https://example.com/error',
+            "success_url": 'https://example.com/success',
+            "idpub": publication.id,
+            "iduser": localuser.id,
+            "reserve": reserveController.text
+          })).timeout(const Duration(seconds: timeOutValue));;
 
-    // Checks :
-    flagLoadingPayment = false;
-    if(response.statusCode == 200){
-      HubWaveResponseShort hubWaveResponse = HubWaveResponseShort.fromJson(json.decode(response.body));
-      if(hubWaveResponse.id.isNotEmpty) {
-        // Open link
-        final Uri url = Uri.parse(hubWaveResponse.wave_launch_url);
-        if (!await launchUrl(url)) {
-          //throw Exception('Could not launch $_url');
+      // Checks :
+      flagLoadingPayment = false;
+      if(response.statusCode == 200){
+        HubWaveResponseShort hubWaveResponse = HubWaveResponseShort.fromJson(json.decode(response.body));
+        if(hubWaveResponse.id.isNotEmpty) {
+          // Open link
+          final Uri url = Uri.parse(hubWaveResponse.wave_launch_url);
+          if (!await launchUrl(url)) {
+            //throw Exception('Could not launch $_url');
+          }
+          else{
+            //
+            hitServerAfterUrlPayment = true;
+          }
         }
-        else{
-          //
-          hitServerAfterUrlPayment = true;
+        else if(hubWaveResponse.reserve > 0){
+          displayMessage('Impossible de réserver plus ${hubWaveResponse.reserve} Kg', 5);
         }
       }
-      else if(hubWaveResponse.reserve > 0){
-        displayMessage('Impossible de réserver plus ${hubWaveResponse.reserve} Kg', 5);
+      else{
+        displayMessage('Une erreur est survenue', 3);
       }
     }
-    else{
-      displayMessage('Une erreur est survenue', 3);
+    catch(e){}
+    finally{
+      flagLoadingPayment = false;
     }
   }
 
@@ -309,78 +315,85 @@ class _ReservePaiement extends State<ReservePaiement> {
 
   // Send Account DATA :
   Future<void> sendReservationRequest() async {
-    final hNow = DateTime.now();
-    final url = montantFinal == "0" ? Uri.parse('${dotenv.env['URL']}bookreservation') :
+    try{
+      final hNow = DateTime.now();
+      final url = montantFinal == "0" ? Uri.parse('${dotenv.env['URL']}bookreservation') :
       Uri.parse('${dotenv.env['URL']}managereservation');
-    var response = await widget.client.post(url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "idpub": publication.id,
-          "iduser": localuser.id, // CHANGE THAT :
-          "montant": montantFinal,
-          "reserve": reserveController.text
-        })).timeout(const Duration(seconds: timeOutValue));
+      var response = await widget.client.post(url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "idpub": publication.id,
+            "iduser": localuser.id, // CHANGE THAT :
+            "montant": montantFinal,
+            "reserve": reserveController.text
+          })).timeout(const Duration(seconds: timeOutValue));
 
-    // Checks :
-    if(response.statusCode == 200){
-      ReservationResponse data =  ReservationResponse.fromJson(jsonDecode(const Utf8Decoder().convert(response.bodyBytes)));
-      // Check USER's presence :
-      User? user = await _userRepository.findById(data.id);
-      if(user == null){
-        // Persist DATA :
-        // Create new :
-        user = User(nationnalite: data.nationnalite,
-            id: data.id,
-            typepieceidentite: '',
-            numeropieceidentite: '',
-            nom: data.nom,
-            prenom: data.prenom,
-            email: '',
-            numero: '',
-            adresse: data.adresse,
-            fcmtoken: '',
-            pwd: "123",
-            codeinvitation: "123",
-            villeresidence: 0, streamtoken: '', streamid: '');
-        // Save :
-        outil.addUser(user);
-        //await _userRepository.insertUser(user);
+      // Checks :
+      if(response.statusCode == 200){
+        ReservationResponse data =  ReservationResponse.fromJson(jsonDecode(const Utf8Decoder().convert(response.bodyBytes)));
+        // Check USER's presence :
+        User? user = await _userRepository.findById(data.id);
+        if(user == null){
+          // Persist DATA :
+          // Create new :
+          user = User(nationnalite: data.nationnalite,
+              id: data.id,
+              typepieceidentite: '',
+              numeropieceidentite: '',
+              nom: data.nom,
+              prenom: data.prenom,
+              email: '',
+              numero: '',
+              adresse: data.adresse,
+              fcmtoken: '',
+              pwd: "123",
+              codeinvitation: "123",
+              villeresidence: 0, streamtoken: '', streamid: '');
+          // Save :
+          outil.addUser(user);
+          //await _userRepository.insertUser(user);
+        }
+
+        // Now update 'publication'
+        Publication pub = Publication(
+            id: publication.id,
+            userid: publication.userid,
+            villedepart: publication.villedepart,
+            villedestination: publication.villedestination,
+            datevoyage: publication.datevoyage,
+            datepublication: publication.datepublication,
+            reserve: publication.reserve,
+            active: 1,
+            reservereelle: int.parse(reserveController.text),
+            souscripteur: user.id, // Use OWNER Id
+            milliseconds: publication.milliseconds,
+            identifiant: publication.identifiant,
+            devise: publication.devise,
+            prix: publication.prix,
+            read: 1,
+            streamchannelid: data.channelid
+        );
+        // Update  :
+        await outil.updatePublication(pub);
+
+        // Set FLAG :
+        flagSendData = false;
+        closeAlertDialog = false;
       }
-
-      // Now update 'publication'
-      Publication pub = Publication(
-        id: publication.id,
-        userid: publication.userid,
-        villedepart: publication.villedepart,
-        villedestination: publication.villedestination,
-        datevoyage: publication.datevoyage,
-        datepublication: publication.datepublication,
-        reserve: publication.reserve,
-        active: 1,
-        reservereelle: int.parse(reserveController.text),
-        souscripteur: user.id, // Use OWNER Id
-        milliseconds: publication.milliseconds,
-        identifiant: publication.identifiant,
-        devise: publication.devise,
-        prix: publication.prix,
-        read: 1,
-        streamchannelid: data.channelid
-      );
-      // Update  :
-      await outil.updatePublication(pub);
-
-      // Set FLAG :
-      flagSendData = false;
-      closeAlertDialog = false;
+      else if(response.statusCode == 403) {
+        flagSendData = false;
+        displayFloat("Opération de paiement non finalisée");
+      }
+      else{
+        flagSendData = false;
+        // Erreur Réseau :
+        displayFloat("Impossible de traiter l'opération");
+      }
     }
-    else if(response.statusCode == 403) {
-      flagSendData = false;
-      displayFloat("Opération de paiement non finalisée");
+    catch(e){
     }
-    else{
+    finally{
       flagSendData = false;
-      // Erreur Réseau :
-      displayFloat("Impossible de traiter l'opération");
     }
   }
 

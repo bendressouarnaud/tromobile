@@ -14,7 +14,7 @@ class DatabaseHelper {
   static final _databaseName = "fluttercommerce.db";
 
   // Increment this version when you need to change the schema.
-  static final _databaseVersion = 1;
+  static final _databaseVersion = 2;
 
 
   // Make this a singleton class.
@@ -61,10 +61,10 @@ class DatabaseHelper {
       case 1:
         await _createDatabase(db);
         break;
-      /*case 2:
-        await _addTownsFirstBatch(db);
+      case 2:
+        await _addColumnToalertUser(db);
         break;
-      case 3:
+      /*case 3:
         await _addStreamChatObject(db);
         break;*/
     }
@@ -303,7 +303,14 @@ class DatabaseHelper {
     // Add parameters :
     await database.insert('parameters', Parameters(id: 1, state: 'resumed', travellocal: 500, travelabroad: 5000
         , notification: 0, epochdebut: 0, epochfin: 0, comptevalide: 0, deviceregistered: 0,
-        privacypolicy: 0).toDatabaseJson());
+        privacypolicy: 0, appmigration: 0).toDatabaseJson());
+  }
+
+  // Add new column :
+  Future _addColumnToalertUser(Database db) async {
+    await db.execute('ALTER TABLE parameters ADD COLUMN appmigration INTEGER');
+    // Init that :
+    await db.execute('UPDATE parameters SET appmigration = 0');
   }
 
   /*Future<void> _addTownsFirstBatch(Database database) async {
