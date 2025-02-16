@@ -145,7 +145,7 @@ class EcranAnnonce {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(processDate(pub.datevoyage, 0, (pub.userid != user.first.id))),
+                            Text(processDate(pub.datevoyage, 0, false)),
                             Text(processDate(pub.datevoyage, 1, (pub.userid != user.first.id)))
                           ],
                         ),
