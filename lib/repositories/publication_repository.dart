@@ -13,7 +13,8 @@ class PublicationRepository {
   Future<Publication?> findOptionalPublicationById(int id) => publicationDao.findOptionalPublicationById(id);
   Future<int> deleteById(int id) => publicationDao.deleteById(id);
   Future<int> deleteAllPublications() => publicationDao.deleteAllPublications();
-  Future<List<Publication>> findAll() => publicationDao.findAll();
+  //Future<List<Publication>> findAll() => publicationDao.findAll();
+  Future<List<Publication>> findAll() => publicationDao.findAllToDisplay(0);
   // These PUBLICATIONs that are still ongoing :
   Future<List<Publication>> findOngoingAll(int milliseconds) => publicationDao.findOngoingAll(milliseconds);
   Future<List<Publication>> findOldAll(int milliseconds) => publicationDao.findOldAll(milliseconds);

@@ -12,4 +12,5 @@ class FiliationRepository {
   Future<int> insert(Filiation data) => dao.save(data);
   Future<Filiation?> findById(int data) => dao.findById(data);
   Future<int> update(Filiation data) => dao.update(data);
+  Future<int> deleteAllFiliations() => dao.deleteAllFiliations();
 }

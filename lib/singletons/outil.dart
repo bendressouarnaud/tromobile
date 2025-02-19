@@ -4,6 +4,7 @@ import 'package:tro/getxcontroller/getpublicationcontroller.dart';
 import 'package:tro/getxcontroller/getusercontroller.dart';
 import 'package:tro/models/publication.dart';
 import 'package:tro/models/souscription.dart';
+import 'package:tro/repositories/filiation_repository.dart';
 import 'package:tro/repositories/ville_repository.dart';
 
 import '../getxcontroller/getchatcontroller.dart';
@@ -29,6 +30,7 @@ class Outil {
   late NavGetController _navController;
   late NavChatGetController _navChatController;
   final _villeRepository = VilleRepository();
+  final _filiationRepository = FiliationRepository();
   String urlPrefix = '';
   User? publicationOwner;
   Publication? publicationSuscribed;
@@ -233,6 +235,7 @@ class Outil {
     // Delete OTHERS
     await _chatController.deleteAllChats();
     await _souscriptionController.deleteAllSouscriptions();
+    await _filiationRepository.deleteAllFiliations();
     return await _publicationController.deleteAllPublications();
   }
 
@@ -247,6 +250,14 @@ class Outil {
 
   Future<void> updatePublicationWithoutFurtherActions(Publication publication) async{
     _publicationController.updateData(publication);
+  }
+
+  Future<void> removeDeletedPublication(Publication publication) async{
+    _publicationController.removeData(publication);
+  }
+
+  Future<void> justUpdatePublicationController() async{
+    _publicationController.justUpdate();
   }
 
   Future<void> updatePublication(Publication publication) async{

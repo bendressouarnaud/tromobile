@@ -29,4 +29,12 @@ class FiliationDao {
         where: "id = ?", whereArgs: [data.id]);
     return result;
   }
+
+  Future<int> deleteAllFiliations() async {
+    final db = await dbProvider.database;
+    var result = await db.delete(
+      "filiation",
+    );
+    return result;
+  }
 }

@@ -48,9 +48,9 @@ class EcranAnnonce {
   Widget displayObjectData(Publication pub, List<Pays> pays, List<Ville> villes, List<databaseuser.User> user, BuildContext context,
       bool historique, Client client, StreamChatClient streamChatClient, bool souscription) {
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         // Display DIALOG
-        Navigator.push(context,
+        final result = await Navigator.push(context,
             MaterialPageRoute(builder: (context) {
               return HistoriqueAnnonce(publication: pub,
                   ville: villes.where((ville) => ville.id == pub.villedestination).single,
@@ -60,6 +60,11 @@ class EcranAnnonce {
                 client: client,
                 streamclient: streamChatClient);
             }));
+        // Close the DOORS :
+        if (result != null) {
+          // Call Update on PublicationController :
+          outil.justUpdatePublicationController();
+        }
       },
       child: Container(
           decoration: BoxDecoration(

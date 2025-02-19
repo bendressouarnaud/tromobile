@@ -112,6 +112,11 @@ class _ChatManagementState extends State<ChatManagement> {
     return '${tUser.nom} ${tUser.prenom}';
   }
 
+  String removeChariotReturn(String message){
+    // Remove character like '\
+    return message.replaceAll("\n", " ");
+  }
+
   List<Chat> filterChatList(List<Chat> readList) {
     List<Chat> tampon = [];
     for(Chat mChat in readList){
@@ -249,9 +254,9 @@ class _ChatManagementState extends State<ChatManagement> {
                                                         alignment: Alignment.topLeft,
                                                         margin: const EdgeInsets.only(right: 10),
                                                         child: Text(
-                                                            liste[index].contenu.length > 30 ?
-                                                            '${liste[index].contenu.substring(0,20)} ...' :
-                                                            liste[index].contenu,
+                                                            removeChariotReturn(liste[index].contenu).length > 30 ?
+                                                            '${removeChariotReturn(liste[index].contenu).substring(0,20)} ...' :
+                                                            removeChariotReturn(liste[index].contenu),
                                                             style: const TextStyle(
                                                                 color: Colors.black87
                                                             )

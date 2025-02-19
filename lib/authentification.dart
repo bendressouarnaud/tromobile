@@ -250,7 +250,7 @@ class _NewAuth extends State<AuthentificationEcran> {
       }
     }
     catch (e) {
-      //print('Erreur : ${e.toString()}');
+      print('Erreur : ${e.toString()}');
     }
     finally{
       // Notify :

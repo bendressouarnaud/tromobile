@@ -340,7 +340,12 @@ class _ManageDepartureState extends State<ManageDeparture> {
           // Kill ACTIVITY :
           if(!closeAlertDialog) {
             if (Navigator.canPop(context)) {
-              Navigator.pop(context);
+              if(widget.idpub > 0) {
+                Navigator.pop(context, 1);
+              }
+              else{
+                Navigator.pop(context);
+              }
               //Navigator.of(context).pop({'selection': '1'});
             }
           }
@@ -469,7 +474,7 @@ class _ManageDepartureState extends State<ManageDeparture> {
         DepartureResponse reponse = DepartureResponse.fromJson(
             json.decode(response.body));
         Publication pub = Publication(
-            id: idpub == 0 ? reponse.id : idpub,
+            id: widget.idpub == 0 ? reponse.id : widget.idpub,
             userid: id,
             villedepart: villeDepartMenu!.id,
             villedestination: villeDestinationMenu!.id,
@@ -533,7 +538,8 @@ class _ManageDepartureState extends State<ManageDeparture> {
       }
     }
     catch (e){
-      displayToast("Traitement impossible !");
+      // ${e.toString()}
+      displayToast("Traitement impossible. Prière de recommencer !");
     }
 
     //

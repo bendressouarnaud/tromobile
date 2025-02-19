@@ -63,6 +63,23 @@ class PublicationGetController extends GetxController {
     );
   }
 
+
+  // Remove DATA :
+  Future<void> removeData(Publication publication) async{
+    Publication? pub = publicationData.where((p0) => p0.id == publication.id).firstOrNull;
+    publicationData.remove(pub);
+    // Update :
+    await _publicationRepository.update(publication);
+  }
+
+  void justUpdate(){
+    Future.delayed(const Duration(milliseconds: 800),
+            () {
+          update();
+        }
+    );
+  }
+
   Future<int> updateData(Publication publication) async{
     Publication? pub = publicationData.where((p0) => p0.id == publication.id).firstOrNull;
     int maj = 0;

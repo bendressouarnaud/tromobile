@@ -118,22 +118,14 @@ class _WelcomePageState extends State<WelcomePage> {
   @override
   void initState() {
     // Call first :
-    //getPublicationNotRead();
     setupInteractedMessage();
     chechNotificationPermission();
-    // Try THIS :
-    //getPubAndSouscription();
-    //initLocalConnection();
-
     _subscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
-
     // Initialize the AppLifecycleListener class and pass callbacks
     _listener = AppLifecycleListener(
       onStateChange: _onStateChanged,
     );
-
     // Run this to check :
-    //outil.refreshAllChatsFromResumed(0);
     super.initState();
   }
 
@@ -387,7 +379,7 @@ class _WelcomePageState extends State<WelcomePage> {
     cUser = await _userRepository.getConnectedUser();
     //
     List<Publication> lte = await outil.findAllPublication();//publicationData;
-    if(!streamUserConnected) initLocalConnection();
+    //if(!streamUserConnected) initLocalConnection();
     return lte;
   }
 
@@ -947,7 +939,8 @@ class _WelcomePageState extends State<WelcomePage> {
               }
             }
           ),
-          AnnoncesUsers(streamclient: widget.streamclient, listePublication: listePub, listeSouscription: listeSouscription),//ChatManagement(client: widget.client),
+          ChatManagement(client: widget.client),
+          //AnnoncesUsers(streamclient: widget.streamclient, listePublication: listePub, listeSouscription: listeSouscription),//ChatManagement(client: widget.client),
           Historique(client: widget.client, streamclient: widget.streamclient),
           EcranCompte(client: widget.client),
         ][currentPageIndex]);

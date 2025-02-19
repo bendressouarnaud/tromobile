@@ -125,8 +125,8 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
     return datetime.split("T")[choice];
   }
 
-  void openTravelForUpdate() {
-    Navigator.push(
+  void openTravelForUpdate() async{
+    final result = await Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context){
@@ -136,6 +136,17 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
             }
         )
     );
+
+    // Close the DOORS :
+    if (result != null) {
+      // Request for Permission :
+      forceLeave();
+    }
+  }
+
+  // Leave :
+  void forceLeave(){
+    Navigator.pop(context);
   }
 
   @override
@@ -449,7 +460,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
               },
               onTap: () async {
                 // Display DIALOG :
-                if(!signalerReception) {
+                /*if(!signalerReception) {
                   if (publication.active == 1) {
                     displayFloat(
                         'Le colis n\'a pas encore été remis !', choix: 1);
@@ -467,7 +478,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                   setState(() {
                     signalerReception = false;
                   });
-                }
+                }*/
 
                 /*if(widget.streamclient.wsConnectionStatus == ConnectionStatus.connected){
                   final channel = widget.streamclient.channel('messaging', id: publication.streamchannelid);
@@ -475,7 +486,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                   openStramChat(widget.streamclient, channel);
                 }*/
 
-                /*final result = await Navigator.push(context,
+                final result = await Navigator.push(context,
                   MaterialPageRoute(
                     builder: (context) {
                       return Messagerie(idpub: publication.id, owner: ('${outil.getPublicationOwner()!.nom} ${outil.getPublicationOwner()!.prenom}'),
@@ -485,7 +496,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                 );
                 if(result == '1'){
                   await outil.refreshAllChatsFromResumed(0);
-                }*/
+                }
               },
               child: Container(
                   //margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
@@ -625,8 +636,8 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
       Publication pub = Publication(
           id: publication.id,
           userid: publication.userid,
-          villedepart: publication.id,
-          villedestination: publication.id,
+          villedepart: publication.villedepart,
+          villedestination: publication.villedestination,
           datevoyage: publication.datevoyage,
           datepublication: publication.datepublication,
           reserve: publication.reserve,
@@ -640,7 +651,8 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
           read: publication.read,
           streamchannelid: publication.streamchannelid
       );
-      await outil.updatePublicationWithoutFurtherActions(pub);
+      await outil.removeDeletedPublication(pub);
+      //await outil.updatePublicationWithoutFurtherActions(pub);
       publicationDeletionDone = true;
     }
     flagDeletionData = false;
@@ -814,7 +826,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
             // Display message :
             displayFloat('Opération effectuée !');
             // Leave SCREEN :
-            Navigator.pop(context);
+            Navigator.pop(context, 1);
           }
           else{
             displayFloat('Suppression de l\'annonce impossible');
@@ -1272,7 +1284,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                               },
                                               onTap: () async {
                                                 // Display DIALOG
-                                                /*final result = await Navigator.push(context,
+                                                final result = await Navigator.push(context,
                                                     MaterialPageRoute(
                                                         builder: (context) {
                                                           return Messagerie(idpub: publication.id, owner: ('${listeUser[index].nom} ${listeUser[index].prenom}'),
@@ -1285,7 +1297,7 @@ class _HAnnonce extends State<HistoriqueAnnonce> {
                                                 //
                                                 if(result == '1'){
                                                   await outil.refreshAllChatsFromResumed(0);
-                                                }*/
+                                                }
 
                                                 /*Souscription souscription = await outil.getSouscriptionByIdpubAndIduser(publication.id, listeUser[index].id);
                                                 if(widget.streamclient.wsConnectionStatus == ConnectionStatus.connected) {

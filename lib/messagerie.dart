@@ -76,7 +76,7 @@ class _HMessagerie extends State<Messagerie> {
 
   @override
   void dispose() async{
-    _subscription.cancel();
+    //_subscription.cancel();
     _controller.dispose();
     //_listener.dispose();
 
@@ -145,7 +145,7 @@ class _HMessagerie extends State<Messagerie> {
     );
 
     // Generate ID :
-    if(checkNetworkConnected) {
+    if(outil.getCheckNetworkConnected()) {
       final url = Uri.parse('${dotenv.env['URL']}sendmessage');
       try {
         var response = await widget.client.post(
@@ -422,24 +422,26 @@ class _HMessagerie extends State<Messagerie> {
                                               onPressed: () async{
                                                 // Send that message :
                                                 /*print('startService ------- --------------------------------');
-                                      final service = FlutterBackgroundService();
-                                      await service.startService();*/
+                                                  final service = FlutterBackgroundService();
+                                                  await service.startService();*/
                                               },
-                                              icon: const Icon(Icons.email_rounded)
+                                              icon: const Icon(Icons.message)
                                           ),
                                           suffixIcon: IconButton(
                                             icon: const Icon(Icons.send),
                                             onPressed: (){
-                                              if(checkNetworkConnected) {
-                                                persistMessage();
-                                              }
-                                              else{
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(
-                                                      duration: Duration(seconds: 3),
-                                                      content: Text("Le terminal n'est pas connecté !")
-                                                  ),
-                                                );
+                                              if(messageController.text.trim().isNotEmpty){
+                                                if(outil.getCheckNetworkConnected()) {
+                                                  persistMessage();
+                                                }
+                                                else{
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(
+                                                        duration: Duration(seconds: 3),
+                                                        content: Text("Le terminal n'est pas connecté !")
+                                                    ),
+                                                  );
+                                                }
                                               }
                                             },
                                           ),
